@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מסע קליסטניקס</title>
+    <style>
+
+        @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700;900&display=swap');
+        :root {
+            --bg-dark: #0a0a0f; --bg-card: #12121a; --bg-elevated: #1a1a2e;
+            --accent: #ff6b35; --accent-glow: rgba(255,107,53,0.3);
+            --success: #00d26a; --warning: #ffd166; --danger: #ff4757; --info: #45b7d1;
+            --text-primary: #f0f0f5; --text-secondary: #8a8a9a; --border: #2a2a3e;
+            --level-1: #4ecdc4; --level-2: #45b7d1; --level-3: #96ceb4; --level-4: #feca57; --level-5: #ff6b6b;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Heebo',sans-serif; background: var(--bg-dark); color: var(--text-primary); min-height: 100vh; overflow-x: hidden; }
+        .bg-particles { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; overflow: hidden; }
+        .particle { position: absolute; width: 4px; height: 4px; background: var(--accent); border-radius: 50%; opacity: 0.3; animation: float 15s infinite; }
+        @keyframes float { 0%,100% { transform: translateY(100vh) rotate(0deg); opacity: 0; } 10% { opacity: 0.3; } 90% { opacity: 0.3; } 100% { transform: translateY(-10vh) rotate(720deg); opacity: 0; } }
+        .app-container { position: relative; z-index: 1; max-width: 480px; margin: 0 auto; padding: 20px; min-height: 100vh; }
+        .app-header { text-align: center; padding: 30px 0 20px; }
+        .logo { font-size: 2.2rem; font-weight: 900; background: linear-gradient(135deg,var(--accent),#ff8c5a); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 8px; }
+        .tagline { color: var(--text-secondary); font-size: 0.95rem; font-weight: 300; }
+        .screen { display: none; animation: fadeIn 0.5s ease; }
+        .screen.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px; padding: 24px; margin-bottom: 16px; transition: all 0.3s ease; }
+        .card:hover { border-color: var(--accent); box-shadow: 0 0 20px var(--accent-glow); }
+        .btn { width: 100%; padding: 16px 24px; border: none; border-radius: 16px; font-family: 'Heebo',sans-serif; font-size: 1.1rem; font-weight: 700; cursor: pointer; transition: all 0.3s ease; margin-top: 12px; }
+        .btn-primary { background: linear-gradient(135deg,var(--accent),#ff8c5a); color: white; box-shadow: 0 4px 20px var(--accent-glow); }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px var(--accent-glow); }
+        .btn-secondary { background: var(--bg-elevated); color: var(--text-primary); border: 1px solid var(--border); }
+        .btn-secondary:hover { border-color: var(--accent); }
+        .btn-success { background: linear-gradient(135deg,var(--success),#00b894); color: white; }
+        .btn-danger { background: linear-gradient(135deg,var(--danger),#ee5a5a); color: white; }
+        .btn-info { background: linear-gradient(135deg,var(--info),#3a9bc4); color: white; }
+        .btn-sm { padding: 10px 16px; font-size: 0.9rem; width: auto; margin-top: 0; }
+        .progress-container { background: var(--bg-elevated); border-radius: 12px; height: 8px; margin: 20px 0; overflow: hidden; }
+        .progress-bar { height: 100%; background: linear-gradient(90deg,var(--accent),#ff8c5a); border-radius: 12px; transition: width 0.5s ease; }
+        .quiz-question { font-size: 1.2rem; font-weight: 700; margin-bottom: 20px; line-height: 1.5; }
+        .quiz-options { display: flex; flex-direction: column; gap: 12px; }
+        .quiz-option { background: var(--bg-elevated); border: 2px solid var(--border); border-radius: 16px; padding: 16px 20px; cursor: pointer; transition: all 0.3s ease; font-size: 1rem; text-align: right; }
+        .quiz-option:hover { border-color: var(--accent); background: rgba(255,107,53,0.1); }
+        .quiz-option.selected { border-color: var(--accent); background: rgba(255,107,53,0.2); }
+        .quiz-counter { text-align: center; color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 16px; }
+        .level-badge { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 50px; font-weight: 700; font-size: 0.9rem; }
+        .level-1 { background: rgba(78,205,196,0.2); color: var(--level-1); }
+        .level-2 { background: rgba(69,183,209,0.2); color: var(--level-2); }
+        .level-3 { background: rgba(150,206,180,0.2); color: var(--level-3); }
+        .level-4 { background: rgba(254,202,87,0.2); color: var(--level-4); }
+        .level-5 { background: rgba(255,107,107,0.2); color: var(--level-5); }
+        .exercise-card { background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 16px; padding: 20px; margin-bottom: 12px; cursor: pointer; transition: all 0.3s ease; position: relative; overflow: hidden; }
+        .exercise-card:hover { border-color: var(--accent); transform: translateX(-4px); }
+        .exercise-card.locked { opacity: 0.5; cursor: not-allowed; }
+        .exercise-card.locked::after { content: "🔒"; position: absolute; left: 20px; top: 50%; transform: translateY(-50%); font-size: 1.5rem; }
+        .exercise-name { font-weight: 700; font-size: 1.1rem; margin-bottom: 4px; }
+        .exercise-desc { color: var(--text-secondary); font-size: 0.85rem; }
+        .exercise-difficulty { display: inline-block; padding: 4px 10px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; margin-top: 8px; }
+        .camera-container { position: relative; width: 100%; aspect-ratio: 3/4; background: var(--bg-elevated); border-radius: 20px; overflow: hidden; border: 2px solid var(--border); }
+        .camera-video { width: 100%; height: 100%; object-fit: cover; }
+        .camera-placeholder { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-secondary); }
+        .camera-placeholder svg { width: 64px; height: 64px; margin-bottom: 16px; opacity: 0.5; }
+        .camera-controls { display: flex; gap: 12px; margin-top: 16px; }
+        .camera-controls .btn { flex: 1; margin-top: 0; }
+        .ai-score-container { text-align: center; padding: 40px 20px; }
+        .ai-score-circle { width: 180px; height: 180px; border-radius: 50%; background: conic-gradient(var(--accent) var(--score-deg), var(--bg-elevated) var(--score-deg)); display: flex; align-items: center; justify-content: center; margin: 0 auto 24px; position: relative; }
+        .ai-score-circle::before { content: ""; position: absolute; width: 150px; height: 150px; background: var(--bg-card); border-radius: 50%; }
+        .ai-score-value { position: relative; z-index: 1; font-size: 3rem; font-weight: 900; color: var(--accent); }
+        .ai-feedback { font-size: 1.1rem; line-height: 1.6; color: var(--text-secondary); margin-top: 16px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 12px; margin-top: 20px; }
+        .stat-box { background: var(--bg-elevated); border-radius: 16px; padding: 20px; text-align: center; }
+        .stat-value { font-size: 1.8rem; font-weight: 900; color: var(--accent); }
+        .stat-label { font-size: 0.85rem; color: var(--text-secondary); margin-top: 4px; }
+        .workout-day { background: var(--bg-elevated); border-radius: 16px; padding: 20px; margin-bottom: 12px; border-right: 4px solid var(--accent); }
+        .workout-day-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .workout-day-title { font-weight: 700; font-size: 1.1rem; }
+        .workout-day-status { padding: 4px 12px; border-radius: 50px; font-size: 0.8rem; font-weight: 700; }
+        .status-pending { background: rgba(255,209,102,0.2); color: var(--warning); }
+        .status-done { background: rgba(0,210,106,0.2); color: var(--success); }
+        .status-rest { background: rgba(138,138,154,0.2); color: var(--text-secondary); }
+        .workout-exercises { display: flex; flex-direction: column; gap: 8px; }
+        .workout-exercise { display: flex; align-items: center; gap: 12px; padding: 10px; background: var(--bg-card); border-radius: 12px; cursor: pointer; }
+        .workout-exercise-check { width: 24px; height: 24px; border: 2px solid var(--border); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; flex-shrink: 0; }
+        .workout-exercise-check.done { background: var(--success); border-color: var(--success); color: white; }
+        .workout-exercise:hover { border-color: var(--accent); }
+        .profile-header { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; }
+        .profile-avatar { width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg,var(--accent),#ff8c5a); display: flex; align-items: center; justify-content: center; font-size: 2.5rem; flex-shrink: 0; }
+        .profile-info h2 { font-size: 1.4rem; margin-bottom: 4px; }
+        .profile-info p { color: var(--text-secondary); font-size: 0.9rem; }
+        .profile-section { background: var(--bg-elevated); border-radius: 16px; padding: 20px; margin-bottom: 16px; }
+        .profile-section h3 { font-size: 1.1rem; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 8px; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 14px 16px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; color: var(--text-primary); font-family: 'Heebo',sans-serif; font-size: 1rem; transition: all 0.3s ease; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 10px var(--accent-glow); }
+        .day-selector { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+        .day-chip { padding: 10px 18px; border-radius: 50px; background: var(--bg-card); border: 2px solid var(--border); cursor: pointer; transition: all 0.3s ease; font-size: 0.9rem; font-weight: 500; }
+        .day-chip:hover { border-color: var(--accent); }
+        .day-chip.selected { background: var(--accent); border-color: var(--accent); color: white; }
+        .day-chip.rest { border-color: var(--text-secondary); opacity: 0.5; }
+        .time-picker { display: flex; align-items: center; gap: 12px; margin-top: 8px; }
+        .time-picker input[type="time"] { padding: 10px 14px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; color: var(--text-primary); font-family: 'Heebo',sans-serif; }
+        .history-item { display: flex; align-items: center; gap: 16px; padding: 16px; background: var(--bg-elevated); border-radius: 16px; margin-bottom: 12px; border-right: 3px solid var(--accent); }
+        .history-date { text-align: center; min-width: 60px; }
+        .history-date .day { font-size: 1.5rem; font-weight: 900; color: var(--accent); }
+        .history-date .month { font-size: 0.75rem; color: var(--text-secondary); }
+        .history-details { flex: 1; }
+        .history-title { font-weight: 700; margin-bottom: 4px; }
+        .history-meta { font-size: 0.85rem; color: var(--text-secondary); }
+        .history-score { font-size: 1.5rem; font-weight: 900; color: var(--success); }
+        .achievement-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
+        .achievement-item { background: var(--bg-card); border: 2px solid var(--border); border-radius: 16px; padding: 20px 10px; text-align: center; transition: all 0.3s ease; }
+        .achievement-item.unlocked { border-color: var(--accent); background: rgba(255,107,53,0.1); }
+        .achievement-icon { font-size: 2.5rem; margin-bottom: 8px; }
+        .achievement-name { font-size: 0.8rem; font-weight: 700; }
+        .achievement-item:not(.unlocked) { opacity: 0.4; }
+        .journey-timeline { position: relative; padding-right: 30px; }
+        .journey-timeline::before { content: ""; position: absolute; right: 8px; top: 0; width: 2px; height: 100%; background: linear-gradient(to bottom,var(--accent),var(--bg-elevated)); }
+        .journey-item { position: relative; margin-bottom: 24px; padding: 16px; background: var(--bg-elevated); border-radius: 16px; border-right: 3px solid var(--accent); }
+        .journey-item::before { content: ""; position: absolute; right: -26px; top: 20px; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); border: 3px solid var(--bg-dark); }
+        .journey-date { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 4px; }
+        .journey-title { font-weight: 700; margin-bottom: 4px; }
+        .journey-desc { font-size: 0.9rem; color: var(--text-secondary); }
+        .video-card { background: var(--bg-elevated); border-radius: 16px; overflow: hidden; margin-bottom: 16px; cursor: pointer; transition: all 0.3s ease; border: 1px solid var(--border); }
+        .video-card:hover { border-color: var(--accent); }
+        .video-thumbnail { width: 100%; aspect-ratio: 16/9; background: linear-gradient(135deg,var(--bg-card),var(--bg-elevated)); display: flex; align-items: center; justify-content: center; font-size: 3rem; position: relative; }
+        .video-thumbnail .play-btn { width: 60px; height: 60px; border-radius: 50%; background: rgba(255,107,53,0.9); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: white; position: absolute; }
+        .video-info { padding: 16px; }
+        .video-title { font-weight: 700; margin-bottom: 4px; }
+        .video-meta { font-size: 0.85rem; color: var(--text-secondary); }
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--bg-card); border-top: 1px solid var(--border); display: flex; justify-content: space-around; padding: 12px 0; z-index: 100; backdrop-filter: blur(20px); }
+        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--text-secondary); text-decoration: none; font-size: 0.7rem; transition: all 0.3s ease; cursor: pointer; padding: 4px 12px; }
+        .nav-item.active { color: var(--accent); }
+        .nav-item span { font-size: 1.4rem; }
+        @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+        .pulse { animation: pulse 2s infinite; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: var(--bg-elevated); border: 1px solid var(--accent); color: var(--text-primary); padding: 16px 24px; border-radius: 16px; font-weight: 700; z-index: 1000; animation: slideIn 0.3s ease; box-shadow: 0 8px 32px rgba(0,0,0,0.4); }
+        @media (max-width: 400px) { .app-container { padding: 12px; } .logo { font-size: 1.8rem; } .achievement-grid { grid-template-columns: repeat(2,1fr); } }
+        </style>
+</head>
+<body>
+    <div class="bg-particles" id="particles"></div>
+    <div class="app-container" style="padding-bottom: 80px;">
+
+        <!-- WELCOME -->
+        <div class="screen active" id="screen-welcome">
+            <header class="app-header">
+                <div style="font-size: 5rem; margin-bottom: 16px;">💪</div>
+                <h1 class="logo">מסע קליסטניקס</h1>
+                <p class="tagline">הדרך שלך — המשחק שלך</p>
+            </header>
+            <div class="card" style="text-align: center; padding: 32px 24px;">
+                <h2 style="font-size: 1.3rem; margin-bottom: 12px;">בונים גוף חזק — בלי מכון כושר</h2>
+                <p style="color: var(--text-secondary); line-height: 1.7; margin-bottom: 24px; font-size: 0.95rem;">
+                    5 רמות התקדמות • AI מנתח ביצוע • תוכנית אישית<br>
+                    צלם את עצמך • קהילה • והמסע שלך מתחיל עכשיו
+                </p>
+                <button class="btn btn-primary pulse" onclick="startOnboarding()">התחל את המסע 🚀</button>
+                <button class="btn btn-secondary" onclick="showScreen('screen-login')" style="margin-top: 8px;">כבר יש לי חשבון →</button>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-box"><div class="stat-value">5</div><div class="stat-label">רמות</div></div>
+                <div class="stat-box"><div class="stat-value">50+</div><div class="stat-label">תרגילים</div></div>
+                <div class="stat-box"><div class="stat-value">AI</div><div class="stat-label">ניתוח ביצוע</div></div>
+                <div class="stat-box"><div class="stat-value">100</div><div class="stat-label">נקודות מקס</div></div>
+            </div>
+            <div class="card" style="margin-top: 16px;">
+                <h3 style="margin-bottom: 16px; font-size: 1.1rem;">🏆 מה מיוחד כאן?</h3>
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <span style="font-size: 1.5rem;">📹</span>
+                        <div><div style="font-weight: 700;">צלם וקבל ציון</div><div style="font-size: 0.85rem; color: var(--text-secondary);">AI מנתח את הטכניקה שלך בזמן אמת</div></div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <span style="font-size: 1.5rem;">📅</span>
+                        <div><div style="font-weight: 700;">תוכנית אישית</div><div style="font-size: 0.85rem; color: var(--text-secondary);">מותאמת לרמה שלך, מתעדכנת כל שבוע</div></div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <span style="font-size: 1.5rem;">🎮</span>
+                        <div><div style="font-weight: 700;">משחק התקדמות</div><div style="font-size: 0.85rem; color: var(--text-secondary);">שלבים, הישגים, ולוחות תוצאות</div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- LOGIN -->
+        <div class="screen" id="screen-login">
+            <div class="app-header"><h1 class="logo">התחברות</h1></div>
+            <div class="card">
+                <div class="form-group"><label>אימייל</label><input type="email" id="login-email" placeholder="your@email.com"></div>
+                <div class="form-group"><label>סיסמה</label><input type="password" id="login-password" placeholder="••••••••"></div>
+                <button class="btn btn-primary" onclick="login()">התחבר</button>
+                <button class="btn btn-secondary" onclick="showScreen('screen-welcome')" style="margin-top: 8px;">חזרה</button>
+            </div>
+        </div>
+
+        <!-- ONBOARDING -->
+        <div class="screen" id="screen-onboarding">
+            <div class="app-header">
+                <h1 class="logo">בוא נכיר אותך</h1>
+                <p class="tagline">פרטים בסיסיים לפני הקוויז</p>
+            </div>
+            <div class="card">
+                <div class="form-group"><label>שם מלא *</label><input type="text" id="onb-name" placeholder="השם שלך"></div>
+                <div class="form-group"><label>גיל *</label><input type="number" id="onb-age" placeholder="25" min="10" max="100"></div>
+                <div class="form-group"><label>מין</label><select id="onb-gender"><option value="">בחר</option><option value="male">זכר</option><option value="female">נקבה</option><option value="other">אחר</option></select></div>
+                <div class="form-group"><label>תחומי ספורט נוספים שאתה מתאמן בהם</label><textarea id="onb-sports" rows="2" placeholder="לדוג': ריצה, שחייה, יוגה, אגרוף..."></textarea></div>
+                <div class="form-group"><label>מטרה עיקרית</label><select id="onb-goal"><option value="strength">חיזוק וכוח</option><option value="muscle">בניית שריר</option><option value="weight">הורדת משקל</option><option value="skills">לימוד תרגילים מתקדמים</option><option value="health">בריאות כללית</option></select></div>
+                <button class="btn btn-primary" onclick="saveProfileAndStartQuiz()">המשך לקוויז →</button>
+            </div>
+        </div>
+
+        <!-- QUIZ -->
+        <div class="screen" id="screen-quiz">
+            <div class="card">
+                <div class="quiz-counter" id="quiz-counter">שאלה 1 מתוך 20</div>
+                <div class="progress-container"><div class="progress-bar" id="quiz-progress" style="width: 5%"></div></div>
+                <div class="quiz-question" id="quiz-question">טוען שאלה...</div>
+                <div class="quiz-options" id="quiz-options"></div>
+                <button class="btn btn-secondary" style="margin-top: 16px; font-size: 0.9rem;" onclick="skipQuestion()">❓ לא יודע — דלג</button>
+            </div>
+        </div>
+
+        <!-- RESULTS -->
+        <div class="screen" id="screen-results">
+            <div class="card" style="text-align: center; padding: 40px 24px;">
+                <div style="font-size: 3rem; margin-bottom: 16px;">🎯</div>
+                <h2 style="font-size: 1.4rem; margin-bottom: 8px;">הרמה שלך נקבעה!</h2>
+                <div id="result-level" class="level-badge" style="margin: 16px 0; font-size: 1.2rem; padding: 12px 24px;"></div>
+                <p id="result-desc" style="color: var(--text-secondary); line-height: 1.6; margin-bottom: 24px;"></p>
+                <div class="stats-grid" style="margin-bottom: 24px;">
+                    <div class="stat-box"><div class="stat-value" id="result-score">0</div><div class="stat-label">ניקוד כולל</div></div>
+                    <div class="stat-box"><div class="stat-value" id="result-strength">0</div><div class="stat-label">כוח</div></div>
+                    <div class="stat-box"><div class="stat-value" id="result-endurance">0</div><div class="stat-label">סיבולת</div></div>
+                    <div class="stat-box"><div class="stat-value" id="result-mobility">0</div><div class="stat-label">ניידות</div></div>
+                </div>
+                <button class="btn btn-primary" onclick="showWorkoutSetup()">בחר ימי אימון 📅</button>
+            </div>
+        </div>
+
+        <!-- SCHEDULE -->
+        <div class="screen" id="screen-schedule">
+            <div class="app-header">
+                <h1 class="logo">ימי האימון שלך</h1>
+                <p class="tagline">בחר מתי אתה רוצה להתאמן</p>
+            </div>
+            <div class="card">
+                <h3 style="margin-bottom: 16px;">📅 בחר ימי אימון</h3>
+                <div class="day-selector" id="schedule-days">
+                    <div class="day-chip" data-day="0" onclick="toggleDay(this)">ראשון</div>
+                    <div class="day-chip" data-day="1" onclick="toggleDay(this)">שני</div>
+                    <div class="day-chip selected" data-day="2" onclick="toggleDay(this)">שלישי</div>
+                    <div class="day-chip" data-day="3" onclick="toggleDay(this)">רביעי</div>
+                    <div class="day-chip selected" data-day="4" onclick="toggleDay(this)">חמישי</div>
+                    <div class="day-chip" data-day="5" onclick="toggleDay(this)">שישי</div>
+                    <div class="day-chip rest" data-day="6" onclick="toggleDay(this)">שבת</div>
+                </div>
+                <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 20px;">💡 טיפ: 3-4 אימונים בשבוע הם אידיאליים למתחילים</p>
+            </div>
+            <div class="card">
+                <h3 style="margin-bottom: 16px;">⏰ שעות אימון</h3>
+                <div id="schedule-times"></div>
+            </div>
+            <button class="btn btn-primary" onclick="saveScheduleAndGo()">סיים והתחל! 🚀</button>
+        </div>
+
+        <!-- DASHBOARD -->
+        <div class="screen" id="screen-dashboard">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px;">
+                <div style="width: 50px; height: 50px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), #ff8c5a); display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">👤</div>
+                <div>
+                    <div style="font-weight: 700;" id="dash-name">שלום!</div>
+                    <div id="user-level-display" class="level-badge" style="margin-top: 4px;"></div>
+                </div>
+            </div>
+            <div class="stats-grid" style="margin-bottom: 20px;">
+                <div class="stat-box"><div class="stat-value" id="dash-streak">0</div><div class="stat-label">ימי רצף 🔥</div></div>
+                <div class="stat-box"><div class="stat-value" id="dash-workouts">0</div><div class="stat-label">אימונים</div></div>
+                <div class="stat-box"><div class="stat-value" id="dash-score">0</div><div class="stat-label">ציון ממוצע</div></div>
+                <div class="stat-box"><div class="stat-value" id="dash-next">1</div><div class="stat-label">אימון הבא</div></div>
+            </div>
+            <h3 style="margin-bottom: 16px; font-size: 1.2rem;">📅 תוכנית השבוע</h3>
+            <div id="workout-plan"></div>
+            <h3 style="margin: 24px 0 16px; font-size: 1.2rem;">🏋️ התרגילים שלך</h3>
+            <div id="exercises-list"></div>
+        </div>
+
+        <!-- PROFILE -->
+        <div class="screen" id="screen-profile">
+            <div class="profile-header">
+                <div class="profile-avatar" id="profile-avatar">👤</div>
+                <div class="profile-info">
+                    <h2 id="profile-name">שם המשתמש</h2>
+                    <p id="profile-details">גיל • רמה • ימי רצף</p>
+                </div>
+            </div>
+            <div class="profile-section">
+                <h3>📊 סטטיסטיקות</h3>
+                <div class="stats-grid" style="margin-top: 16px;">
+                    <div class="stat-box"><div class="stat-value" id="profile-streak">0</div><div class="stat-label">ימי רצף 🔥</div></div>
+                    <div class="stat-box"><div class="stat-value" id="profile-workouts">0</div><div class="stat-label">אימונים</div></div>
+                    <div class="stat-box"><div class="stat-value" id="profile-avg">0</div><div class="stat-label">ציון ממוצע</div></div>
+                    <div class="stat-box"><div class="stat-value" id="profile-hours">0</div><div class="stat-label">שעות אימון</div></div>
+                </div>
+            </div>
+            <div class="profile-section">
+                <h3>👤 פרטים אישיים</h3>
+                <div class="form-group"><label>שם</label><input type="text" id="edit-name" placeholder="השם שלך"></div>
+                <div class="form-group"><label>גיל</label><input type="number" id="edit-age" placeholder="25" min="10" max="100"></div>
+                <div class="form-group"><label>תחומי ספורט נוספים</label><textarea id="edit-sports" rows="2" placeholder="לדוג': ריצה, שחייה, יוגה..."></textarea></div>
+                <div class="form-group"><label>מטרה</label><select id="edit-goal"><option value="strength">חיזוק וכוח</option><option value="muscle">בניית שריר</option><option value="weight">הורדת משקל</option><option value="skills">לימוד תרגילים מתקדמים</option><option value="health">בריאות כללית</option></select></div>
+                <button class="btn btn-primary btn-sm" onclick="saveProfile()">שמור שינויים</button>
+            </div>
+            <div class="profile-section">
+                <h3>⏰ לוח אימונים</h3>
+                <div id="profile-schedule"></div>
+            </div>
+            <button class="btn btn-danger" onclick="resetProgress()" style="margin-top: 16px;">🔄 אפס התקדמות</button>
+        </div>
+
+        <!-- HISTORY -->
+        <div class="screen" id="screen-history">
+            <div class="app-header">
+                <h1 class="logo">היסטוריית אימונים</h1>
+                <p class="tagline">כל האימונים שעשית</p>
+            </div>
+            <div id="history-list"></div>
+        </div>
+
+        <!-- JOURNEY -->
+        <div class="screen" id="screen-journey">
+            <div class="app-header">
+                <h1 class="logo">המסע שלי</h1>
+                <p class="tagline">הדרך שעברת עד כאן</p>
+            </div>
+            <div class="card" style="margin-bottom: 20px;">
+                <div style="display: flex; align-items: center; gap: 16px;">
+                    <div style="font-size: 3rem;">🗺️</div>
+                    <div>
+                        <div style="font-weight: 700; font-size: 1.2rem;">המסע מתחיל כאן</div>
+                        <div style="color: var(--text-secondary);">כל שלב, כל ניצחון, כל כישלון — הכל מתועד</div>
+                    </div>
+                </div>
+            </div>
+            <div class="journey-timeline" id="journey-timeline"></div>
+        </div>
+
+        <!-- ACHIEVEMENTS -->
+        <div class="screen" id="screen-achievements">
+            <div class="app-header">
+                <h1 class="logo">הישגים</h1>
+                <p class="tagline">אסוף את כל המדליות</p>
+            </div>
+            <div class="card" style="margin-bottom: 20px;">
+                <div class="stats-grid">
+                    <div class="stat-box"><div class="stat-value" id="ach-unlocked">0</div><div class="stat-label">נפתחו</div></div>
+                    <div class="stat-box"><div class="stat-value" id="ach-total">0</div><div class="stat-label">סה"כ</div></div>
+                </div>
+            </div>
+            <div class="achievement-grid" id="achievement-grid"></div>
+        </div>
+
+        <!-- VIDEOS -->
+        <div class="screen" id="screen-videos">
+            <div class="app-header">
+                <h1 class="logo">סרטוני הדרכה</h1>
+                <p class="tagline">למד כל תרגיל צעד אחר צעד</p>
+            </div>
+            <div class="card" style="margin-bottom: 16px;">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <input type="text" id="video-search" placeholder="🔍 חפש תרגיל..." oninput="filterVideos()">
+                </div>
+            </div>
+            <div id="videos-list"></div>
+        </div>
+
+        <!-- VIDEO PLAYER -->
+        <div class="screen" id="screen-video-player">
+            <button class="btn btn-secondary btn-sm" style="margin-bottom: 16px;" onclick="showScreen('screen-videos')">← חזרה לסרטונים</button>
+            <div class="card" style="padding: 0; overflow: hidden;">
+                <div style="width: 100%; aspect-ratio: 16/9; background: var(--bg-elevated); display: flex; align-items: center; justify-content: center; font-size: 4rem;" id="video-player-area">▶️</div>
+                <div style="padding: 20px;">
+                    <h2 id="video-player-title" style="margin-bottom: 8px;"></h2>
+                    <p id="video-player-desc" style="color: var(--text-secondary); margin-bottom: 16px;"></p>
+                    <div style="background: var(--bg-elevated); border-radius: 12px; padding: 16px; margin-bottom: 16px;">
+                        <div style="font-weight: 700; margin-bottom: 8px;">🎯 מטרה</div>
+                        <div id="video-player-goal" style="color: var(--text-secondary);"></div>
+                    </div>
+                    <div style="background: var(--bg-elevated); border-radius: 12px; padding: 16px;">
+                        <div style="font-weight: 700; margin-bottom: 8px;">💡 טיפים</div>
+                        <div id="video-player-tips" style="color: var(--text-secondary);"></div>
+                    </div>
+                    <button class="btn btn-primary" style="margin-top: 16px;" onclick="goToExerciseFromVideo()">התחל תרגיל זה →</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- EXERCISE DETAIL -->
+        <div class="screen" id="screen-exercise">
+            <button class="btn btn-secondary btn-sm" style="margin-bottom: 16px;" onclick="showScreen('screen-dashboard')">← חזרה</button>
+            <div class="card">
+                <h2 id="ex-title" style="margin-bottom: 8px;"></h2>
+                <p id="ex-desc" style="color: var(--text-secondary); margin-bottom: 20px;"></p>
+                <div style="background: var(--bg-elevated); border-radius: 16px; padding: 16px; margin-bottom: 20px;">
+                    <div style="font-weight: 700; margin-bottom: 8px;">🎯 מטרה</div>
+                    <div id="ex-goal" style="color: var(--text-secondary);"></div>
+                </div>
+                <div style="background: var(--bg-elevated); border-radius: 16px; padding: 16px; margin-bottom: 20px;">
+                    <div style="font-weight: 700; margin-bottom: 8px;">💡 טיפים</div>
+                    <div id="ex-tips" style="color: var(--text-secondary);"></div>
+                </div>
+                <button class="btn btn-info" onclick="goToVideoFromExercise()">📹 צפה בסרטון הדרכה</button>
+            </div>
+            <div class="card">
+                <h3 style="margin-bottom: 16px;">📹 צלם את הביצוע שלך</h3>
+                <div class="camera-container" id="camera-container">
+                    <div class="camera-placeholder" id="camera-placeholder">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                            <circle cx="12" cy="13" r="4"/>
+                        </svg>
+                        <div>לחץ כדי להפעיל מצלמה</div>
+                    </div>
+                    <video class="camera-video" id="camera-video" style="display: none;" autoplay playsinline></video>
+                </div>
+                <div class="camera-controls">
+                    <button class="btn btn-secondary" id="btn-camera" onclick="toggleCamera()">📷 הפעל מצלמה</button>
+                    <button class="btn btn-primary" id="btn-record" onclick="simulateRecording()" disabled>🔴 התחל הקלטה</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI SCORE -->
+        <div class="screen" id="screen-score">
+            <div class="ai-score-container">
+                <h2 style="margin-bottom: 8px;">ניתוח ביצוע AI</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 32px;">מנתח את הסרטון שלך...</p>
+                <div class="ai-score-circle" id="score-circle" style="--score-deg: 0deg;">
+                    <div class="ai-score-value" id="ai-score">0</div>
+                </div>
+                <div id="ai-grade" style="font-size: 1.5rem; font-weight: 900; margin-bottom: 16px;"></div>
+                <div class="ai-feedback" id="ai-feedback"></div>
+                <div style="margin-top: 32px;">
+                    <div style="background: var(--bg-elevated); border-radius: 16px; padding: 20px; margin-bottom: 16px; text-align: right;">
+                        <div style="font-weight: 700; margin-bottom: 12px;">📊 פירוח הציון</div>
+                        <div id="score-breakdown"></div>
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="showDashboard()">המשך לאימון הבא →</button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- BOTTOM NAV -->
+    <nav class="bottom-nav" id="bottom-nav" style="display: none;">
+        <div class="nav-item active" onclick="showDashboard()"><span>🏠</span><div>בית</div></div>
+        <div class="nav-item" onclick="showVideos()"><span>📹</span><div>סרטונים</div></div>
+        <div class="nav-item" onclick="showJourney()"><span>🗺️</span><div>המסע</div></div>
+        <div class="nav-item" onclick="showAchievements()"><span>🏆</span><div>הישגים</div></div>
+        <div class="nav-item" onclick="showProfile()"><span>👤</span><div>פרופיל</div></div>
+    </nav>
+
+    <script>
+        const quizQuestions = [
+            { q: "כמה שכיבות שמיכה אתה מסוגל לעשות ברצף?", options: ["0", "1-5", "6-15", "16-30", "30+"], scores: [0, 10, 20, 30, 40], category: "strength" },
+            { q: "כמה מתחים אתה מסוגל לעשות ברצף?", options: ["0", "1-3", "4-8", "9-15", "15+"], scores: [0, 10, 20, 30, 40], category: "strength" },
+            { q: "כמה זמן אתה מחזיק פלנק?", options: ["פחות מ-10 שניות", "10-30 שניות", "30-60 שניות", "1-2 דקות", "2+ דקות"], scores: [0, 10, 20, 30, 40], category: "endurance" },
+            { q: "האם אתה מסוגל לעשות שכיבות יהונים?", options: ["לא בכלל", "1-3 עם ברכיים", "1-3 מלאות", "4-8 מלאות", "8+ מלאות"], scores: [0, 10, 20, 30, 40], category: "strength" },
+            { q: "כמה זמן אתה מחזיק L-Sit?", options: ["לא מסוגל", "1-5 שניות", "5-15 שניות", "15-30 שניות", "30+ שניות"], scores: [0, 10, 20, 30, 40], category: "strength" },
+            { q: "האם אתה מסוגל לעשות מתח אוסטראלי?", options: ["לא", "כמעט", "1-3", "4-8", "8+"], scores: [0, 10, 20, 30, 40], category: "strength" },
+            { q: "כמה זמן אתה מתאמן בשבוע?", options: ["לא מתאמן", "1-2 פעמים", "3 פעמים", "4-5 פעמים", "6+ פעמים"], scores: [0, 5, 10, 15, 20], category: "endurance" },
+            { q: "האם יש לך ניסיון בקליסטניקס?", options: ["אין בכלל", "פחות מחודש", "1-3 חודשים", "3-12 חודשים", "שנה+"], scores: [0, 5, 10, 15, 20], category: "endurance" },
+            { q: "כמה דחיקות כתפיים אתה עושה ברצף?", options: ["0", "1-5", "6-15", "16-25", "25+"], scores: [0, 10, 20, 30, 40], category: "strength" },
+            { q: "האם אתה מסוגל לעשות dips?", options: ["לא", "1-3", "4-8", "9-15", "15+"], scores: [0, 10, 20, 30, 40], category: "strength" },
+            { q: "כמה זמן אתה מחזיק Hollow Body Hold?", options: ["לא מסוגל", "5-15 שניות", "15-30 שניות", "30-60 שניות", "60+ שניות"], scores: [0, 10, 20, 30, 40], category: "endurance" },
+            { q: "האם אתה מסוגל לעשות Pike Push-ups?", options: ["לא", "1-3", "4-8", "9-15", "15+"], scores: [0, 10, 20, 30, 40], category: "strength" },
+            { q: "מה רמת הגמישות שלך?", options: ["נמוכה מאוד", "נמוכה", "בינונית", "טובה", "מעולה"], scores: [0, 5, 10, 15, 20], category: "mobility" },
+            { q: "האם אתה מסוגל לעשות Australian Pull-ups?", options: ["לא", "1-5", "6-12", "13-20", "20+"], scores: [0, 10, 20, 30, 40], category: "strength" },
+            { q: "כמה זמן אתה מחזיק Arch Hold?", options: ["לא מסוגל", "5-15 שניות", "15-30 שניות", "30-60 שניות", "60+ שניות"], scores: [0, 10, 20, 30, 40], category: "endurance" },
+            { q: "האם אתה מסוגל לעשות Bodyweight Squats?", options: ["0", "1-10", "11-25", "26-50", "50+"], scores: [0, 5, 10, 15, 20], category: "strength" },
+            { q: "מה המשקל שלך ביחס לגובה?", options: ["משמעותית מתחת לממוצע", "מתחת לממוצע", "ממוצע", "מעל לממוצע", "משמעותית מעל לממוצע"], scores: [20, 15, 10, 5, 0], category: "mobility" },
+            { q: "האם יש לך פציעות עבר?", options: ["פציעות רבות", "כמה פציעות", "פציעה אחת", "ללא פציעות", "ללא פציעות + תזונה טובה"], scores: [0, 5, 10, 15, 20], category: "mobility" },
+            { q: "כמה שעות שינה אתה מקבל בממוצע?", options: ["פחות מ-5", "5-6", "6-7", "7-8", "8+"], scores: [0, 5, 10, 15, 20], category: "endurance" },
+            { q: "מה המטרה העיקרית שלך?", options: ["ללמוד את הבסיס", "לחטב את הגוף", "להתחזק", "להתקדם לתרגילים מתקדמים", "להגיע לרמה מקצועית"], scores: [10, 15, 20, 25, 30], category: "goal" }
+        ];
+
+        const levels = {
+            1: { name: "מתחיל", color: "level-1", desc: "בונים את הבסיס — שליטה במשקל הגוף", minScore: 0 },
+            2: { name: "מתקדם", color: "level-2", desc: "מחזקים — תרגילים בינוניים", minScore: 200 },
+            3: { name: "בינוני", color: "level-3", desc: "מתקרבים לתרגילים מתקדמים", minScore: 350 },
+            4: { name: "מתקדם+", color: "level-4", desc: "תרגילים קשים ושליטה גבוהה", minScore: 500 },
+            5: { name: "מקצוען", color: "level-5", desc: "תרגילים מתקדמים — Planche, Front Lever", minScore: 650 }
+        };
+
+        const exercisesByLevel = {
+            1: [
+                { id: "pushups", name: "שכיבות שמיכה", desc: "הבסיס של הכל — שליטה בתנועה המלאה", difficulty: "קל", goal: "3 סטים של 8-12 חזרות", tips: "שמור על גוף ישר, מרפקים בזווית 45 מעלות", videoId: "pushups" },
+                { id: "australian_pull", name: "מתח אוסטראלי", desc: "מתח עם רגליים על הקרקע", difficulty: "קל", goal: "3 סטים של 10-15 חזרות", tips: "משוך את החזה למוט, כתפיים למטה ואחורה", videoId: "australian_pull" },
+                { id: "plank", name: "פלנק", desc: "חיזוק ליבה — שליטה בסיסית", difficulty: "קל", goal: "3 סטים של 30-60 שניות", tips: "גוף ישר כמו קרש, מכווץ את הבטן", videoId: "plank" },
+                { id: "pike_push", name: "דחיקות כתפיים", desc: "בניית כוח כתפיים על הרצפה", difficulty: "קל", goal: "3 סטים של 10-15 חזרות", tips: "ישבן למעלה, ראש בין הידיים", videoId: "pike_push" },
+                { id: "hollow_hold", name: "Hollow Body Hold", desc: "חיזוק ליבה — מצב חלול", difficulty: "בינוני", goal: "3 סטים של 20-30 שניות", tips: "גב תחתון צמוד לרצפה, כפות רגליים מורמות", videoId: "hollow_hold" },
+                { id: "arch_hold", name: "Arch Hold", desc: "חיזוק גב — מצב קשת", difficulty: "בינוני", goal: "3 סטים של 20-30 שניות", tips: "משוך כתפיים אחורה, רגליים מורמות", videoId: "arch_hold" }
+            ],
+            2: [
+                { id: "diamond_pushups", name: "שכיבות יהונים", desc: "שכיבות עם ידיים צמודות — יותר קשה", difficulty: "בינוני", goal: "3 סטים של 5-8 חזרות", tips: "מרפקים צמודים לגוף, יורד עד הסף", videoId: "diamond_pushups" },
+                { id: "pullups", name: "מתח רגיל", desc: "מתח מלא — הבסיס של משיכה", difficulty: "בינוני", goal: "3 סטים של 5-8 חזרות", tips: "התחל ממתח מתח, שליטה בירידה", videoId: "pullups" },
+                { id: "dips", name: "Dips", desc: "דחיקות בין ספסלים או מוטות", difficulty: "בינוני", goal: "3 סטים של 6-10 חזרות", tips: "גוף ישר, יורד עד 90 מעלות במרפק", videoId: "dips" },
+                { id: "lsit", name: "L-Sit", desc: "ישיבה ב-L — חיזוק ליבה וכתפיים", difficulty: "בינוני", goal: "3 סטים של 10-15 שניות", tips: "דחוף כתפיים למטה, רגליים ישרות", videoId: "lsit" },
+                { id: "pike_pushups", name: "Pike Push-ups", desc: "דחיקות בזווית — הכנה לHandstand", difficulty: "בינוני", goal: "3 סטים של 6-10 חזרות", tips: "ישבן גבוה, ראש נוגע ברצפה", videoId: "pike_pushups" },
+                { id: "australian_pulls", name: "Australian Pull-ups", desc: "מתח אופקי — חיזוק גב", difficulty: "בינוני", goal: "3 סטים של 8-12 חזרות", tips: "גוף ישר, משוך חזה למוט", videoId: "australian_pulls" }
+            ],
+            3: [
+                { id: "archer_pushups", name: "Archer Push-ups", desc: "שכיבות ארצ'ר — שליטה חד-צדדית", difficulty: "קשה", goal: "3 סטים של 4-6 לכל צד", tips: "הרחב יד אחת, שלוט בתנועה", videoId: "archer_pushups" },
+                { id: "chinups", name: "Chin-ups", desc: "מתח אחיזה צמודה — יותר דגש על בייספס", difficulty: "קשה", goal: "3 סטים של 5-8 חזרות", tips: "אחיזה צמודה, סנטר מעל המוט", videoId: "chinups" },
+                { id: "pseudo_planche", name: "Pseudo Planche Push-ups", desc: "שכיבות בזווית פלנש", difficulty: "קשה", goal: "3 סטים של 5-8 חזרות", tips: "הטה גוף קדימה, כתפיים מול כפות ידיים", videoId: "pseudo_planche" },
+                { id: "tuck_lsit", name: "Tuck L-Sit", desc: "L-Sit בקפיצה — שליטה מתקדמת", difficulty: "קשה", goal: "3 סטים של 15-20 שניות", tips: "דחוף כתפיים, ברכיים צמודות לחזה", videoId: "tuck_lsit" },
+                { id: "wide_pullups", name: "Wide Grip Pull-ups", desc: "מתח אחיזה רחבה — דגש על שרירי גב", difficulty: "קשה", goal: "3 סטים של 4-6 חזרות", tips: "אחיזה רחבה, משוך חזה למוט", videoId: "wide_pullups" },
+                { id: "handstand_hold", name: "Handstand Hold", desc: "עמידת ידיים מול קיר", difficulty: "קשה", goal: "3 סטים של 20-30 שניות", tips: "תחת קיר, רגליים ישרות למעלה", videoId: "handstand_hold" }
+            ],
+            4: [
+                { id: "one_arm_pushup", name: "One Arm Push-up Progression", desc: "שכיבות ביד אחת — הכנה", difficulty: "קשה מאוד", goal: "3 סטים של 3-5 לכל צד", tips: "התחל עם אחיזה רחבה, שלוט בליבה", videoId: "one_arm_pushup" },
+                { id: "muscleup_prog", name: "Muscle-up Progression", desc: "הכנה למוסל-אפ — חלקי תנועה", difficulty: "קשה מאוד", goal: "3 סטים של 3-5 חזרות", tips: "תנועה explosivית, מעבר ממתח לדחיקה", videoId: "muscleup_prog" },
+                { id: "front_lever_tuck", name: "Front Lever Tuck", desc: "פרונט לבר בקפיצה", difficulty: "קשה מאוד", goal: "3 סטים של 10-15 שניות", tips: "גוף ישר, ברכיים צמודות לחזה", videoId: "front_lever_tuck" },
+                { id: "planche_lean", name: "Planche Lean", desc: "הטיית פלנש — בניית כתפיים", difficulty: "קשה מאוד", goal: "3 סטים של 20-30 שניות", tips: "הטה קדימה עד שכתפיים מול כפות ידיים", videoId: "planche_lean" },
+                { id: "weighted_pullups", name: "Weighted Pull-ups", desc: "מתח עם משקל נוסף", difficulty: "קשה מאוד", goal: "3 סטים של 4-6 חזרות", tips: "הוסף משקל בהדרגה, שליטה מלאה", videoId: "weighted_pullups" },
+                { id: "handstand_pushups", name: "Handstand Push-ups", desc: "דחיקות בעמידת ידיים", difficulty: "קשה מאוד", goal: "3 סטים של 3-5 חזרות", tips: "עמידת ידיים מול קיר, יורד עד ראש", videoId: "handstand_pushups" }
+            ],
+            5: [
+                { id: "muscleup", name: "Muscle-up", desc: "מעבר ממתח לדחיקה מעל המוט", difficulty: "מקצועי", goal: "3 סטים של 3-5 חזרות", tips: "תנועה explosivית, מסתובב סביב המוט", videoId: "muscleup" },
+                { id: "front_lever", name: "Front Lever", desc: "פרונט לבר מלא — גוף ישר אופקי", difficulty: "מקצועי", goal: "3 סטים של 5-10 שניות", tips: "גוף ישר לחלוטין, כתפיים מופעלות", videoId: "front_lever" },
+                { id: "planche", name: "Planche", desc: "פלנש — שליטה מלאה בגוף", difficulty: "מקצועי", goal: "3 סטים של 3-5 שניות", tips: "גוף ישר אופקי, כתפיים מופעלות", videoId: "planche" },
+                { id: "one_arm_pullup", name: "One Arm Pull-up", desc: "מתח ביד אחת", difficulty: "מקצועי", goal: "3 סטים של 1-3 חזרות", tips: "התחל עם אחיזה צמודה, שליטה מלאה", videoId: "one_arm_pullup" },
+                { id: "handstand_free", name: "Handstand", desc: "עמידת ידיים חופשית", difficulty: "מקצועי", goal: "3 סטים של 10-20 שניות", tips: "ללא קיר, שליטה בליבה וכתפיים", videoId: "handstand_free" },
+                { id: "human_flag", name: "Human Flag", desc: "דגל אנושי — שליטה צדדית", difficulty: "מקצועי", goal: "3 סטים של 3-5 שניות", tips: "אחיזה על מוט אנכי, גוף ישר אופקי", videoId: "human_flag" }
+            ]
+        };
+
+        const achievements = [
+            { id: "first_workout", name: "אימון ראשון", icon: "🎯", desc: "השלמת את האימון הראשון שלך" },
+            { id: "week_streak", name: "שבוע שלם", icon: "🔥", desc: "7 ימי רצף" },
+            { id: "month_streak", name: "חודש שלם", icon: "⚡", desc: "30 ימי רצף" },
+            { id: "perfect_score", name: "מושלם", icon: "💯", desc: "קבל ציון 100" },
+            { id: "level_up", name: "עליית רמה", icon: "📈", desc: "עלה רמה אחת" },
+            { id: "all_exercises", name: "אספן", icon: "🏆", desc: "נסה את כל התרגילים ברמה שלך" },
+            { id: "early_bird", name: "מוקדם", icon: "🌅", desc: "התאמן לפני 7 בבוקר" },
+            { id: "night_owl", name: "לילי", icon: "🌙", desc: "התאמן אחרי 22:00" },
+            { id: "ten_workouts", name: "עשרה אימונים", icon: "🔟", desc: "השלם 10 אימונים" },
+            { id: "fifty_workouts", name: "חמישים אימונים", icon: "🎖️", desc: "השלם 50 אימונים" },
+            { id: "hundred_workouts", name: "מאה אימונים", icon: "👑", desc: "השלם 100 אימונים" },
+            { id: "explorer", name: "חוקר", icon: "🗺️", desc: "נסה תרגיל מכל רמה" }
+        ];
+
+        let currentQuestion = 0, quizAnswers = [], userLevel = 1, userScore = 0;
+        let userProfile = { name: "", age: "", gender: "", sports: "", goal: "strength" };
+        let userSchedule = { days: [2, 4], times: {} };
+        let userStats = { streak: 0, workouts: 0, avgScore: 0, totalHours: 0 };
+        let workoutHistory = [], journeyEvents = [], unlockedAchievements = [];
+        let currentExercise = null, stream = null, isRecording = false;
+
+        function createParticles() {
+            const container = document.getElementById('particles');
+            for (let i = 0; i < 20; i++) {
+                const p = document.createElement('div');
+                p.className = 'particle';
+                p.style.left = Math.random() * 100 + '%';
+                p.style.animationDelay = Math.random() * 15 + 's';
+                p.style.animationDuration = (10 + Math.random() * 10) + 's';
+                container.appendChild(p);
+            }
+        }
+        createParticles();
+
+        function showScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            window.scrollTo(0, 0);
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            if (id === 'screen-dashboard') document.querySelectorAll('.nav-item')[0].classList.add('active');
+            else if (id === 'screen-videos') document.querySelectorAll('.nav-item')[1].classList.add('active');
+            else if (id === 'screen-journey') document.querySelectorAll('.nav-item')[2].classList.add('active');
+            else if (id === 'screen-achievements') document.querySelectorAll('.nav-item')[3].classList.add('active');
+            else if (id === 'screen-profile') document.querySelectorAll('.nav-item')[4].classList.add('active');
+        }
+
+        function showBottomNav(show) {
+            document.getElementById('bottom-nav').style.display = show ? 'flex' : 'none';
+        }
+
+        function startOnboarding() { showScreen('screen-onboarding'); }
+
+        function saveProfileAndStartQuiz() {
+            const name = document.getElementById('onb-name').value;
+            const age = document.getElementById('onb-age').value;
+            if (!name || !age) { showToast('נא למלא שם וגיל'); return; }
+            userProfile.name = name; userProfile.age = age;
+            userProfile.gender = document.getElementById('onb-gender').value;
+            userProfile.sports = document.getElementById('onb-sports').value;
+            userProfile.goal = document.getElementById('onb-goal').value;
+            startQuiz();
+        }
+
+        function startQuiz() {
+            currentQuestion = 0; quizAnswers = [];
+            showScreen('screen-quiz'); renderQuestion();
+        }
+
+        function renderQuestion() {
+            const q = quizQuestions[currentQuestion];
+            document.getElementById('quiz-counter').textContent = `שאלה ${currentQuestion + 1} מתוך ${quizQuestions.length}`;
+            document.getElementById('quiz-progress').style.width = ((currentQuestion + 1) / quizQuestions.length * 100) + '%';
+            document.getElementById('quiz-question').textContent = q.q;
+            const optsDiv = document.getElementById('quiz-options');
+            optsDiv.innerHTML = '';
+            q.options.forEach((opt, i) => {
+                const btn = document.createElement('div');
+                btn.className = 'quiz-option';
+                btn.textContent = opt;
+                btn.onclick = () => selectAnswer(i);
+                optsDiv.appendChild(btn);
+            });
+        }
+
+        function selectAnswer(idx) {
+            quizAnswers.push(idx);
+            if (currentQuestion < quizQuestions.length - 1) { currentQuestion++; renderQuestion(); }
+            else { calculateResults(); }
+        }
+
+        function skipQuestion() {
+            const q = quizQuestions[currentQuestion];
+            selectAnswer(Math.floor(q.scores.length / 2));
+        }
+
+        function calculateResults() {
+            let totalScore = 0, strength = 0, endurance = 0, mobility = 0;
+            let strengthCount = 0, enduranceCount = 0, mobilityCount = 0;
+            quizAnswers.forEach((ans, i) => {
+                const score = quizQuestions[i].scores[ans];
+                totalScore += score;
+                const cat = quizQuestions[i].category;
+                if (cat === 'strength') { strength += score; strengthCount++; }
+                else if (cat === 'endurance') { endurance += score; enduranceCount++; }
+                else if (cat === 'mobility') { mobility += score; mobilityCount++; }
+            });
+            userScore = totalScore;
+            for (let lvl = 5; lvl >= 1; lvl--) { if (totalScore >= levels[lvl].minScore) { userLevel = lvl; break; } }
+            const lvl = levels[userLevel];
+            document.getElementById('result-level').textContent = `רמה ${userLevel}: ${lvl.name}`;
+            document.getElementById('result-level').className = `level-badge ${lvl.color}`;
+            document.getElementById('result-desc').textContent = lvl.desc;
+            document.getElementById('result-score').textContent = totalScore;
+            document.getElementById('result-strength').textContent = strengthCount ? Math.round(strength / strengthCount) : 0;
+            document.getElementById('result-endurance').textContent = enduranceCount ? Math.round(endurance / enduranceCount) : 0;
+            document.getElementById('result-mobility').textContent = mobilityCount ? Math.round(mobility / mobilityCount) : 0;
+            addJourneyEvent('התחלת את המסע!', `השלמת את הקוויז ונקבעת לרמה ${userLevel}: ${lvl.name}`);
+            showScreen('screen-results');
+        }
+
+        function showWorkoutSetup() { showScreen('screen-schedule'); renderScheduleTimes(); }
+
+        function toggleDay(el) {
+            el.classList.toggle('selected');
+            const day = parseInt(el.dataset.day);
+            if (el.classList.contains('selected')) { if (!userSchedule.days.includes(day)) userSchedule.days.push(day); }
+            else { userSchedule.days = userSchedule.days.filter(d => d !== day); }
+            renderScheduleTimes();
+        }
+
+        function renderScheduleTimes() {
+            const container = document.getElementById('schedule-times');
+            container.innerHTML = '';
+            const dayNames = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
+            userSchedule.days.forEach(day => {
+                const div = document.createElement('div');
+                div.className = 'form-group';
+                div.innerHTML = `<label>יום ${dayNames[day]}</label><div class="time-picker"><input type="time" id="time-day-${day}" value="${userSchedule.times[day] || '18:00'}"><span style="color: var(--text-secondary); font-size: 0.85rem;">שעת אימון</span></div>`;
+                container.appendChild(div);
+            });
+        }
+
+        function saveScheduleAndGo() {
+            userSchedule.days.forEach(day => {
+                const timeInput = document.getElementById(`time-day-${day}`);
+                if (timeInput) userSchedule.times[day] = timeInput.value;
+            });
+            showBottomNav(true); showDashboard(); showToast('🎉 ברוך הבא למסע קליסטניקס!');
+        }
+
+        function showDashboard() {
+            const lvl = levels[userLevel];
+            document.getElementById('dash-name').textContent = `שלום, ${userProfile.name || 'מתאמן'}!`;
+            document.getElementById('user-level-display').textContent = `רמה ${userLevel}: ${lvl.name}`;
+            document.getElementById('user-level-display').className = `level-badge ${lvl.color}`;
+            document.getElementById('dash-streak').textContent = userStats.streak;
+            document.getElementById('dash-workouts').textContent = userStats.workouts;
+            document.getElementById('dash-score').textContent = userStats.avgScore || '-';
+            document.getElementById('dash-next').textContent = userStats.workouts + 1;
+
+            const planDiv = document.getElementById('workout-plan');
+            planDiv.innerHTML = '';
+            const dayNames = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
+            const exercises = exercisesByLevel[userLevel];
+            for (let i = 0; i < 7; i++) {
+                const isWorkoutDay = userSchedule.days.includes(i);
+                const dayDiv = document.createElement('div');
+                dayDiv.className = 'workout-day';
+                if (!isWorkoutDay) {
+                    dayDiv.style.borderRightColor = 'var(--text-secondary)';
+                    dayDiv.innerHTML = `<div class="workout-day-header"><div class="workout-day-title">יום ${dayNames[i]} — מנוחה 🛌</div><div class="workout-day-status status-rest">מנוחה</div></div><div style="color: var(--text-secondary);">יום מנוחה — הגוף מתאושש ומתחזק</div>`;
+                } else {
+                    const time = userSchedule.times[i] || '18:00';
+                    const dayExercises = exercises.slice(0, 4);
+                    dayDiv.innerHTML = `<div class="workout-day-header"><div class="workout-day-title">יום ${dayNames[i]} — ${time} ⏰</div><div class="workout-day-status status-pending">ממתין</div></div><div class="workout-exercises">${dayExercises.map(ex => `<div class="workout-exercise" onclick="openExerciseById('${ex.id}')"><div class="workout-exercise-check">○</div><div>${ex.name}</div><span style="margin-right: auto; font-size: 0.8rem; color: var(--accent);">📹</span></div>`).join('')}</div>`;
+                }
+                planDiv.appendChild(dayDiv);
+            }
+
+            const exList = document.getElementById('exercises-list');
+            exList.innerHTML = '';
+            for (let lvl = 1; lvl <= 5; lvl++) {
+                const isUnlocked = lvl <= userLevel;
+                exercisesByLevel[lvl].forEach(ex => {
+                    const card = document.createElement('div');
+                    card.className = `exercise-card ${!isUnlocked ? 'locked' : ''}`;
+                    card.innerHTML = `<div class="exercise-name">${ex.name}</div><div class="exercise-desc">${ex.desc}</div><span class="exercise-difficulty" style="background: ${getDifficultyColor(ex.difficulty)}20; color: ${getDifficultyColor(ex.difficulty)};">${ex.difficulty}</span>`;
+                    if (isUnlocked) card.onclick = () => openExercise(ex);
+                    exList.appendChild(card);
+                });
+            }
+            showScreen('screen-dashboard');
+        }
+
+        function getDifficultyColor(diff) {
+            switch(diff) {
+                case 'קל': return '#4ecdc4';
+                case 'בינוני': return '#45b7d1';
+                case 'קשה': return '#feca57';
+                case 'קשה מאוד': return '#ff6b6b';
+                case 'מקצועי': return '#ff6b35';
+                default: return '#8a8a9a';
+            }
+        }
+
+        function openExerciseById(id) {
+            for (let lvl = 1; lvl <= 5; lvl++) {
+                const ex = exercisesByLevel[lvl].find(e => e.id === id);
+                if (ex) { openExercise(ex); return; }
+            }
+        }
+
+        function openExercise(ex) {
+            currentExercise = ex;
+            document.getElementById('ex-title').textContent = ex.name;
+            document.getElementById('ex-desc').textContent = ex.desc;
+            document.getElementById('ex-goal').textContent = ex.goal;
+            document.getElementById('ex-tips').textContent = ex.tips;
+            if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+            document.getElementById('camera-video').style.display = 'none';
+            document.getElementById('camera-placeholder').style.display = 'flex';
+            document.getElementById('btn-camera').textContent = '📷 הפעל מצלמה';
+            document.getElementById('btn-record').disabled = true;
+            showScreen('screen-exercise');
+        }
+
+        function goToVideoFromExercise() { if (currentExercise) openVideoPlayer(currentExercise.videoId); }
+
+        async function toggleCamera() {
+            const video = document.getElementById('camera-video');
+            const placeholder = document.getElementById('camera-placeholder');
+            const btn = document.getElementById('btn-camera');
+            const recordBtn = document.getElementById('btn-record');
+            if (stream) {
+                stream.getTracks().forEach(t => t.stop()); stream = null;
+                video.style.display = 'none'; placeholder.style.display = 'flex';
+                btn.textContent = '📷 הפעל מצלמה'; recordBtn.disabled = true;
+            } else {
+                try {
+                    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
+                    video.srcObject = stream; video.style.display = 'block';
+                    placeholder.style.display = 'none';
+                    btn.textContent = '📷 כבה מצלמה'; recordBtn.disabled = false;
+                } catch (err) { alert('לא ניתן לגשת למצלמה. ודא שהרשאות המצלמה מופעלות.'); }
+            }
+        }
+
+        function simulateRecording() {
+            const btn = document.getElementById('btn-record');
+            if (!isRecording) {
+                isRecording = true; btn.textContent = '⏹️ עצור הקלטה';
+                btn.style.background = 'linear-gradient(135deg, #ff6b6b, #ee5a5a)';
+                setTimeout(() => {
+                    isRecording = false; btn.textContent = '🔴 התחל הקלטה';
+                    btn.style.background = ''; analyzePerformance();
+                }, 3000);
+            }
+        }
+
+        function analyzePerformance() {
+            showScreen('screen-score');
+            const score = Math.round(60 + Math.random() * 30);
+            const grade = score >= 90 ? 'A+' : score >= 80 ? 'A' : score >= 70 ? 'B' : score >= 60 ? 'C' : 'D';
+            let current = 0;
+            const circle = document.getElementById('score-circle');
+            const value = document.getElementById('ai-score');
+            const gradeEl = document.getElementById('ai-grade');
+            const feedback = document.getElementById('ai-feedback');
+            const breakdown = document.getElementById('score-breakdown');
+
+            const interval = setInterval(() => {
+                current += 2;
+                if (current >= score) {
+                    current = score; clearInterval(interval);
+                    gradeEl.textContent = `ציון: ${grade}`;
+                    gradeEl.style.color = score >= 80 ? 'var(--success)' : score >= 60 ? 'var(--warning)' : 'var(--accent)';
+                    const feedbacks = ["טוב מאוד! המשך להתאמן על הטכניקה.", "ביצוע מצוין! הטכניקה שלך משתפרת.", "יפה! שים לב לזוויות המפרקים.", "מעולה! כמעט מושלם, המשך כך!"];
+                    feedback.textContent = feedbacks[Math.floor(Math.random() * feedbacks.length)];
+                    breakdown.innerHTML = `<div style="display: flex; justify-content: space-between; margin-bottom: 8px;"><span>טכניקה</span><span style="color: var(--accent);">${Math.round(score * 0.9)}%</span></div><div style="display: flex; justify-content: space-between; margin-bottom: 8px;"><span>טווח תנועה</span><span style="color: var(--accent);">${Math.round(score * 0.85)}%</span></div><div style="display: flex; justify-content: space-between; margin-bottom: 8px;"><span>שליטה</span><span style="color: var(--accent);">${Math.round(score * 0.95)}%</span></div><div style="display: flex; justify-content: space-between;"><span>קצב</span><span style="color: var(--accent);">${Math.round(score * 0.88)}%</span></div>`;
+
+                    userStats.workouts++;
+                    userStats.avgScore = Math.round((userStats.avgScore * (userStats.workouts - 1) + score) / userStats.workouts);
+                    userStats.streak++; userStats.totalHours += 0.5;
+                    workoutHistory.unshift({ date: new Date(), exercise: currentExercise.name, score: score, level: userLevel });
+                    addJourneyEvent(`השלמת אימון: ${currentExercise.name}`, `קיבלת ציון ${score} — המשך כך!`);
+                    checkAchievements();
+                }
+                value.textContent = current;
+                circle.style.setProperty('--score-deg', (current / 100 * 360) + 'deg');
+            }, 30);
+        }
+
+        function openVideoPlayer(videoId) {
+            let ex = null;
+            for (let lvl = 1; lvl <= 5; lvl++) { ex = exercisesByLevel[lvl].find(e => e.videoId === videoId); if (ex) break; }
+            if (!ex) return;
+            currentExercise = ex;
+            document.getElementById('video-player-title').textContent = ex.name;
+            document.getElementById('video-player-desc').textContent = ex.desc;
+            document.getElementById('video-player-goal').textContent = ex.goal;
+            document.getElementById('video-player-tips').textContent = ex.tips;
+            showScreen('screen-video-player');
+        }
+
+        function goToExerciseFromVideo() { if (currentExercise) openExercise(currentExercise); }
+
+        function showProfile() {
+            document.getElementById('profile-name').textContent = userProfile.name || 'שם המשתמש';
+            document.getElementById('profile-details').textContent = `${userProfile.age || '--'} שנים • רמה ${userLevel} • ${userStats.streak} ימי רצף`;
+            document.getElementById('profile-streak').textContent = userStats.streak;
+            document.getElementById('profile-workouts').textContent = userStats.workouts;
+            document.getElementById('profile-avg').textContent = userStats.avgScore || 0;
+            document.getElementById('profile-hours').textContent = Math.round(userStats.totalHours);
+            document.getElementById('edit-name').value = userProfile.name;
+            document.getElementById('edit-age').value = userProfile.age;
+            document.getElementById('edit-sports').value = userProfile.sports;
+            document.getElementById('edit-goal').value = userProfile.goal;
+
+            const schedDiv = document.getElementById('profile-schedule');
+            const dayNames = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
+            if (userSchedule.days.length === 0) {
+                schedDiv.innerHTML = '<div style="color: var(--text-secondary);">טרם נקבעו ימי אימון</div>';
+            } else {
+                schedDiv.innerHTML = userSchedule.days.map(d => `<div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border);"><span>יום ${dayNames[d]}</span><span style="color: var(--accent);">${userSchedule.times[d] || '18:00'}</span></div>`).join('');
+            }
+            showScreen('screen-profile');
+        }
+
+        function saveProfile() {
+            userProfile.name = document.getElementById('edit-name').value;
+            userProfile.age = document.getElementById('edit-age').value;
+            userProfile.sports = document.getElementById('edit-sports').value;
+            userProfile.goal = document.getElementById('edit-goal').value;
+            showToast('✅ הפרופיל נשמר בהצלחה!'); showProfile();
+        }
+
+        function resetProgress() {
+            if (confirm('האם אתה בטוח שברצונך לאפס את כל ההתקדמות? פעולה זו בלתי הפיכה.')) {
+                userStats = { streak: 0, workouts: 0, avgScore: 0, totalHours: 0 };
+                workoutHistory = []; journeyEvents = []; unlockedAchievements = [];
+                showToast('🔄 ההתקדמות אופסה'); showProfile();
+            }
+        }
+
+        function showHistory() {
+            const list = document.getElementById('history-list');
+            if (workoutHistory.length === 0) {
+                list.innerHTML = '<div class="card" style="text-align: center; color: var(--text-secondary);">עדיין לא ביצעת אימונים</div>';
+            } else {
+                list.innerHTML = workoutHistory.map(w => {
+                    const d = w.date; const day = d.getDate(); const month = d.toLocaleString('he', { month: 'short' });
+                    return `<div class="history-item"><div class="history-date"><div class="day">${day}</div><div class="month">${month}</div></div><div class="history-details"><div class="history-title">${w.exercise}</div><div class="history-meta">רמה ${w.level} • ${d.toLocaleTimeString('he', {hour: '2-digit', minute: '2-digit'})}</div></div><div class="history-score">${w.score}</div></div>`;
+                }).join('');
+            }
+            showScreen('screen-history');
+        }
+
+        function addJourneyEvent(title, desc) { journeyEvents.unshift({ date: new Date(), title: title, desc: desc }); }
+
+        function showJourney() {
+            const timeline = document.getElementById('journey-timeline');
+            if (journeyEvents.length === 0) {
+                timeline.innerHTML = '<div style="color: var(--text-secondary); text-align: center;">המסע שלך מתחיל כאן...</div>';
+            } else {
+                timeline.innerHTML = journeyEvents.map(e => {
+                    const d = e.date;
+                    return `<div class="journey-item"><div class="journey-date">${d.toLocaleDateString('he')} • ${d.toLocaleTimeString('he', {hour: '2-digit', minute: '2-digit'})}</div><div class="journey-title">${e.title}</div><div class="journey-desc">${e.desc}</div></div>`;
+                }).join('');
+            }
+            showScreen('screen-journey');
+        }
+
+        function checkAchievements() {
+            const newUnlocks = [];
+            if (userStats.workouts >= 1 && !unlockedAchievements.includes('first_workout')) newUnlocks.push('first_workout');
+            if (userStats.streak >= 7 && !unlockedAchievements.includes('week_streak')) newUnlocks.push('week_streak');
+            if (userStats.streak >= 30 && !unlockedAchievements.includes('month_streak')) newUnlocks.push('month_streak');
+            if (userStats.avgScore >= 100 && !unlockedAchievements.includes('perfect_score')) newUnlocks.push('perfect_score');
+            if (userStats.workouts >= 10 && !unlockedAchievements.includes('ten_workouts')) newUnlocks.push('ten_workouts');
+            if (userStats.workouts >= 50 && !unlockedAchievements.includes('fifty_workouts')) newUnlocks.push('fifty_workouts');
+            if (userStats.workouts >= 100 && !unlockedAchievements.includes('hundred_workouts')) newUnlocks.push('hundred_workouts');
+
+            newUnlocks.forEach(id => {
+                unlockedAchievements.push(id);
+                const ach = achievements.find(a => a.id === id);
+                if (ach) { showToast(`🏆 הישג חדש: ${ach.name}!`); addJourneyEvent(`הישג חדש: ${ach.name}`, ach.desc); }
+            });
+        }
+
+        function showAchievements() {
+            document.getElementById('ach-unlocked').textContent = unlockedAchievements.length;
+            document.getElementById('ach-total').textContent = achievements.length;
+            const grid = document.getElementById('achievement-grid');
+            grid.innerHTML = achievements.map(a => {
+                const isUnlocked = unlockedAchievements.includes(a.id);
+                return `<div class="achievement-item ${isUnlocked ? 'unlocked' : ''}"><div class="achievement-icon">${a.icon}</div><div class="achievement-name">${a.name}</div></div>`;
+            }).join('');
+            showScreen('screen-achievements');
+        }
+
+        function showVideos() {
+            const list = document.getElementById('videos-list');
+            list.innerHTML = '';
+            for (let lvl = 1; lvl <= 5; lvl++) {
+                const isUnlocked = lvl <= userLevel;
+                exercisesByLevel[lvl].forEach(ex => {
+                    const card = document.createElement('div');
+                    card.className = 'video-card';
+                    card.dataset.name = ex.name;
+                    card.innerHTML = `<div class="video-thumbnail"><div class="play-btn">▶️</div><div style="position: absolute; bottom: 10px; left: 10px; background: rgba(0,0,0,0.7); padding: 4px 10px; border-radius: 8px; font-size: 0.8rem;">רמה ${lvl} ${!isUnlocked ? '🔒' : ''}</div></div><div class="video-info"><div class="video-title">${ex.name}</div><div class="video-meta">${ex.desc} • ${ex.difficulty}</div></div>`;
+                    if (isUnlocked) { card.onclick = () => openVideoPlayer(ex.videoId); }
+                    else { card.style.opacity = '0.5'; card.style.cursor = 'not-allowed'; }
+                    list.appendChild(card);
+                });
+            }
+            showScreen('screen-videos');
+        }
+
+        function filterVideos() {
+            const query = document.getElementById('video-search').value.toLowerCase();
+            document.querySelectorAll('.video-card').forEach(card => {
+                card.style.display = card.dataset.name.toLowerCase().includes(query) ? 'block' : 'none';
+            });
+        }
+
+        function login() {
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            if (!email || !password) { showToast('נא למלא אימייל וסיסמה'); return; }
+            showToast('✅ התחברת בהצלחה!'); showBottomNav(true); showDashboard();
+        }
+
+        function showToast(msg) {
+            const t = document.createElement('div');
+            t.className = 'toast'; t.textContent = msg;
+            document.body.appendChild(t);
+            setTimeout(() => t.remove(), 3000);
+        }
+    </script>
+</body>
+</html>
