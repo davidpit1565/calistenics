@@ -1,20 +1,36 @@
-# התחלה מהירה
+# התחלה מהירה — למפתח הבא בצ'אט חדש
 
-## 🎯 איך להתחיל
+## 🎯 מה לבקש מה-AI בצ'אט החדש:
 
-1. פתח את `masa_calisthenics.html` בדפדפן
-2. בחר שפה (HE/EN/NL/ES)
-3. בחר theme (Dark/Light)
-4. התחל את המסע — מלא פרטים ועשה קוויז
-5. בחר ימי אימון
-6. התחל להתאמן!
+הדבק את הטקסט הבא:
 
-## 📱 התקנה על מובייל
-- **iOS**: Safari → Share → Add to Home Screen
-- **Android**: Chrome → Menu → Add to Home Screen
+---
 
-## 🌐 העלאה ל-GitHub Pages
-1. צור repo חדש ב-GitHub
-2. העלה את `masa_calisthenics.html`
-3. Settings → Pages → Source: Deploy from branch → main
-4. גש ל-`https://username.github.io/repo-name`
+אני ממשיך את פרויקט "מסע קליסטניקס" — אפליקציית ווב לאימוני קליסטניקס.
+
+**מה שכבר בנוי:**
+- קובץ HTML אחד (SPA) עם CSS ו-JS inline
+- 5 רמות קליסטניקס, 30 תרגילים
+- קוויז 20 שאלות + AI מנתח ביצוע (מדומה)
+- מצלמה, תוכנית אימונים אישית, פרופיל, היסטוריה
+- מערכת הישגים (12 מדליות), דף סרטוני הדרכה
+- עיצוב dark mode מודרני
+
+**מה אני רוצה לעשות עכשיו:**
+1. תקן את ה-bottom nav — שלא יעלה עם המקלדת
+2. בדוק שאין באגים במעברים בין מסכים
+3. הוסף מערכת רב-לשונית (EN/NL/ES/HE)
+4. הוסף שמירת נתונים ב-localStorage
+5. הוסף Dark/Light mode
+6. הוסף סרטוני YouTube אמיתיים לכל תרגיל
+7. המשך לשדרוגים מתקדמים (AI אמיתי, קהילה, push notifications וכו')
+
+**הקובץ המצורף:** masa_calisthenics.html
+
+---
+
+## 📦 קבצים ב-ZIP:
+- `masa_calisthenics.html` — האפליקציה המלאה
+- `README.md` — הסבר מפורט
+- `TODO.md` — רשימת משימות מסודרת
+- `QUICKSTART.md` — קובץ זה
