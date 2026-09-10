@@ -283,14 +283,39 @@
         }
         .exercise-name { font-weight: 700; font-size: 1.1rem; margin-bottom: 4px; }
         .exercise-desc { color: var(--text-secondary); font-size: 0.85rem; }
-        .exercise-difficulty { 
-            display: inline-block; 
-            padding: 4px 10px; 
-            border-radius: 8px; 
-            font-size: 0.75rem; 
-            font-weight: 700; 
-            margin-top: 8px; 
+        .exercise-difficulty {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin-top: 8px;
         }
+
+        /* ==================== STRUCTURED PROGRAMS ==================== */
+        .program-card { display: flex; align-items: flex-start; gap: 14px; }
+        .program-card-icon { font-size: 1.8rem; line-height: 1; flex-shrink: 0; }
+        .program-card-body { flex: 1; min-width: 0; }
+        .program-card-name { font-weight: 700; font-size: 1.05rem; margin-bottom: 4px; }
+        .program-card-goal { color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 8px; }
+        .program-card-meta { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+        .program-badge {
+            display: inline-block; padding: 3px 9px; border-radius: 8px;
+            font-size: 0.72rem; font-weight: 700;
+        }
+        .program-badge.badge-active { background: rgba(255,140,90,0.18); color: var(--accent); }
+        .program-badge.badge-done { background: rgba(78,205,196,0.18); color: var(--success); }
+        .program-progress-track {
+            width: 100%; height: 8px; border-radius: 6px; background: var(--bg-elevated);
+            overflow: hidden; margin: 10px 0;
+        }
+        .program-progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), #ff8c5a); border-radius: 6px; transition: width 0.3s ease; }
+        .program-day-exercise {
+            display: flex; align-items: center; justify-content: space-between; gap: 10px;
+            padding: 12px 14px; border-radius: 12px; background: var(--bg-elevated); margin-bottom: 8px; cursor: pointer;
+        }
+        .program-day-exercise-name { font-weight: 600; }
+        .program-day-exercise-vol { color: var(--accent); font-weight: 700; font-size: 0.85rem; }
 
         /* ==================== CAMERA ==================== */
         .camera-container {
@@ -1569,6 +1594,14 @@
                 </div>
                 <div class="toggle-switch" id="injury-toggle" onclick="toggleInjuryMode()"></div>
             </div>
+            <div class="card program-card" id="program-cta-card" style="display:none; cursor:pointer;" onclick="showPrograms()">
+                <div class="program-card-icon" id="program-cta-icon"></div>
+                <div class="program-card-body">
+                    <div class="program-card-name" data-i18n="continue_active_program">המשך את התוכנית שלך</div>
+                    <div class="program-card-goal" id="program-cta-title"></div>
+                    <div class="program-progress-track"><div class="program-progress-fill" id="program-cta-progress-fill" style="width:0%;"></div></div>
+                </div>
+            </div>
             <div class="stats-grid" style="margin-bottom: 20px;">
                 <div class="stat-box"><div class="stat-value" id="dash-streak">0</div><div class="stat-label" data-i18n="streak_days">ימי רצף</div><div id="dash-streak-freeze" style="font-size:0.68rem; color: var(--info); margin-top:2px;"></div></div>
                 <div class="stat-box"><div class="stat-value" id="dash-workouts">0</div><div class="stat-label" data-i18n="workouts">אימונים</div></div>
@@ -1771,6 +1804,38 @@
             </div>
             <div id="videos-list"></div>
             <div id="videos-no-results" class="card" style="display:none; text-align:center; color: var(--text-secondary);" data-i18n="no_exercises_found">לא נמצאו תרגילים התואמים לחיפוש</div>
+        </div>
+
+        <!-- STRUCTURED PROGRAMS -->
+        <div class="screen" id="screen-programs">
+            <div class="app-header">
+                <div class="header-icon"><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4z"/><path d="M8 2v4M16 2v4M4 10h16"/></svg></div><h1 class="logo" data-i18n="programs_title">תוכניות מובנות</h1>
+                <p class="tagline" data-i18n="programs_subtitle">מסלולים רב-שבועיים למטרה ברורה</p>
+            </div>
+            <div id="programs-list"></div>
+        </div>
+
+        <!-- PROGRAM DETAIL / PROGRESS -->
+        <div class="screen" id="screen-program-detail">
+            <button class="btn btn-secondary btn-sm" style="margin-bottom: 16px;" onclick="showPrograms()" data-i18n="back">חזרה</button>
+            <div class="card">
+                <div style="display:flex; align-items:center; gap:12px; margin-bottom:6px;">
+                    <div id="program-detail-icon" style="font-size:2rem;"></div>
+                    <div>
+                        <h2 id="program-detail-name" style="margin-bottom:2px;"></h2>
+                        <div id="program-detail-goal" style="color: var(--text-secondary); font-size:0.88rem;"></div>
+                    </div>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:baseline; margin-top:16px;">
+                    <div id="program-detail-week-day" style="font-weight:700; direction:ltr; unicode-bidi:isolate;"></div>
+                    <div id="program-detail-percent" style="color: var(--text-secondary); font-size:0.85rem; direction:ltr; unicode-bidi:isolate;"></div>
+                </div>
+                <div class="program-progress-track"><div class="program-progress-fill" id="program-detail-progress-fill" style="width:0%;"></div></div>
+            </div>
+            <h3 style="margin: 20px 0 12px; font-size: 1.1rem;" data-i18n="program_todays_session">האימון של היום</h3>
+            <div id="program-day-exercises"></div>
+            <button class="btn btn-primary" style="margin-top: 16px;" id="program-complete-day-btn" onclick="completeProgramDay()" data-i18n="program_complete_day_btn">סמן יום כהושלם</button>
+            <button class="btn btn-secondary" style="margin-top: 10px;" onclick="confirmAbandonProgram()" data-i18n="program_abandon_btn">עצור תוכנית</button>
         </div>
 
         <!-- VIDEO PLAYER -->
@@ -2418,6 +2483,10 @@
     <div id="more-menu" style="display: none; position: fixed; bottom: calc(var(--nav-height) + var(--safe-bottom)); left: 0; right: 0; background: var(--bg-card); border-top: 1px solid var(--border); z-index: 99; padding: 16px; border-radius: 20px 20px 0 0; box-shadow: 0 -8px 32px rgba(0,0,0,0.4); max-height: 70vh; overflow-y: auto;">
         <div class="more-group-title" data-i18n="more_group_progress">התקדמות</div>
         <div class="more-group">
+            <div class="more-row" onclick="showPrograms(); hideMoreMenu();">
+                <div class="more-icon"><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4z"/><path d="M8 2v4M16 2v4M4 10h16"/></svg></div>
+                <div class="more-row-label" data-i18n="nav_programs">תוכניות</div>
+            </div>
             <div class="more-row" onclick="showAchievements(); hideMoreMenu();">
                 <div class="more-icon"><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="5.5"/><path d="M9 13 7 21l5-2.5L17 21l-2-8"/></svg></div>
                 <div class="more-row-label" data-i18n="nav_achievements">הישגים</div>
@@ -3119,6 +3188,28 @@
                 stop_recording: "עצור הקלטה",
                 user_name: "שם המשתמש",
 
+                // Structured Programs
+                nav_programs: "תוכניות",
+                programs_title: "תוכניות מובנות",
+                programs_subtitle: "מסלולים רב-שבועיים למטרה ברורה",
+                program_start_btn: "התחל תוכנית",
+                program_continue_btn: "המשך תוכנית",
+                program_in_progress_badge: "בתהליך",
+                program_completed_badge: "הושלמה",
+                program_week_label: "שבוע",
+                program_day_label: "יום",
+                program_todays_session: "האימון של היום",
+                program_complete_day_btn: "סמן יום כהושלם",
+                program_day_completed_toast: "🎉 יום הושלם! עבודה מצוינת.",
+                program_completed_toast: "🏆 סיימת את התוכנית כולה! כל הכבוד!",
+                program_abandon_btn: "עצור תוכנית",
+                program_abandon_confirm: "לעצור את התוכנית הזו? ההתקדמות תאופס.",
+                program_unlock_at_level: "נפתח ברמה",
+                program_weeks_unit: "שבועות",
+                program_no_active: "אין תוכנית פעילה כרגע",
+                browse_all_programs: "עיין בכל התוכניות",
+                continue_active_program: "המשך את התוכנית שלך",
+
                 // Exercise names for race
                 pushups: "שכיבות שמיכה",
                 pullups: "מתח",
@@ -3745,6 +3836,28 @@
                 disable_camera: "Disable Camera",
                 stop_recording: "Stop Recording",
                 user_name: "User Name",
+
+                // Structured Programs
+                nav_programs: "Programs",
+                programs_title: "Structured Programs",
+                programs_subtitle: "Multi-week paths toward a clear goal",
+                program_start_btn: "Start Program",
+                program_continue_btn: "Continue Program",
+                program_in_progress_badge: "In Progress",
+                program_completed_badge: "Completed",
+                program_week_label: "Week",
+                program_day_label: "Day",
+                program_todays_session: "Today's Session",
+                program_complete_day_btn: "Mark Day Complete",
+                program_day_completed_toast: "🎉 Day complete! Great work.",
+                program_completed_toast: "🏆 You finished the whole program! Amazing work!",
+                program_abandon_btn: "Stop Program",
+                program_abandon_confirm: "Stop this program? Your progress will be reset.",
+                program_unlock_at_level: "Unlocks at level",
+                program_weeks_unit: "weeks",
+                program_no_active: "No active program right now",
+                browse_all_programs: "Browse all programs",
+                continue_active_program: "Continue your program",
 
                 // Exercise names for race
                 pushups: "Push-ups",
@@ -4373,6 +4486,28 @@
                 stop_recording: "Opname Stoppen",
                 user_name: "Gebruikersnaam",
 
+                // Structured Programs
+                nav_programs: "Programma's",
+                programs_title: "Gestructureerde Programma's",
+                programs_subtitle: "Meerweekse trajecten naar een duidelijk doel",
+                program_start_btn: "Start Programma",
+                program_continue_btn: "Ga Verder met Programma",
+                program_in_progress_badge: "Bezig",
+                program_completed_badge: "Voltooid",
+                program_week_label: "Week",
+                program_day_label: "Dag",
+                program_todays_session: "Sessie van Vandaag",
+                program_complete_day_btn: "Markeer Dag als Voltooid",
+                program_day_completed_toast: "🎉 Dag voltooid! Goed gedaan.",
+                program_completed_toast: "🏆 Je hebt het hele programma voltooid! Geweldig gedaan!",
+                program_abandon_btn: "Stop Programma",
+                program_abandon_confirm: "Dit programma stoppen? Je voortgang wordt gereset.",
+                program_unlock_at_level: "Ontgrendelt op level",
+                program_weeks_unit: "weken",
+                program_no_active: "Geen actief programma op dit moment",
+                browse_all_programs: "Bekijk alle programma's",
+                continue_active_program: "Ga verder met je programma",
+
                 // Exercise names for race
                 pushups: "Opdrukken",
                 pullups: "Optrekken",
@@ -5000,6 +5135,28 @@
                 stop_recording: "Detener Grabación",
                 user_name: "Nombre de Usuario",
 
+                // Structured Programs
+                nav_programs: "Programas",
+                programs_title: "Programas Estructurados",
+                programs_subtitle: "Rutas de varias semanas hacia un objetivo claro",
+                program_start_btn: "Iniciar Programa",
+                program_continue_btn: "Continuar Programa",
+                program_in_progress_badge: "En Progreso",
+                program_completed_badge: "Completado",
+                program_week_label: "Semana",
+                program_day_label: "Día",
+                program_todays_session: "Sesión de Hoy",
+                program_complete_day_btn: "Marcar Día como Completado",
+                program_day_completed_toast: "🎉 ¡Día completado! Gran trabajo.",
+                program_completed_toast: "🏆 ¡Completaste todo el programa! ¡Excelente trabajo!",
+                program_abandon_btn: "Detener Programa",
+                program_abandon_confirm: "¿Detener este programa? Tu progreso se reiniciará.",
+                program_unlock_at_level: "Se desbloquea en el nivel",
+                program_weeks_unit: "semanas",
+                program_no_active: "No hay ningún programa activo ahora mismo",
+                browse_all_programs: "Ver todos los programas",
+                continue_active_program: "Continúa tu programa",
+
                 // Exercise names for race
                 pushups: "Flexiones",
                 pullups: "Dominadas",
@@ -5570,7 +5727,8 @@
             { id: "ten_workouts", name: "ten_workouts", icon: "🔟", desc: "ten_workouts_desc" },
             { id: "fifty_workouts", name: "fifty_workouts", icon: "🏆", desc: "fifty_workouts_desc" },
             { id: "hundred_workouts", name: "hundred_workouts", icon: "👑", desc: "hundred_workouts_desc" },
-            { id: "explorer", name: "explorer", icon: "🧭", desc: "explorer_desc" }
+            { id: "explorer", name: "explorer", icon: "🧭", desc: "explorer_desc" },
+            { id: "program_finisher", name: "program_finisher", icon: "📜", desc: "program_finisher_desc" }
         ];
 
         const achievementTranslations = {
@@ -5586,7 +5744,8 @@
                 ten_workouts: "עשרה אימונים", ten_workouts_desc: "השלם 10 אימונים",
                 fifty_workouts: "חמישים אימונים", fifty_workouts_desc: "השלם 50 אימונים",
                 hundred_workouts: "מאה אימונים", hundred_workouts_desc: "השלם 100 אימונים",
-                explorer: "חוקר", explorer_desc: "נסה תרגיל מכל רמה"
+                explorer: "חוקר", explorer_desc: "נסה תרגיל מכל רמה",
+                program_finisher: "מסיים תוכנית", program_finisher_desc: "השלמת תוכנית מובנית מהתחלה ועד הסוף"
             },
             en: {
                 first_workout: "First Workout", first_workout_desc: "Completed your first workout",
@@ -5600,7 +5759,8 @@
                 ten_workouts: "Ten Workouts", ten_workouts_desc: "Completed 10 workouts",
                 fifty_workouts: "Fifty Workouts", fifty_workouts_desc: "Completed 50 workouts",
                 hundred_workouts: "Hundred Workouts", hundred_workouts_desc: "Completed 100 workouts",
-                explorer: "Explorer", explorer_desc: "Tried an exercise from every level"
+                explorer: "Explorer", explorer_desc: "Tried an exercise from every level",
+                program_finisher: "Program Finisher", program_finisher_desc: "Completed a structured program from start to finish"
             },
             nl: {
                 first_workout: "Eerste Training", first_workout_desc: "Je eerste training voltooid",
@@ -5614,7 +5774,8 @@
                 ten_workouts: "Tien Trainingen", ten_workouts_desc: "10 trainingen voltooid",
                 fifty_workouts: "Vijftig Trainingen", fifty_workouts_desc: "50 trainingen voltooid",
                 hundred_workouts: "Honderd Trainingen", hundred_workouts_desc: "100 trainingen voltooid",
-                explorer: "Ontdekker", explorer_desc: "Een oefening van elk niveau geprobeerd"
+                explorer: "Ontdekker", explorer_desc: "Een oefening van elk niveau geprobeerd",
+                program_finisher: "Programma Voltooid", program_finisher_desc: "Een gestructureerd programma van begin tot eind voltooid"
             },
             es: {
                 first_workout: "Primer Entreno", first_workout_desc: "Completaste tu primer entrenamiento",
@@ -5628,9 +5789,243 @@
                 ten_workouts: "Diez Entrenos", ten_workouts_desc: "Completaste 10 entrenamientos",
                 fifty_workouts: "Cincuenta Entrenos", fifty_workouts_desc: "Completaste 50 entrenamientos",
                 hundred_workouts: "Cien Entrenos", hundred_workouts_desc: "Completaste 100 entrenamientos",
-                explorer: "Explorador", explorer_desc: "Probaste un ejercicio de cada nivel"
+                explorer: "Explorador", explorer_desc: "Probaste un ejercicio de cada nivel",
+                program_finisher: "Programa Terminado", program_finisher_desc: "Completaste un programa estructurado de principio a fin"
             }
         };
+
+        // ==================== STRUCTURED PROGRAMS ====================
+        // Real, goal-oriented multi-week programs built entirely from exercises
+        // already in exercisesByLevel — no invented exercises. Each program is a
+        // week-by-week progressive-overload plan (same session repeated
+        // `daysPerWeek` times per week, with sets/reps/hold-time increasing week
+        // over week), gated by `levelReq` the same way exercises are gated by
+        // level. Volume ("sets"/"reps") is intentionally language-neutral
+        // (digits + short universal units) rather than translated per language —
+        // only the program name/goal and the surrounding UI chrome are localized.
+        const programs = [
+            {
+                id: "beginner_full_body", icon: "🌱", levelReq: 1, weeks: 4, daysPerWeek: 3,
+                nameKey: "program_beginner_full_body_name", goalKey: "program_beginner_full_body_goal",
+                plan: [
+                    [{ id: "bodyweight_squats", sets: 3, reps: "12" }, { id: "incline_pushups", sets: 3, reps: "8" }, { id: "plank", sets: 3, reps: "20s" }, { id: "glute_bridge", sets: 3, reps: "12" }],
+                    [{ id: "bodyweight_squats", sets: 3, reps: "15" }, { id: "incline_pushups", sets: 3, reps: "10" }, { id: "plank", sets: 3, reps: "30s" }, { id: "glute_bridge", sets: 3, reps: "15" }],
+                    [{ id: "bodyweight_squats", sets: 4, reps: "15" }, { id: "pushups", sets: 3, reps: "5" }, { id: "plank", sets: 3, reps: "40s" }, { id: "superman_hold", sets: 3, reps: "20s" }],
+                    [{ id: "bodyweight_squats", sets: 4, reps: "18" }, { id: "pushups", sets: 3, reps: "8" }, { id: "plank", sets: 4, reps: "45s" }, { id: "superman_hold", sets: 3, reps: "25s" }]
+                ]
+            },
+            {
+                id: "pushup_builder_30", icon: "🔥", levelReq: 1, weeks: 4, daysPerWeek: 4,
+                nameKey: "program_pushup_builder_30_name", goalKey: "program_pushup_builder_30_goal",
+                plan: [
+                    [{ id: "incline_pushups", sets: 3, reps: "10" }, { id: "pushups", sets: 2, reps: "5" }, { id: "plank", sets: 3, reps: "20s" }],
+                    [{ id: "pushups", sets: 3, reps: "8" }, { id: "incline_pushups", sets: 2, reps: "12" }, { id: "plank", sets: 3, reps: "30s" }],
+                    [{ id: "pushups", sets: 4, reps: "10" }, { id: "diamond_pushups", sets: 2, reps: "5" }, { id: "plank", sets: 3, reps: "40s" }],
+                    [{ id: "pushups", sets: 4, reps: "15" }, { id: "diamond_pushups", sets: 3, reps: "8" }, { id: "archer_pushups", sets: 2, reps: "3/side" }]
+                ]
+            },
+            {
+                id: "first_pullup_6wk", icon: "💪", levelReq: 2, weeks: 6, daysPerWeek: 3,
+                nameKey: "program_first_pullup_6wk_name", goalKey: "program_first_pullup_6wk_goal",
+                plan: [
+                    [{ id: "australian_pulls", sets: 3, reps: "10" }, { id: "negative_pullups", sets: 3, reps: "3" }, { id: "hollow_hold", sets: 3, reps: "20s" }],
+                    [{ id: "australian_pulls", sets: 3, reps: "12" }, { id: "negative_pullups", sets: 4, reps: "4" }, { id: "hollow_hold", sets: 3, reps: "25s" }],
+                    [{ id: "negative_pullups", sets: 4, reps: "5" }, { id: "australian_pulls", sets: 3, reps: "15" }, { id: "side_plank", sets: 3, reps: "20s/side" }],
+                    [{ id: "negative_pullups", sets: 5, reps: "5" }, { id: "pullups", sets: 3, reps: "1" }, { id: "lsit", sets: 3, reps: "10s" }],
+                    [{ id: "pullups", sets: 4, reps: "2" }, { id: "negative_pullups", sets: 3, reps: "5" }, { id: "lsit", sets: 3, reps: "12s" }],
+                    [{ id: "pullups", sets: 4, reps: "3-5" }, { id: "chinups", sets: 2, reps: "2" }, { id: "hollow_hold", sets: 3, reps: "30s" }]
+                ]
+            },
+            {
+                id: "handstand_foundations", icon: "🤸", levelReq: 3, weeks: 8, daysPerWeek: 3,
+                nameKey: "program_handstand_foundations_name", goalKey: "program_handstand_foundations_goal",
+                plan: [
+                    [{ id: "pike_push", sets: 3, reps: "10" }, { id: "wall_walk", sets: 3, reps: "3" }, { id: "plank", sets: 3, reps: "30s" }],
+                    [{ id: "pike_pushups", sets: 3, reps: "8" }, { id: "wall_walk", sets: 4, reps: "4" }, { id: "plank", sets: 3, reps: "40s" }],
+                    [{ id: "pike_pushups", sets: 3, reps: "10" }, { id: "handstand_hold", sets: 3, reps: "15s" }, { id: "wall_walk", sets: 4, reps: "5" }],
+                    [{ id: "handstand_hold", sets: 4, reps: "20s" }, { id: "pike_pushups", sets: 4, reps: "10" }, { id: "hollow_hold", sets: 3, reps: "25s" }],
+                    [{ id: "handstand_hold", sets: 4, reps: "30s" }, { id: "handstand_pushups", sets: 2, reps: "3" }, { id: "wall_walk", sets: 3, reps: "6" }],
+                    [{ id: "handstand_hold", sets: 5, reps: "30s" }, { id: "handstand_pushups", sets: 3, reps: "4" }, { id: "skin_the_cat", sets: 3, reps: "3" }],
+                    [{ id: "handstand_hold", sets: 4, reps: "40s" }, { id: "handstand_pushups", sets: 3, reps: "6" }, { id: "handstand_free", sets: 3, reps: "5s" }],
+                    [{ id: "handstand_free", sets: 4, reps: "10s" }, { id: "handstand_pushups", sets: 3, reps: "8" }, { id: "handstand_hold", sets: 3, reps: "45s" }]
+                ]
+            },
+            {
+                id: "core_hollow_mastery", icon: "🎯", levelReq: 2, weeks: 6, daysPerWeek: 3,
+                nameKey: "program_core_hollow_mastery_name", goalKey: "program_core_hollow_mastery_goal",
+                plan: [
+                    [{ id: "hollow_hold", sets: 3, reps: "20s" }, { id: "plank", sets: 3, reps: "30s" }, { id: "side_plank", sets: 3, reps: "20s/side" }],
+                    [{ id: "hollow_hold", sets: 3, reps: "25s" }, { id: "lsit", sets: 3, reps: "8s" }, { id: "side_plank", sets: 3, reps: "25s/side" }],
+                    [{ id: "hollow_hold", sets: 4, reps: "30s" }, { id: "lsit", sets: 3, reps: "12s" }, { id: "tuck_lsit", sets: 2, reps: "10s" }],
+                    [{ id: "tuck_lsit", sets: 3, reps: "15s" }, { id: "dragon_flag_tuck", sets: 3, reps: "6" }, { id: "lsit", sets: 3, reps: "15s" }],
+                    [{ id: "dragon_flag_tuck", sets: 4, reps: "8" }, { id: "tuck_lsit", sets: 3, reps: "20s" }, { id: "l_sit_pullup", sets: 2, reps: "3" }],
+                    [{ id: "dragon_flag", sets: 2, reps: "4" }, { id: "dragon_flag_tuck", sets: 3, reps: "10" }, { id: "l_sit_pullup", sets: 3, reps: "5" }]
+                ]
+            },
+            {
+                id: "planche_progression", icon: "🦾", levelReq: 4, weeks: 10, daysPerWeek: 3,
+                nameKey: "program_planche_progression_name", goalKey: "program_planche_progression_goal",
+                plan: [
+                    [{ id: "pseudo_planche", sets: 3, reps: "8" }, { id: "plank", sets: 3, reps: "40s" }, { id: "pike_push", sets: 3, reps: "10" }],
+                    [{ id: "pseudo_planche", sets: 4, reps: "10" }, { id: "planche_lean", sets: 3, reps: "10s" }, { id: "hollow_hold", sets: 3, reps: "30s" }],
+                    [{ id: "planche_lean", sets: 4, reps: "15s" }, { id: "pseudo_planche", sets: 4, reps: "12" }, { id: "dips", sets: 3, reps: "8" }],
+                    [{ id: "planche_lean", sets: 4, reps: "20s" }, { id: "one_arm_pushup", sets: 2, reps: "3/side" }, { id: "plank", sets: 3, reps: "45s" }],
+                    [{ id: "planche_lean", sets: 5, reps: "20s" }, { id: "planche_pushup", sets: 2, reps: "2" }, { id: "dips", sets: 3, reps: "10" }],
+                    [{ id: "planche_lean", sets: 5, reps: "25s" }, { id: "planche_pushup", sets: 3, reps: "3" }, { id: "hollow_hold", sets: 4, reps: "30s" }],
+                    [{ id: "planche", sets: 2, reps: "3s" }, { id: "planche_lean", sets: 4, reps: "30s" }, { id: "planche_pushup", sets: 3, reps: "4" }],
+                    [{ id: "planche", sets: 3, reps: "4s" }, { id: "planche_pushup", sets: 3, reps: "5" }, { id: "planche_lean", sets: 3, reps: "30s" }],
+                    [{ id: "planche", sets: 3, reps: "5s" }, { id: "planche_pushup", sets: 4, reps: "5" }, { id: "dips", sets: 3, reps: "12" }],
+                    [{ id: "planche", sets: 4, reps: "5s" }, { id: "planche_pushup", sets: 4, reps: "6" }, { id: "planche_lean", sets: 3, reps: "30s" }]
+                ]
+            },
+            {
+                id: "flexibility_mobility", icon: "🧘", levelReq: 1, weeks: 4, daysPerWeek: 4,
+                nameKey: "program_flexibility_mobility_name", goalKey: "program_flexibility_mobility_goal",
+                plan: [
+                    [{ id: "arch_hold", sets: 3, reps: "20s" }, { id: "superman_hold", sets: 3, reps: "20s" }, { id: "glute_bridge", sets: 3, reps: "12" }, { id: "plank", sets: 3, reps: "20s" }],
+                    [{ id: "arch_hold", sets: 3, reps: "25s" }, { id: "superman_hold", sets: 3, reps: "25s" }, { id: "glute_bridge", sets: 3, reps: "15" }, { id: "side_plank", sets: 3, reps: "15s/side" }],
+                    [{ id: "skin_the_cat", sets: 3, reps: "3" }, { id: "arch_hold", sets: 3, reps: "30s" }, { id: "glute_bridge", sets: 4, reps: "15" }, { id: "side_plank", sets: 3, reps: "20s/side" }],
+                    [{ id: "skin_the_cat", sets: 4, reps: "5" }, { id: "arch_hold", sets: 4, reps: "30s" }, { id: "bulgarian_split_squat", sets: 3, reps: "8/leg" }, { id: "plank", sets: 3, reps: "40s" }]
+                ]
+            },
+            {
+                id: "explosive_power", icon: "⚡", levelReq: 3, weeks: 6, daysPerWeek: 3,
+                nameKey: "program_explosive_power_name", goalKey: "program_explosive_power_goal",
+                plan: [
+                    [{ id: "jump_squats", sets: 3, reps: "10" }, { id: "bulgarian_split_squat", sets: 3, reps: "8/leg" }, { id: "plank", sets: 3, reps: "30s" }],
+                    [{ id: "jump_squats", sets: 4, reps: "12" }, { id: "bulgarian_split_squat", sets: 3, reps: "10/leg" }, { id: "dragon_flag_tuck", sets: 2, reps: "6" }],
+                    [{ id: "pistol_squat", sets: 3, reps: "3/leg" }, { id: "jump_squats", sets: 4, reps: "15" }, { id: "dragon_flag_tuck", sets: 3, reps: "8" }],
+                    [{ id: "pistol_squat", sets: 3, reps: "5/leg" }, { id: "jump_squats", sets: 4, reps: "18" }, { id: "muscleup_prog", sets: 2, reps: "3" }],
+                    [{ id: "pistol_squat", sets: 4, reps: "6/leg" }, { id: "muscleup_prog", sets: 3, reps: "4" }, { id: "dragon_flag_tuck", sets: 3, reps: "10" }],
+                    [{ id: "pistol_squat", sets: 4, reps: "8/leg" }, { id: "muscleup_prog", sets: 3, reps: "5" }, { id: "jump_squats", sets: 5, reps: "15" }]
+                ]
+            },
+            {
+                id: "lever_foundations", icon: "🪶", levelReq: 4, weeks: 8, daysPerWeek: 3,
+                nameKey: "program_lever_foundations_name", goalKey: "program_lever_foundations_goal",
+                plan: [
+                    [{ id: "skin_the_cat", sets: 3, reps: "4" }, { id: "tuck_lsit", sets: 3, reps: "15s" }, { id: "plank", sets: 3, reps: "40s" }],
+                    [{ id: "front_lever_tuck", sets: 3, reps: "10s" }, { id: "back_lever_tuck", sets: 3, reps: "8s" }, { id: "skin_the_cat", sets: 3, reps: "5" }],
+                    [{ id: "front_lever_tuck", sets: 4, reps: "12s" }, { id: "back_lever_tuck", sets: 4, reps: "10s" }, { id: "dragon_flag_tuck", sets: 3, reps: "8" }],
+                    [{ id: "front_lever_tuck", sets: 4, reps: "15s" }, { id: "back_lever_tuck", sets: 4, reps: "12s" }, { id: "typewriter_pullups", sets: 2, reps: "3" }],
+                    [{ id: "front_lever_tuck", sets: 5, reps: "15s" }, { id: "back_lever_tuck", sets: 5, reps: "12s" }, { id: "weighted_pullups", sets: 3, reps: "5" }],
+                    [{ id: "front_lever", sets: 2, reps: "3s" }, { id: "back_lever", sets: 2, reps: "3s" }, { id: "front_lever_tuck", sets: 3, reps: "20s" }],
+                    [{ id: "front_lever", sets: 3, reps: "4s" }, { id: "back_lever", sets: 3, reps: "4s" }, { id: "back_lever_tuck", sets: 3, reps: "15s" }],
+                    [{ id: "front_lever", sets: 3, reps: "5s" }, { id: "back_lever", sets: 3, reps: "5s" }, { id: "weighted_pullups", sets: 3, reps: "6" }]
+                ]
+            },
+            {
+                id: "muscleup_mastery", icon: "🏆", levelReq: 3, weeks: 8, daysPerWeek: 3,
+                nameKey: "program_muscleup_mastery_name", goalKey: "program_muscleup_mastery_goal",
+                plan: [
+                    [{ id: "negative_pullups", sets: 4, reps: "5" }, { id: "dips", sets: 3, reps: "8" }, { id: "pullups", sets: 3, reps: "5" }],
+                    [{ id: "pullups", sets: 4, reps: "6" }, { id: "dips", sets: 4, reps: "10" }, { id: "chinups", sets: 3, reps: "5" }],
+                    [{ id: "chinups", sets: 3, reps: "6" }, { id: "muscleup_prog", sets: 2, reps: "3" }, { id: "dips", sets: 4, reps: "12" }],
+                    [{ id: "muscleup_prog", sets: 3, reps: "4" }, { id: "pullups", sets: 4, reps: "8" }, { id: "dips", sets: 3, reps: "12" }],
+                    [{ id: "muscleup_prog", sets: 4, reps: "5" }, { id: "weighted_pullups", sets: 2, reps: "5" }, { id: "dips", sets: 4, reps: "12" }],
+                    [{ id: "muscleup", sets: 1, reps: "1" }, { id: "muscleup_prog", sets: 4, reps: "6" }, { id: "dips", sets: 4, reps: "12" }],
+                    [{ id: "muscleup", sets: 2, reps: "2" }, { id: "muscleup_prog", sets: 3, reps: "6" }, { id: "pullups", sets: 4, reps: "10" }],
+                    [{ id: "muscleup", sets: 3, reps: "3" }, { id: "muscleup_prog", sets: 3, reps: "6" }, { id: "dips", sets: 4, reps: "15" }]
+                ]
+            }
+        ];
+
+        const programTranslations = {
+            he: {
+                program_beginner_full_body_name: "מסלול גוף מלא למתחילים",
+                program_beginner_full_body_goal: "מסלול מובנה למתחילים מוחלטים — בניית כוח בסיסי ושליטה בתנועה בכל הגוף.",
+                program_pushup_builder_30_name: "בונה שכיבות שמיכה ב-30 יום",
+                program_pushup_builder_30_goal: "התקדמות משכיבות מסייעות לחזרות מלאות וחזקות תוך חודש.",
+                program_first_pullup_6wk_name: "מתח ראשון תוך 6 שבועות",
+                program_first_pullup_6wk_goal: "בניית כוח משיכה דרך שליליות ותרגילי עזר עד למתח מלא ראשון.",
+                program_handstand_foundations_name: "יסודות עמידת ידיים",
+                program_handstand_foundations_goal: "מהחזקה מול קיר ועד לעמידת ידיים חופשית ראשונה.",
+                program_core_hollow_mastery_name: "שליטה בליבה וגוף חלול",
+                program_core_hollow_mastery_goal: "בניית בסיס ה-Hollow Body שעומד מאחורי כל מיומנות קליסטניקס מתקדמת.",
+                program_planche_progression_name: "מסלול התקדמות לפלאנש",
+                program_planche_progression_goal: "מסלול ארוך טווח מפסאודו-פלאנש ועד להחזקת פלאנש בזרועות ישרות.",
+                program_flexibility_mobility_name: "גמישות וניידות לקליסטניקס",
+                program_flexibility_mobility_goal: "שיפור ניידות כתפיים, ירכיים ועמוד שדרה כדי להתאמן בבטחה ולזוז טוב יותר.",
+                program_explosive_power_name: "תוכנית כוח נפיץ",
+                program_explosive_power_goal: "תרגילי פליומטריה וכוח נפיץ לבניית מהירות ועוצמה למיומנויות מתקדמות.",
+                program_lever_foundations_name: "יסודות פרונט לבר ובק לבר",
+                program_lever_foundations_goal: "בניית כוח משיכה וליבה להחזקות פרונט לבר ובק לבר נשלטות.",
+                program_muscleup_mastery_name: "שליטה במאסל-אפ",
+                program_muscleup_mastery_goal: "שילוב כוח משיכה ודחיפה למאסל-אפ ראשון ונקי."
+            },
+            en: {
+                program_beginner_full_body_name: "Beginner Full-Body Path",
+                program_beginner_full_body_goal: "A structured on-ramp for total beginners — build baseline strength and movement control across your whole body.",
+                program_pushup_builder_30_name: "30-Day Push-Up Builder",
+                program_pushup_builder_30_goal: "Progress from assisted push-ups to strong, full-range reps in one month.",
+                program_first_pullup_6wk_name: "First Pull-Up in 6 Weeks",
+                program_first_pullup_6wk_goal: "Build pulling strength through negatives and assisted work until you get your first strict pull-up.",
+                program_handstand_foundations_name: "Handstand Foundations",
+                program_handstand_foundations_goal: "From wall-supported holds to your first freestanding handstand.",
+                program_core_hollow_mastery_name: "Core & Hollow Body Mastery",
+                program_core_hollow_mastery_goal: "Build the hollow-body foundation behind every advanced calisthenics skill.",
+                program_planche_progression_name: "Planche Progression Track",
+                program_planche_progression_goal: "A long-term path from pseudo planche to a straight-arm planche hold.",
+                program_flexibility_mobility_name: "Flexibility & Mobility for Calisthenics",
+                program_flexibility_mobility_goal: "Improve shoulder, hip and spine mobility to train safer and move better.",
+                program_explosive_power_name: "Explosive Power Program",
+                program_explosive_power_goal: "Plyometric and explosive drills to build speed and power for advanced skills.",
+                program_lever_foundations_name: "Front & Back Lever Foundations",
+                program_lever_foundations_goal: "Build the pulling and core strength for controlled front and back lever holds.",
+                program_muscleup_mastery_name: "Muscle-Up Mastery",
+                program_muscleup_mastery_goal: "Combine pulling and pressing strength into your first clean muscle-up."
+            },
+            nl: {
+                program_beginner_full_body_name: "Volledig-Lichaam Pad voor Beginners",
+                program_beginner_full_body_goal: "Een gestructureerd startpunt voor complete beginners — bouw basiskracht en bewegingscontrole op in je hele lichaam.",
+                program_pushup_builder_30_name: "30-Dagen Opdruk Opbouwer",
+                program_pushup_builder_30_goal: "Ga van ondersteunde opdrukken naar sterke, volledige herhalingen in één maand.",
+                program_first_pullup_6wk_name: "Eerste Optrekoefening in 6 Weken",
+                program_first_pullup_6wk_goal: "Bouw trekkracht op via negatieven en ondersteund werk tot je eerste volledige optrekoefening.",
+                program_handstand_foundations_name: "Handstand Basis",
+                program_handstand_foundations_goal: "Van tegen de muur ondersteunde holds tot je eerste vrijstaande handstand.",
+                program_core_hollow_mastery_name: "Core & Hollow Body Beheersing",
+                program_core_hollow_mastery_goal: "Bouw de hollow-body basis die achter elke geavanceerde calisthenics vaardigheid zit.",
+                program_planche_progression_name: "Planche Opbouwtraject",
+                program_planche_progression_goal: "Een langetermijntraject van pseudo planche naar een gestrekte-arm planche hold.",
+                program_flexibility_mobility_name: "Flexibiliteit & Mobiliteit voor Calisthenics",
+                program_flexibility_mobility_goal: "Verbeter schouder-, heup- en wervelkolommobiliteit om veiliger te trainen en beter te bewegen.",
+                program_explosive_power_name: "Explosief Krachtprogramma",
+                program_explosive_power_goal: "Plyometrische en explosieve oefeningen voor snelheid en kracht voor geavanceerde vaardigheden.",
+                program_lever_foundations_name: "Front & Back Lever Basis",
+                program_lever_foundations_goal: "Bouw de trek- en corekracht op voor gecontroleerde front en back lever holds.",
+                program_muscleup_mastery_name: "Muscle-Up Meesterschap",
+                program_muscleup_mastery_goal: "Combineer trek- en drukkracht tot je eerste schone muscle-up."
+            },
+            es: {
+                program_beginner_full_body_name: "Camino de Cuerpo Completo para Principiantes",
+                program_beginner_full_body_goal: "Una vía estructurada para principiantes absolutos — desarrolla fuerza base y control del movimiento en todo el cuerpo.",
+                program_pushup_builder_30_name: "Constructor de Flexiones en 30 Días",
+                program_pushup_builder_30_goal: "Progresa de flexiones asistidas a repeticiones completas y fuertes en un mes.",
+                program_first_pullup_6wk_name: "Primera Dominada en 6 Semanas",
+                program_first_pullup_6wk_goal: "Desarrolla fuerza de tracción con negativas y ejercicios asistidos hasta tu primera dominada completa.",
+                program_handstand_foundations_name: "Fundamentos del Pino (Handstand)",
+                program_handstand_foundations_goal: "Desde sostenes apoyados en la pared hasta tu primer pino libre.",
+                program_core_hollow_mastery_name: "Dominio de Core y Hollow Body",
+                program_core_hollow_mastery_goal: "Construye la base de hollow body detrás de toda habilidad avanzada de calistenia.",
+                program_planche_progression_name: "Progresión hacia la Planche",
+                program_planche_progression_goal: "Un camino a largo plazo desde la pseudo planche hasta una plancha con brazos rectos.",
+                program_flexibility_mobility_name: "Flexibilidad y Movilidad para Calistenia",
+                program_flexibility_mobility_goal: "Mejora la movilidad de hombros, caderas y columna para entrenar más seguro y moverte mejor.",
+                program_explosive_power_name: "Programa de Potencia Explosiva",
+                program_explosive_power_goal: "Ejercicios pliométricos y explosivos para ganar velocidad y potencia para habilidades avanzadas.",
+                program_lever_foundations_name: "Fundamentos de Front y Back Lever",
+                program_lever_foundations_goal: "Construye la fuerza de tracción y core para sostenes controlados de front y back lever.",
+                program_muscleup_mastery_name: "Maestría del Muscle-Up",
+                program_muscleup_mastery_goal: "Combina fuerza de tracción y empuje para tu primer muscle-up limpio."
+            }
+        };
+
+        // Active-program state: which program (if any), current week/day (1-based),
+        // which of today's exercises were opened for AI feedback, and which
+        // programs have been finished — persisted the same way as every other
+        // stateful feature (see saveToStorage/loadFromStorage/export/import).
+        let userPrograms = { activeId: null, currentWeek: 1, currentDay: 1, completedPrograms: [] };
 
         let currentQuestion = 0, quizAnswers = [], userLevel = 1, userScore = 0;
         let userProfile = { name: "", age: "", gender: "", sports: "", goal: "strength", weight: "", height: "", activity: "moderate", nutritionPlan: null };
@@ -6097,6 +6492,7 @@
             renderSmartSuggestion();
 
             renderTodayWorkoutCard();
+            renderProgramCTA();
 
             const planDiv = document.getElementById('workout-plan');
             planDiv.innerHTML = '';
@@ -6940,6 +7336,7 @@
                 const triedAtLevel = new Set(workoutHistory.filter(w => w.exerciseId && getExerciseLevelById(w.exerciseId) === userLevel).map(w => w.exerciseId));
                 if (exercisesByLevel[userLevel].every(ex => triedAtLevel.has(ex.id))) newUnlocks.push('all_exercises');
             }
+            if (userPrograms.completedPrograms.length > 0 && !unlockedAchievements.includes('program_finisher')) newUnlocks.push('program_finisher');
 
             newUnlocks.forEach(id => {
                 unlockedAchievements.push(id);
@@ -6964,6 +7361,186 @@
                 return `<div class="achievement-item ${isUnlocked ? 'unlocked' : ''}"><div class="achievement-icon">${a.icon}</div><div class="achievement-name">${achName}</div></div>`;
             }).join('');
             showScreen('screen-achievements');
+        }
+
+        // ==================== STRUCTURED PROGRAMS ====================
+        function getProgramName(def) { return (programTranslations[currentLang] && programTranslations[currentLang][def.nameKey]) || def.nameKey; }
+        function getProgramGoal(def) { return (programTranslations[currentLang] && programTranslations[currentLang][def.goalKey]) || def.goalKey; }
+
+        function getActiveProgramDef() {
+            if (!userPrograms.activeId) return null;
+            return programs.find(p => p.id === userPrograms.activeId) || null;
+        }
+
+        // Total days across the whole program vs. days completed so far —
+        // used both for the list-screen progress bar and the detail-screen one.
+        function getProgramProgressPercent(def) {
+            const totalDays = def.weeks * def.daysPerWeek;
+            const daysDone = (userPrograms.currentWeek - 1) * def.daysPerWeek + (userPrograms.currentDay - 1);
+            return Math.min(100, Math.round((daysDone / totalDays) * 100));
+        }
+
+        function showPrograms() {
+            const list = document.getElementById('programs-list');
+            list.innerHTML = programs.map(def => {
+                const isLocked = userLevel < def.levelReq;
+                const isActive = userPrograms.activeId === def.id;
+                const isDone = userPrograms.completedPrograms.includes(def.id);
+                let badge = '';
+                if (isActive) badge = `<span class="program-badge badge-active">${t('program_in_progress_badge') || 'In Progress'}</span>`;
+                else if (isDone) badge = `<span class="program-badge badge-done">${t('program_completed_badge') || 'Completed'}</span>`;
+                const progressBar = isActive
+                    ? `<div class="program-progress-track"><div class="program-progress-fill" style="width:${getProgramProgressPercent(def)}%;"></div></div>`
+                    : '';
+                const lockNote = isLocked
+                    ? `<div style="color: var(--warning); font-size:0.78rem; margin-top:6px;">🔒 ${t('program_unlock_at_level') || 'Unlocks at level'} ${def.levelReq}</div>`
+                    : '';
+                return `<div class="card program-card ${isLocked ? 'locked' : ''}" style="${isLocked ? 'opacity:0.55; cursor:not-allowed;' : 'cursor:pointer;'}" ${isLocked ? '' : `onclick="openProgramDetail('${def.id}')"`}>
+                    <div class="program-card-icon">${def.icon}</div>
+                    <div class="program-card-body">
+                        <div class="program-card-name">${getProgramName(def)}</div>
+                        <div class="program-card-goal">${getProgramGoal(def)}</div>
+                        <div class="program-card-meta">
+                            <span class="program-badge" style="background: rgba(255,255,255,0.08); color: var(--text-secondary);" dir="ltr">${def.weeks} ${t('program_weeks_unit') || 'weeks'}</span>
+                            ${badge}
+                        </div>
+                        ${progressBar}
+                        ${lockNote}
+                    </div>
+                </div>`;
+            }).join('');
+            showScreen('screen-programs');
+        }
+
+        // Opens a program's detail screen — starting it first if it isn't the
+        // active one yet (starting a new program while another is active simply
+        // switches which one is tracked; progress on the old one is preserved
+        // in place so switching back later resumes where it left off... note:
+        // this build tracks a single active program at a time, matching the
+        // "which program (if any)" persistence contract).
+        function openProgramDetail(id) {
+            if (userPrograms.activeId !== id) {
+                userPrograms.activeId = id;
+                userPrograms.currentWeek = 1;
+                userPrograms.currentDay = 1;
+                saveToStorage();
+            }
+            renderProgramDetail();
+            showScreen('screen-program-detail');
+        }
+
+        function renderProgramDetail() {
+            const def = getActiveProgramDef();
+            if (!def) { showPrograms(); return; }
+            document.getElementById('program-detail-icon').textContent = def.icon;
+            document.getElementById('program-detail-name').textContent = getProgramName(def);
+            document.getElementById('program-detail-goal').textContent = getProgramGoal(def);
+            document.getElementById('program-detail-week-day').textContent =
+                `${t('program_week_label') || 'Week'} ${userPrograms.currentWeek}/${def.weeks} · ${t('program_day_label') || 'Day'} ${userPrograms.currentDay}/${def.daysPerWeek}`;
+            const percent = getProgramProgressPercent(def);
+            document.getElementById('program-detail-percent').textContent = `${percent}%`;
+            document.getElementById('program-detail-progress-fill').style.width = percent + '%';
+
+            const weekPlan = def.plan[userPrograms.currentWeek - 1] || def.plan[def.plan.length - 1];
+            const list = document.getElementById('program-day-exercises');
+            list.innerHTML = weekPlan.map(item => {
+                const ex = openExerciseByIdLookup(item.id);
+                const name = ex ? getExerciseName(ex) : item.id;
+                return `<div class="program-day-exercise" onclick="openExerciseById('${item.id}')">
+                    <div class="program-day-exercise-name">${name}</div>
+                    <div class="program-day-exercise-vol" dir="ltr">${item.sets} × ${item.reps}</div>
+                </div>`;
+            }).join('');
+        }
+
+        // Small lookup helper (distinct from openExerciseById, which navigates) —
+        // used when rendering the program day so we can show each exercise's
+        // localized name without leaving the program-detail screen.
+        function openExerciseByIdLookup(id) {
+            for (let lvl = 1; lvl <= 5; lvl++) {
+                const ex = exercisesByLevel[lvl].find(e => e.id === id);
+                if (ex) return ex;
+            }
+            return null;
+        }
+
+        // Finalizes the current program day. Programs are checklist-based (not
+        // AI-scored per item — the exercises above are also individually
+        // openable for real camera/AI feedback if the user wants it), so
+        // completing a day reuses the exact same primitives a normal AI-scored
+        // workout completion uses (userStats, recordWorkoutForStreak, XP,
+        // achievements, journey, HealthKit sync) rather than a parallel model —
+        // a completed program day counts as a completed workout everywhere else
+        // in the app.
+        function completeProgramDay() {
+            const def = getActiveProgramDef();
+            if (!def) return;
+            const score = 85; // representative score for a completed checklist-based session
+            userStats.workouts++;
+            userStats.avgScore = Math.round((userStats.avgScore * (userStats.workouts - 1) + score) / userStats.workouts);
+            recordWorkoutForStreak();
+            refreshStreakReminders();
+            userStats.totalHours += 0.5;
+            const workoutDurationMin = 30;
+            const workoutCalories = estimateWorkoutCalories(workoutDurationMin);
+            workoutHistory.unshift({
+                date: new Date(), exercise: getProgramName(def), exerciseId: null, score, level: userLevel,
+                durationMinutes: workoutDurationMin, caloriesBurned: workoutCalories,
+                programId: def.id, programDay: true
+            });
+            syncWorkoutToHealthKit(workoutDurationMin, workoutCalories);
+            addJourneyEvent(`${t('program_day_completed_toast') || 'Day complete'}: ${getProgramName(def)}`,
+                `${t('program_week_label') || 'Week'} ${userPrograms.currentWeek} · ${t('program_day_label') || 'Day'} ${userPrograms.currentDay}`);
+
+            const finished = advanceProgramProgress(def);
+            checkAchievements();
+            addXP(40, 'program_day');
+            saveToStorage();
+
+            showToast(finished ? (t('program_completed_toast') || 'Program completed!') : (t('program_day_completed_toast') || 'Day complete!'));
+            if (finished) { showPrograms(); } else { renderProgramDetail(); }
+        }
+
+        // Moves to the next day/week, or completes the program outright when the
+        // last day of the last week is done. Returns true when the whole
+        // program just finished.
+        function advanceProgramProgress(def) {
+            if (userPrograms.currentDay < def.daysPerWeek) {
+                userPrograms.currentDay++;
+                return false;
+            }
+            if (userPrograms.currentWeek < def.weeks) {
+                userPrograms.currentWeek++;
+                userPrograms.currentDay = 1;
+                return false;
+            }
+            if (!userPrograms.completedPrograms.includes(def.id)) userPrograms.completedPrograms.push(def.id);
+            userPrograms.activeId = null;
+            userPrograms.currentWeek = 1;
+            userPrograms.currentDay = 1;
+            return true;
+        }
+
+        function confirmAbandonProgram() {
+            if (!confirm(t('program_abandon_confirm') || 'Stop this program? Your progress will be reset.')) return;
+            userPrograms.activeId = null;
+            userPrograms.currentWeek = 1;
+            userPrograms.currentDay = 1;
+            saveToStorage();
+            showPrograms();
+        }
+
+        // Dashboard "continue your program" card — hidden when nothing is active.
+        function renderProgramCTA() {
+            const card = document.getElementById('program-cta-card');
+            if (!card) return;
+            const def = getActiveProgramDef();
+            if (!def) { card.style.display = 'none'; return; }
+            card.style.display = 'flex';
+            document.getElementById('program-cta-icon').textContent = def.icon;
+            document.getElementById('program-cta-title').textContent =
+                `${getProgramName(def)} — ${t('program_week_label') || 'Week'} ${userPrograms.currentWeek}/${def.weeks} · ${t('program_day_label') || 'Day'} ${userPrograms.currentDay}/${def.daysPerWeek}`;
+            document.getElementById('program-cta-progress-fill').style.width = getProgramProgressPercent(def) + '%';
         }
 
         // ==================== VIDEOS ====================
@@ -8485,7 +9062,7 @@
                 nutritionAdjustmentOffset, lastAdaptiveCheckDate,
                 lastWorkoutDate, streakFreezesAvailable, lastFreezeGrantDate, lastDeloadCheckDate,
                 lastExportDate, lastBackupReminderDismissedDate,
-                challengeAccepted, challengeCompletedToday
+                challengeAccepted, challengeCompletedToday, userPrograms
             };
             localStorage.setItem('masa_data', JSON.stringify(data));
         }
@@ -8541,6 +9118,9 @@
                     if (data.lastBackupReminderDismissedDate) lastBackupReminderDismissedDate = data.lastBackupReminderDismissedDate;
                     if (data.challengeAccepted !== undefined) challengeAccepted = data.challengeAccepted;
                     if (data.challengeCompletedToday !== undefined) challengeCompletedToday = data.challengeCompletedToday;
+                    // Merge, not replace: an older save/backup made before this feature
+                    // existed won't have `userPrograms` at all.
+                    if (data.userPrograms) userPrograms = { activeId: null, currentWeek: 1, currentDay: 1, completedPrograms: [], ...data.userPrograms };
                     return true;
                 }
             } catch (e) {
@@ -8974,7 +9554,7 @@
                     userProfile, userSchedule, userStats, userLevel, userScore, userXP,
                     workoutHistory, bodyMetrics, nutritionLog, challengeHistory, raceHistory,
                     journeyEvents, unlockedAchievements, waterLog, progressPhotos,
-                    waterTargetOverride, favoriteMeals
+                    waterTargetOverride, favoriteMeals, userPrograms
                 };
                 const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
                 const url = URL.createObjectURL(blob);
@@ -9031,6 +9611,7 @@
                     if (data.progressPhotos) progressPhotos = data.progressPhotos;
                     if (data.waterTargetOverride) waterTargetOverride = data.waterTargetOverride;
                     if (data.favoriteMeals) favoriteMeals = data.favoriteMeals;
+                    if (data.userPrograms) userPrograms = { activeId: null, currentWeek: 1, currentDay: 1, completedPrograms: [], ...data.userPrograms };
                     saveToStorage();
                     showToast(t('health_imported') || 'הנתונים יובאו בהצלחה');
                     showBottomNav(true);
