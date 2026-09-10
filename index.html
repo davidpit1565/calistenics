@@ -1514,19 +1514,6 @@
                     </div>
                 </div>
             </div>
-            <div class="card" id="backup-reminder-card" style="display:none; border-color: var(--warning);">
-                <div style="display:flex; align-items:flex-start; gap:12px;">
-                    <div style="color: var(--warning); flex-shrink:0; margin-top:2px;"><svg class="icon-svg" viewBox="0 0 24 24" style="width:22px;height:22px;" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.5-4.5M4 4v4.5h4.5"/><path d="M4 13a8 8 0 0 0 14.5 4.5M20 20v-4.5h-4.5"/></svg></div>
-                    <div style="flex:1;">
-                        <div style="font-weight:700; margin-bottom:4px;" data-i18n="backup_reminder_title">גיבוי הנתונים שלך</div>
-                        <div style="color: var(--text-secondary); font-size:0.9rem; margin-bottom:12px;" data-i18n="backup_reminder_desc">כל המידע שמור רק על המכשיר הזה. מומלץ לייצא גיבוי מעת לעת כדי לא לאבד את ההתקדמות.</div>
-                        <div style="display:flex; gap:8px;">
-                            <button class="btn btn-primary btn-sm" style="flex:1;" onclick="hideMoreMenu(); exportHealthData(); dismissBackupReminder();" data-i18n="export_now">ייצא עכשיו</button>
-                            <button class="btn btn-secondary btn-sm" style="flex:1;" onclick="dismissBackupReminder()" data-i18n="not_now">לא עכשיו</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
             <div class="card" style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
                 <div style="display:flex; align-items:center; gap:10px;">
                     <div style="color: var(--warning);"><svg class="icon-svg" viewBox="0 0 24 24" style="width:22px;height:22px;" aria-hidden="true"><path d="M12 2.5 19.5 6v6c0 5-3.2 8.5-7.5 9.5-4.3-1-7.5-4.5-7.5-9.5V6z"/><path d="M12 9.5v5M9.5 12h5"/></svg></div>
@@ -1642,6 +1629,7 @@
                 <div class="more-row" onclick="showHealth()">
                     <div class="more-icon"><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5 19.5 6v6c0 5-3.2 8.5-7.5 9.5-4.3-1-7.5-4.5-7.5-9.5V6z"/><path d="M12 9.5v5M9.5 12h5"/></svg></div>
                     <div class="more-row-label" data-i18n="section_data_backup">גיבוי ויצוא נתונים</div>
+                    <div class="more-row-value" id="settings-backup-status"></div>
                 </div>
                 <div class="more-row" onclick="showOffline()">
                     <div class="more-icon"><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><path d="M17 18a4 4 0 0 0 0-8 5 5 0 0 0-9.6-1.5A4 4 0 0 0 6 18h6"/><path d="M3 3l18 18"/></svg></div>
@@ -2568,6 +2556,9 @@
                 consent_text: "קראתי ואני מסכים/ה ל<a href=\"#\" onclick=\"event.preventDefault(); showLegal();\" style=\"color:var(--accent);\">תנאי השימוש ומדיניות הפרטיות</a>",
                 consent_required: "יש לאשר את תנאי השימוש כדי להמשיך",
                 backup_reminder_title: "גיבוי הנתונים שלך",
+                backup_never: "מעולם לא",
+                backup_today: "היום",
+                backup_days_ago: "ימים",
                 backup_reminder_desc: "כל המידע שמור רק על המכשיר הזה. מומלץ לייצא גיבוי מעת לעת כדי לא לאבד את ההתקדמות.",
                 export_now: "ייצא עכשיו",
                 use_meal_label: "השתמש בארוחה",
@@ -3167,6 +3158,9 @@
                 consent_text: "I have read and agree to the <a href=\"#\" onclick=\"event.preventDefault(); showLegal();\" style=\"color:var(--accent);\">Terms of Service and Privacy Policy</a>",
                 consent_required: "You must accept the Terms to continue",
                 backup_reminder_title: "Back Up Your Data",
+                backup_never: "Never",
+                backup_today: "Today",
+                backup_days_ago: "days ago",
                 backup_reminder_desc: "All your data is stored only on this device. It's a good idea to export a backup now and then so you don't lose your progress.",
                 export_now: "Export Now",
                 use_meal_label: "Use meal",
@@ -3766,6 +3760,9 @@
                 consent_text: "Ik heb de <a href=\"#\" onclick=\"event.preventDefault(); showLegal();\" style=\"color:var(--accent);\">Gebruiksvoorwaarden en het Privacybeleid</a> gelezen en ga ermee akkoord",
                 consent_required: "Je moet de voorwaarden accepteren om door te gaan",
                 backup_reminder_title: "Back-up van je Gegevens",
+                backup_never: "Nooit",
+                backup_today: "Vandaag",
+                backup_days_ago: "dagen geleden",
                 backup_reminder_desc: "Al je gegevens worden alleen op dit apparaat opgeslagen. Het is verstandig om af en toe een back-up te exporteren zodat je je voortgang niet kwijtraakt.",
                 export_now: "Nu Exporteren",
                 use_meal_label: "Gebruik maaltijd",
@@ -4365,6 +4362,9 @@
                 consent_text: "He leído y acepto los <a href=\"#\" onclick=\"event.preventDefault(); showLegal();\" style=\"color:var(--accent);\">Términos de Servicio y la Política de Privacidad</a>",
                 consent_required: "Debes aceptar los términos para continuar",
                 backup_reminder_title: "Respalda tus Datos",
+                backup_never: "Nunca",
+                backup_today: "Hoy",
+                backup_days_ago: "días atrás",
                 backup_reminder_desc: "Todos tus datos se guardan solo en este dispositivo. Es buena idea exportar una copia de seguridad de vez en cuando para no perder tu progreso.",
                 export_now: "Exportar Ahora",
                 use_meal_label: "Usar comida",
@@ -5715,7 +5715,6 @@
 
             document.getElementById('injury-toggle').classList.toggle('active', isInjuryModeActiveToday());
             renderSmartSuggestion();
-            checkBackupReminder();
 
             const planDiv = document.getElementById('workout-plan');
             planDiv.innerHTML = '';
@@ -5780,33 +5779,8 @@
 
         // ==================== SMART SUGGESTIONS (AI DIFFICULTY) ====================
         let lastDeloadCheckDate = null; // persisted; avoids nagging more than once every 2 weeks
-        let lastExportDate = null; // persisted; powers the periodic backup reminder
-        let lastBackupReminderDismissedDate = null; // persisted; avoids nagging more than once every 30 days
-
-        // ==================== BACKUP REMINDER (no cloud sync — local data only) ====================
-        function checkBackupReminder() {
-            const card = document.getElementById('backup-reminder-card');
-            if (!card) return;
-
-            // Don't nag brand-new users with nothing worth backing up yet
-            if (userStats.workouts < 5) { card.style.display = 'none'; return; }
-
-            // Respect a 30-day cooldown after the user dismisses or exports
-            const referenceDate = lastExportDate || lastBackupReminderDismissedDate;
-            if (referenceDate) {
-                const daysSince = (new Date() - new Date(referenceDate)) / 86400000;
-                if (daysSince < 30) { card.style.display = 'none'; return; }
-            }
-
-            card.style.display = 'block';
-        }
-
-        function dismissBackupReminder() {
-            lastBackupReminderDismissedDate = new Date().toISOString();
-            saveToStorage();
-            const card = document.getElementById('backup-reminder-card');
-            if (card) card.style.display = 'none';
-        }
+        let lastExportDate = null; // persisted; shown as a passive backup status in Settings
+        let lastBackupReminderDismissedDate = null; // kept for backward-compat with existing saved data; no longer drives any UI
 
         function checkDeloadNeeded() {
             if (lastDeloadCheckDate) {
@@ -6373,6 +6347,18 @@
             const isDark = (document.documentElement.getAttribute('data-theme') || 'dark') === 'dark';
             const valueEl = document.getElementById('settings-theme-value');
             if (valueEl) valueEl.textContent = isDark ? (t('theme_dark') || 'Dark') : (t('theme_light') || 'Light');
+
+            // Passive backup status here instead of an interruptive dashboard
+            // banner — visible only when the user actually opens Settings.
+            const backupEl = document.getElementById('settings-backup-status');
+            if (backupEl) {
+                if (!lastExportDate) {
+                    backupEl.textContent = t('backup_never') || 'Never';
+                } else {
+                    const days = Math.floor((new Date() - new Date(lastExportDate)) / 86400000);
+                    backupEl.textContent = days < 1 ? (t('backup_today') || 'Today') : `${days} ${t('backup_days_ago') || 'days ago'}`;
+                }
+            }
         }
 
         function saveProfile() {
