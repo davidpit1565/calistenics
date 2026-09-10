@@ -10,9 +10,16 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="מסע קליסטניקס">
-    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%230a0a0f'/%3E%3Cg stroke='%23ff6b35' stroke-width='11' stroke-linecap='round' fill='none'%3E%3Crect x='24' y='75' width='20' height='30' rx='6'/%3E%3Crect x='136' y='75' width='20' height='30' rx='6'/%3E%3Cpath d='M52 90h76'/%3E%3C/g%3E%3C/svg%3E">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="icons/icon-32.png" sizes="32x32" type="image/png">
+    <link rel="icon" href="icons/icon-16.png" sizes="16x16" type="image/png">
+    <link rel="apple-touch-icon" href="icons/icon-180.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="icons/icon-152.png">
+    <link rel="apple-touch-icon" sizes="167x167" href="icons/icon-167.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="icons/icon-120.png">
+    <link rel="stylesheet" href="vendor/fonts/heebo.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700;900&display=swap');
+        /* Heebo font is vendored locally (vendor/fonts/heebo.css) so it loads offline. */
 
         /* ==================== CSS VARIABLES ==================== */
         :root {
@@ -1104,7 +1111,7 @@
             color: var(--text-secondary);
         }
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="vendor/chart.umd.min.js"></script>
 </head><body>
     <!-- LOADING OVERLAY -->
     <div class="loading-overlay" id="loading-overlay">
@@ -2075,12 +2082,12 @@
     </div>
 
     <!-- BOTTOM NAV -->
-    <nav class="bottom-nav" id="bottom-nav" style="display: none;">
-        <div class="nav-item active" onclick="showDashboard()"><span><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11.5 12 4l8 7.5"/><path d="M6 10v10h12V10"/><path d="M10 20v-6h4v6"/></svg></span><div data-i18n="nav_home">בית</div></div>
-        <div class="nav-item" onclick="showVideos()"><span><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M10 8.5v7l6-3.5z"/></svg></span><div data-i18n="nav_videos">סרטונים</div></div>
-        <div class="nav-item" onclick="showStats()"><span><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M4 20h16"/></svg></span><div data-i18n="nav_stats">סטטיסטיקה</div></div>
-        <div class="nav-item" onclick="showJourney()"><span><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="19" r="2"/><circle cx="19" cy="5" r="2"/><path d="M6.5 17.5C9 14 8 9 12 9s2-5 5.5-5"/></svg></span><div data-i18n="nav_journey">המסע</div></div>
-        <div class="nav-item" onclick="showMoreMenu()"><span><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></svg></span><div data-i18n="nav_more">עוד</div></div>
+    <nav class="bottom-nav" id="bottom-nav" style="display: none;" role="tablist" aria-label="ניווט ראשי">
+        <div class="nav-item active" role="tab" tabindex="0" aria-selected="true" aria-label="בית" onclick="showDashboard()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showDashboard();}"><span><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11.5 12 4l8 7.5"/><path d="M6 10v10h12V10"/><path d="M10 20v-6h4v6"/></svg></span><div data-i18n="nav_home">בית</div></div>
+        <div class="nav-item" role="tab" tabindex="0" aria-selected="false" aria-label="סרטונים" onclick="showVideos()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showVideos();}"><span><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M10 8.5v7l6-3.5z"/></svg></span><div data-i18n="nav_videos">סרטונים</div></div>
+        <div class="nav-item" role="tab" tabindex="0" aria-selected="false" aria-label="סטטיסטיקה" onclick="showStats()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showStats();}"><span><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M4 20h16"/></svg></span><div data-i18n="nav_stats">סטטיסטיקה</div></div>
+        <div class="nav-item" role="tab" tabindex="0" aria-selected="false" aria-label="המסע" onclick="showJourney()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showJourney();}"><span><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="19" r="2"/><circle cx="19" cy="5" r="2"/><path d="M6.5 17.5C9 14 8 9 12 9s2-5 5.5-5"/></svg></span><div data-i18n="nav_journey">המסע</div></div>
+        <div class="nav-item" role="tab" tabindex="0" aria-selected="false" aria-label="עוד" onclick="showMoreMenu()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showMoreMenu();}"><span><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></svg></span><div data-i18n="nav_more">עוד</div></div>
     </nav>
 
     <!-- MORE MENU OVERLAY -->
@@ -4428,31 +4435,31 @@
             plank: "pSHjTRowC_U",
             pike_push: "2rT3T8bN5mQ",
             hollow_hold: "p7aMtsXz9Ho",
-            arch_hold: "",
+            arch_hold: "n5ca7UfDr90",
             diamond_pushups: "J0DnG1a8HZI",
             pullups: "eGo4IYlbE5g",
             dips: "2z8JmcrW-As",
             lsit: "IUZJoSP6d4w",
             pike_pushups: "2rT3T8bN5mQ",
             australian_pulls: "0iQb8b5Kh4Y",
-            archer_pushups: "",
+            archer_pushups: "MxVbNel13Ek",
             chinups: "brhRXlOhsAM",
-            pseudo_planche: "",
+            pseudo_planche: "L7GKps5ygkQ",
             tuck_lsit: "IUZJoSP6d4w",
             wide_pullups: "eGo4IYlbE5g",
-            handstand_hold: "",
-            one_arm_pushup: "",
-            muscleup_prog: "",
-            front_lever_tuck: "",
-            planche_lean: "",
+            handstand_hold: "sQonfkuqxkI",
+            one_arm_pushup: "xp1tgjT_3k0",
+            muscleup_prog: "v-0wjaMx9RM",
+            front_lever_tuck: "lkGhntOoLNk",
+            planche_lean: "wKV5zVJTYBo",
             weighted_pullups: "eGo4IYlbE5g",
-            handstand_pushups: "",
-            muscleup: "",
-            front_lever: "",
-            planche: "",
+            handstand_pushups: "C-nRd78NGY4",
+            muscleup: "YSe03rIY-xQ",
+            front_lever: "vRc_6uFvwEw",
+            planche: "OmKfROtB45Q",
             one_arm_pullup: "brhRXlOhsAM",
-            handstand_free: "",
-            human_flag: ""
+            handstand_free: "qhFMf7I67Dc",
+            human_flag: "DtraL3XSrtQ"
         };
 
         // ==================== QUIZ QUESTIONS ====================
@@ -7236,41 +7243,15 @@
 
         // ==================== PWA ====================
         function initPWA() {
-            // Manifest is injected at runtime so the app stays a single file
-            try {
-                const icon = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='110' fill='%230a0a0f'/%3E%3Cg stroke='%23ff6b35' stroke-width='30' stroke-linecap='round' fill='none'%3E%3Crect x='66' y='212' width='58' height='88' rx='18'/%3E%3Crect x='388' y='212' width='58' height='88' rx='18'/%3E%3Cpath d='M148 256h216'/%3E%3C/g%3E%3C/svg%3E";
-                const manifest = {
-                    name: t('app_title'),
-                    short_name: t('app_short_name'),
-                    start_url: ".",
-                    display: "standalone",
-                    background_color: "#0a0a0f",
-                    theme_color: "#0a0a0f",
-                    lang: currentLang,
-                    dir: currentLang === 'he' ? "rtl" : "ltr",
-                    icons: [
-                        { src: icon, sizes: "512x512", type: "image/svg+xml", purpose: "any maskable" }
-                    ]
-                };
-                const link = document.createElement('link');
-                link.rel = 'manifest';
-                try {
-                    const blob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
-                    link.href = URL.createObjectURL(blob);
-                } catch (blobErr) {
-                    // Fallback for environments without createObjectURL
-                    link.href = 'data:application/manifest+json;charset=utf-8,' + encodeURIComponent(JSON.stringify(manifest));
-                }
-                document.head.appendChild(link);
-            } catch (e) {
-                console.warn('Manifest injection failed:', e);
-            }
+            // manifest.json and app icons are static files served next to index.html
+            // (see <link rel="manifest"> and <link rel="apple-touch-icon"> in <head>).
+            document.documentElement.lang = currentLang;
+            document.documentElement.dir = currentLang === 'he' ? 'rtl' : 'ltr';
 
-            // Optional service worker for true offline caching.
-            // Requires a separate sw.js next to index.html — silently skipped if absent.
+            // Service worker caches the app shell for real offline support.
             if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
-                navigator.serviceWorker.register('sw.js').catch(() => {
-                    console.info('No sw.js found — app still works offline via localStorage.');
+                navigator.serviceWorker.register('sw.js').catch((e) => {
+                    console.warn('Service worker registration failed:', e);
                 });
             }
         }
