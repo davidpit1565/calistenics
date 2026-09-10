@@ -4797,6 +4797,57 @@
         let workoutHistory = [], journeyEvents = [], unlockedAchievements = [];
         let currentExercise = null, stream = null, isRecording = false;
 
+        // ==================== POSE DETECTION (real, on-device) ====================
+        // Exercise families drive how the generic kinematic analysis below interprets the
+        // keypoint time series. "reps" = dynamic push/pull movements counted as oscillations;
+        // "hold" = static isometric/skill holds analyzed for stability/jitter instead of reps.
+        const REP_BASED_EXERCISES = new Set([
+            'pushups', 'diamond_pushups', 'pike_push', 'pike_pushups', 'archer_pushups',
+            'one_arm_pushup', 'handstand_pushups', 'australian_pull', 'australian_pulls',
+            'pullups', 'chinups', 'wide_pullups', 'dips', 'muscleup_prog', 'muscleup',
+            'weighted_pullups', 'one_arm_pullup'
+        ]);
+        const HOLD_EXERCISES = new Set([
+            'plank', 'hollow_hold', 'arch_hold', 'lsit', 'tuck_lsit', 'pseudo_planche',
+            'front_lever_tuck', 'planche_lean', 'handstand_hold', 'handstand_free',
+            'front_lever', 'planche', 'human_flag'
+        ]);
+        let poseDetector = null;
+        let poseDetectorLoadFailed = false;
+        let poseDetectorLoadingPromise = null;
+        let poseSampleTimer = null;
+        let poseSamples = []; // { t: msSinceStart, keypoints: [{x,y,score,name}] }
+        let recordingStartTs = 0;
+
+        // Lazily creates (once) and caches the MoveNet detector. Model weights are fetched
+        // from Google's TF-Hub CDN on first use and cached by the service worker afterward;
+        // if the fetch fails (e.g. offline first run) we degrade gracefully instead of crashing.
+        async function ensurePoseDetector() {
+            if (poseDetector) return poseDetector;
+            if (poseDetectorLoadFailed) return null;
+            if (poseDetectorLoadingPromise) return poseDetectorLoadingPromise;
+            poseDetectorLoadingPromise = (async () => {
+                try {
+                    if (typeof tf === 'undefined' || typeof poseDetection === 'undefined') {
+                        throw new Error('pose-detection libraries not loaded');
+                    }
+                    await tf.setBackend('webgl').catch(() => tf.setBackend('cpu'));
+                    await tf.ready();
+                    poseDetector = await poseDetection.createDetector(
+                        poseDetection.SupportedModels.MoveNet,
+                        { modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING }
+                    );
+                    console.log('[pose] MoveNet detector ready');
+                    return poseDetector;
+                } catch (err) {
+                    console.error('[pose] failed to load pose model', err);
+                    poseDetectorLoadFailed = true;
+                    return null;
+                }
+            })();
+            return poseDetectorLoadingPromise;
+        }
+
         function createParticles() {
             const container = document.getElementById('particles');
             container.innerHTML = '';
@@ -5401,6 +5452,8 @@
                     video.srcObject = stream; video.style.display = 'block';
                     placeholder.style.display = 'none';
                     btn.textContent = '📷 ' + t('disable_camera'); recordBtn.disabled = false;
+                    // Warm up the pose model in the background so it's ready by the time recording starts.
+                    ensurePoseDetector();
                 } catch (err) { 
                     showToast(t('camera_error')); 
                 }
@@ -5409,47 +5462,237 @@
 
         function simulateRecording() {
             const btn = document.getElementById('btn-record');
+            const video = document.getElementById('camera-video');
             if (!isRecording) {
-                isRecording = true; 
+                isRecording = true;
+                poseSamples = [];
+                recordingStartTs = performance.now();
                 btn.textContent = '⏹️ ' + (t('stop_recording') || 'עצור הקלטה');
                 btn.style.background = 'linear-gradient(135deg, #ff6b6b, #ee5a5a)';
+
+                // Sample the live video through MoveNet every ~120ms for the duration of the
+                // recording window (real frames, not a fake timer) — frequent enough to catch
+                // rep cycles, sparse enough to stay light on battery/CPU.
+                ensurePoseDetector().then(detector => {
+                    if (!detector || !isRecording) return;
+                    poseSampleTimer = setInterval(async () => {
+                        if (!isRecording || !video || video.readyState < 2) return;
+                        try {
+                            const poses = await detector.estimatePoses(video, { flipHorizontal: false });
+                            if (poses && poses[0] && poses[0].keypoints) {
+                                poseSamples.push({ t: performance.now() - recordingStartTs, keypoints: poses[0].keypoints });
+                            }
+                        } catch (err) {
+                            console.error('[pose] estimatePoses failed', err);
+                        }
+                    }, 120);
+                });
+
                 setTimeout(() => {
-                    isRecording = false; 
+                    isRecording = false;
+                    if (poseSampleTimer) { clearInterval(poseSampleTimer); poseSampleTimer = null; }
                     btn.textContent = '🔴 ' + t('start_recording');
-                    btn.style.background = ''; 
+                    btn.style.background = '';
                     analyzePerformance();
                 }, 3000);
             }
         }
 
-        // ==================== AI SCORE ====================
+        // ==================== AI SCORE (real, on-device kinematic analysis) ====================
+        // Named MoveNet (17-point COCO) keypoints we use.
+        function kp(keypoints, name) {
+            const p = keypoints.find(k => k.name === name);
+            return (p && p.score >= 0.3) ? p : null;
+        }
+        // Angle at vertex b (degrees), formed by points a-b-c.
+        function jointAngle(a, b, c) {
+            if (!a || !b || !c) return null;
+            const v1x = a.x - b.x, v1y = a.y - b.y, v2x = c.x - b.x, v2y = c.y - b.y;
+            const m1 = Math.hypot(v1x, v1y), m2 = Math.hypot(v2x, v2y);
+            if (m1 < 1e-3 || m2 < 1e-3) return null;
+            let cos = (v1x * v2x + v1y * v2y) / (m1 * m2);
+            cos = Math.max(-1, Math.min(1, cos));
+            return Math.acos(cos) * 180 / Math.PI;
+        }
+        function avg(nums) { return nums.length ? nums.reduce((a, b) => a + b, 0) / nums.length : null; }
+        function stdev(nums) {
+            if (nums.length < 2) return 0;
+            const m = avg(nums);
+            return Math.sqrt(avg(nums.map(n => (n - m) * (n - m))));
+        }
+
+        // Counts oscillations (reps) in an angle time series via a hysteresis state machine:
+        // the 10th/90th percentile of the signal defines its working range, and a rep is
+        // counted every time the signal rises from the low band back up into the high band.
+        // This is a generic peak/trough detector — it doesn't know "push-up" vs "pull-up",
+        // it just counts real up-down cycles in the tracked joint angle.
+        function countCycles(series) {
+            if (series.length < 6) return { reps: 0, romDeg: 0 };
+            const vals = series.map(p => p.v).sort((a, b) => a - b);
+            const p10 = vals[Math.floor(vals.length * 0.1)];
+            const p90 = vals[Math.floor(vals.length * 0.9)];
+            const rom = p90 - p10;
+            const mid = (p90 + p10) / 2;
+            const hi = mid + rom * 0.2, lo = mid - rom * 0.2;
+            let reps = 0, sawLow = series[0].v < lo;
+            const repTimestamps = [];
+            for (let i = 1; i < series.length; i++) {
+                const v = series[i].v;
+                if (v < lo) sawLow = true;
+                else if (v > hi && sawLow) { reps++; sawLow = false; repTimestamps.push(series[i].t); }
+            }
+            return { reps, romDeg: rom, repTimestamps };
+        }
+
+        // Builds a normalized (scale-invariant) jitter signal for a hold: average distance
+        // of shoulder/hip midpoints from their own median position, in units of torso length.
+        function computeJitter(samples) {
+            const torsoLens = [], midX = [], midY = [];
+            samples.forEach(s => {
+                const ls = kp(s.keypoints, 'left_shoulder'), rs = kp(s.keypoints, 'right_shoulder');
+                const lh = kp(s.keypoints, 'left_hip'), rh = kp(s.keypoints, 'right_hip');
+                if (ls && rs && lh && rh) {
+                    const shoulderMidX = (ls.x + rs.x) / 2, shoulderMidY = (ls.y + rs.y) / 2;
+                    const hipMidX = (lh.x + rh.x) / 2, hipMidY = (lh.y + rh.y) / 2;
+                    const torso = Math.hypot(shoulderMidX - hipMidX, shoulderMidY - hipMidY);
+                    if (torso > 5) {
+                        torsoLens.push(torso);
+                        midX.push((shoulderMidX + hipMidX) / 2 / torso);
+                        midY.push((shoulderMidY + hipMidY) / 2 / torso);
+                    }
+                }
+            });
+            if (midX.length < 3) return null;
+            const medX = [...midX].sort((a, b) => a - b)[Math.floor(midX.length / 2)];
+            const medY = [...midY].sort((a, b) => a - b)[Math.floor(midY.length / 2)];
+            const dists = midX.map((x, i) => Math.hypot(x - medX, midY[i] - medY));
+            return avg(dists);
+        }
+
+        function clamp(n, lo, hi) { return Math.max(lo, Math.min(hi, n)); }
+
+        // Runs the full generic kinematic analysis on the collected keypoint time series and
+        // returns null if tracking confidence was too low to say anything honest about it.
+        function analyzeKeypointSeries(samples, isHold) {
+            if (!samples.length) return null;
+            const allScores = [];
+            samples.forEach(s => s.keypoints.forEach(k => allScores.push(k.score)));
+            const avgConfidence = avg(allScores) || 0;
+            const trackedFrames = samples.filter(s => kp(s.keypoints, 'left_shoulder') || kp(s.keypoints, 'right_shoulder')).length;
+            const frameCoverage = trackedFrames / samples.length;
+            if (avgConfidence < 0.35 || frameCoverage < 0.4) {
+                return { lowConfidence: true, avgConfidence };
+            }
+
+            // Elbow angle series (shoulder-elbow-wrist), averaged left/right per frame — the
+            // primary generic signal for rep-based push/pull movements.
+            const elbowSeries = [];
+            samples.forEach(s => {
+                const angles = [];
+                const la = jointAngle(kp(s.keypoints, 'left_shoulder'), kp(s.keypoints, 'left_elbow'), kp(s.keypoints, 'left_wrist'));
+                const ra = jointAngle(kp(s.keypoints, 'right_shoulder'), kp(s.keypoints, 'right_elbow'), kp(s.keypoints, 'right_wrist'));
+                if (la != null) angles.push(la);
+                if (ra != null) angles.push(ra);
+                if (angles.length) elbowSeries.push({ t: s.t, v: avg(angles) });
+            });
+
+            const jitter = computeJitter(samples); // torso-length units; smaller = steadier
+            const firstHalf = samples.slice(0, Math.floor(samples.length / 2));
+            const secondHalf = samples.slice(Math.floor(samples.length / 2));
+            const jitterFirst = computeJitter(firstHalf);
+            const jitterSecond = computeJitter(secondHalf);
+            const fatigueRatio = (jitterFirst && jitterSecond && jitterFirst > 0.001) ? jitterSecond / jitterFirst : 1;
+
+            let reps = 0, romDeg = 0, tempoConsistency = 1;
+            if (elbowSeries.length >= 6) {
+                const { reps: r, romDeg: rom, repTimestamps } = countCycles(elbowSeries);
+                reps = r; romDeg = rom;
+                if (repTimestamps && repTimestamps.length >= 2) {
+                    const durations = [];
+                    for (let i = 1; i < repTimestamps.length; i++) durations.push(repTimestamps[i] - repTimestamps[i - 1]);
+                    const meanDur = avg(durations);
+                    tempoConsistency = meanDur > 0 ? clamp(1 - (stdev(durations) / meanDur), 0, 1) : 1;
+                }
+            }
+
+            // ---- Combine real measurements into the four sub-scores + overall (0-100) ----
+            // technique: how cleanly/consistently MoveNet could track the body (a trust proxy —
+            //   full biomechanical form scoring is out of scope for on-device pose estimation).
+            const technique = clamp(Math.round(avgConfidence * 100 * 0.6 + frameCoverage * 100 * 0.4), 0, 100);
+            // range: for reps, actual elbow-angle amplitude vs a generic "full rep" reference of
+            //   70deg; for holds, inverted drift of the same angle (less drift = held position better).
+            const idealRomDeg = 70;
+            const range = isHold
+                ? clamp(Math.round(100 - (romDeg || 0) * 1.5), 0, 100)
+                : clamp(Math.round((romDeg / idealRomDeg) * 100), 0, 100);
+            // control: inverse of body-position jitter (variance of shoulder/hip position,
+            //   normalized by torso length so it works regardless of distance from camera).
+            const control = jitter != null ? clamp(Math.round(100 - jitter * 500), 0, 100) : technique;
+            // tempo: for reps, consistency of the time between reps; for holds, whether
+            //   stability held up over the duration (fatigue = jitter rising in the 2nd half).
+            const tempo = isHold
+                ? clamp(Math.round(100 - Math.max(0, fatigueRatio - 1) * 80), 0, 100)
+                : (reps >= 2 ? clamp(Math.round(tempoConsistency * 100), 0, 100) : control);
+
+            const overall = clamp(Math.round(technique * 0.3 + range * 0.25 + control * 0.25 + tempo * 0.2), 0, 100);
+            return { avgConfidence, technique, range, control, tempo, overall, reps, romDeg, isHold, lowConfidence: false };
+        }
+
+        function pickFeedbackKey(result) {
+            const scores = { technique: result.technique, range: result.range, control: result.control, tempo: result.tempo };
+            const weakest = Object.keys(scores).reduce((a, b) => scores[a] <= scores[b] ? a : b);
+            if (weakest === 'technique') return 'feedback_low_technique';
+            if (weakest === 'range') return result.isHold ? 'feedback_low_range_hold' : 'feedback_low_range_reps';
+            if (weakest === 'control') return 'feedback_low_control';
+            return result.isHold ? 'feedback_low_tempo_hold' : 'feedback_low_tempo_reps';
+        }
+
         function analyzePerformance() {
             showScreen('screen-score');
-            const score = Math.round(60 + Math.random() * 30);
-            const grade = score >= 90 ? 'A+' : score >= 80 ? 'A' : score >= 70 ? 'B' : score >= 60 ? 'C' : 'D';
-            let current = 0;
-            const circle = document.getElementById('score-circle');
             const value = document.getElementById('ai-score');
             const gradeEl = document.getElementById('ai-grade');
             const feedback = document.getElementById('ai-feedback');
             const breakdown = document.getElementById('score-breakdown');
+            const circle = document.getElementById('score-circle');
+            value.textContent = '0';
+            circle.style.setProperty('--score-deg', '0deg');
 
-            const feedbacks = [
-                t('feedback_good') || "טוב מאוד! המשך להתאמן על הטכניקה.",
-                t('feedback_excellent') || "ביצוע מצוין! הטכניקה שלך משתפרת.",
-                t('feedback_nice') || "יפה! שים לב לזוויות המפרקים.",
-                t('feedback_great') || "מעולה! כמעט מושלם, המשך כך!"
-            ];
+            // Honest fallback: no camera frames / model never loaded → never fabricate a score.
+            if (poseDetectorLoadFailed || !poseSamples.length) {
+                gradeEl.textContent = '';
+                gradeEl.style.color = 'var(--text-secondary)';
+                feedback.textContent = poseDetectorLoadFailed ? (t('pose_model_unavailable') || 'לא ניתן היה לנתח את הביצוע.') : (t('analysis_unavailable') || 'לא ניתן היה לנתח את הביצוע.');
+                breakdown.innerHTML = '';
+                return;
+            }
+
+            const isHold = currentExercise && HOLD_EXERCISES.has(currentExercise.id);
+            const result = analyzeKeypointSeries(poseSamples, !!isHold);
+
+            if (!result || result.lowConfidence) {
+                gradeEl.textContent = '';
+                gradeEl.style.color = 'var(--warning)';
+                feedback.textContent = t('low_confidence_warning') || 'לא הצלחנו לזהות את התנוחה בבירור — ודא שאתה נראה במלואך במצלמה.';
+                breakdown.innerHTML = '';
+                return;
+            }
+
+            const score = result.overall;
+            const grade = score >= 90 ? 'A+' : score >= 80 ? 'A' : score >= 70 ? 'B' : score >= 60 ? 'C' : 'D';
+            let current = 0;
 
             const interval = setInterval(() => {
                 current += 2;
                 if (current >= score) {
-                    current = score; 
+                    current = score;
                     clearInterval(interval);
                     gradeEl.textContent = `${t('grade') || 'ציון'}: ${grade}`;
                     gradeEl.style.color = score >= 80 ? 'var(--success)' : score >= 60 ? 'var(--warning)' : 'var(--accent)';
-                    feedback.textContent = feedbacks[Math.floor(Math.random() * feedbacks.length)];
-                    breakdown.innerHTML = `<div style="display: flex; justify-content: space-between; margin-bottom: 8px;"><span>${t('technique') || 'טכניקה'}</span><span style="color: var(--accent);">${Math.round(score * 0.9)}%</span></div><div style="display: flex; justify-content: space-between; margin-bottom: 8px;"><span>${t('range_of_motion') || 'טווח תנועה'}</span><span style="color: var(--accent);">${Math.round(score * 0.85)}%</span></div><div style="display: flex; justify-content: space-between; margin-bottom: 8px;"><span>${t('control') || 'שליטה'}</span><span style="color: var(--accent);">${Math.round(score * 0.95)}%</span></div><div style="display: flex; justify-content: space-between;"><span>${t('tempo') || 'קצב'}</span><span style="color: var(--accent);">${Math.round(score * 0.88)}%</span></div>`;
+                    feedback.textContent = t(pickFeedbackKey(result)) || (t('feedback_good') || 'טוב מאוד! המשך להתאמן על הטכניקה.');
+                    const repsLine = (!result.isHold && result.reps > 0)
+                        ? `<div style="display: flex; justify-content: space-between; margin-bottom: 8px;"><span>${t('reps_detected') || 'חזרות שזוהו'}</span><span style="color: var(--accent);">${result.reps}</span></div>`
+                        : '';
+                    breakdown.innerHTML = repsLine + `<div style="display: flex; justify-content: space-between; margin-bottom: 8px;"><span>${t('technique') || 'טכניקה'}</span><span style="color: var(--accent);">${result.technique}%</span></div><div style="display: flex; justify-content: space-between; margin-bottom: 8px;"><span>${t('range_of_motion') || 'טווח תנועה'}</span><span style="color: var(--accent);">${result.range}%</span></div><div style="display: flex; justify-content: space-between; margin-bottom: 8px;"><span>${t('control') || 'שליטה'}</span><span style="color: var(--accent);">${result.control}%</span></div><div style="display: flex; justify-content: space-between;"><span>${t('tempo') || 'קצב'}</span><span style="color: var(--accent);">${result.tempo}%</span></div>`;
 
                     userStats.workouts++;
                     userStats.avgScore = Math.round((userStats.avgScore * (userStats.workouts - 1) + score) / userStats.workouts);
@@ -5461,7 +5704,7 @@
                         durationMinutes: workoutDurationMin,
                         caloriesBurned: estimateWorkoutCalories(workoutDurationMin)
                     });
-                    addJourneyEvent(`${t('workout_completed') || 'השלמת אימון'}: ${getExerciseName(currentExercise)}`, 
+                    addJourneyEvent(`${t('workout_completed') || 'השלמת אימון'}: ${getExerciseName(currentExercise)}`,
                         `${t('got_score') || 'קיבלת ציון'} ${score} — ${t('keep_going') || 'המשך כך!'}`);
                     checkAchievements();
                     saveToStorage();

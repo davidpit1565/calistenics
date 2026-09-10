@@ -1,9 +1,11 @@
-const CACHE_NAME = 'masa-calisthenics-v1';
+const CACHE_NAME = 'masa-calisthenics-v2';
 const APP_SHELL = [
   './',
   './index.html',
   './manifest.json',
   './vendor/chart.umd.min.js',
+  './vendor/tf.min.js',
+  './vendor/pose-detection.min.js',
   './vendor/fonts/heebo.css',
   './vendor/fonts/NGS6v5_NC0k9P9H0TbFhsqMA6aw.woff2',
   './vendor/fonts/NGS6v5_NC0k9P9GKTbFhsqMA6aw.woff2',
