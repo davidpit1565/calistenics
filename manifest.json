@@ -1,7 +1,7 @@
 {
-  "name": "Calisthenics Journey",
-  "short_name": "Calisthenics",
-  "description": "Calisthenics training journey — 5 levels, personal plan, nutrition and progress tracking",
+  "name": "Massa Calisthenics",
+  "short_name": "Massa",
+  "description": "Massa Calisthenics training journey — 5 levels, personal plan, nutrition and progress tracking",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
