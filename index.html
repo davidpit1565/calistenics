@@ -278,14 +278,15 @@
         }
 
         /* ==================== CAMERA ==================== */
-        .camera-container { 
-            position: relative; 
-            width: 100%; 
-            aspect-ratio: 3/4; 
-            background: var(--bg-elevated); 
-            border-radius: 20px; 
-            overflow: hidden; 
-            border: 2px solid var(--border); 
+        .camera-container {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1/1;
+            max-height: 46vh;
+            background: var(--bg-elevated);
+            border-radius: 20px;
+            overflow: hidden;
+            border: 2px solid var(--border);
         }
         .camera-video { 
             width: 100%; 
@@ -316,6 +317,83 @@
             margin-top: 16px; 
         }
         .camera-controls .btn { flex: 1; margin-top: 0; }
+
+        /* ==================== EXERCISE SCREEN (compact header + full-focus camera) ==================== */
+        .exercise-topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+        .exercise-topbar .btn-sm { margin-bottom: 0; }
+        .exercise-info-btn {
+            flex-shrink: 0;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 1px solid var(--border);
+            background: var(--bg-elevated);
+            color: var(--text-primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: border-color 0.2s ease;
+            padding: 0;
+        }
+        .exercise-info-btn:hover, .exercise-info-btn[aria-expanded="true"] { border-color: var(--accent); color: var(--accent); }
+        .exercise-info-btn svg { width: 20px; height: 20px; }
+        .exercise-title {
+            font-size: 1.4rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+            line-height: 1.2;
+        }
+        .exercise-section-label {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            margin-bottom: 8px;
+        }
+        .exercise-watch-btn { margin-top: 12px; }
+
+        /* Info bottom-sheet: goal/desc/tips, collapsed by default so the camera stays primary */
+        .exercise-info-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 98;
+        }
+        .exercise-info-sheet {
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 99;
+            background: var(--bg-card);
+            border-top: 1px solid var(--border);
+            border-radius: 20px 20px 0 0;
+            box-shadow: 0 -8px 32px rgba(0,0,0,0.4);
+            max-height: 70vh;
+            overflow-y: auto;
+            padding: 14px 20px calc(20px + var(--safe-bottom));
+            animation: fadeIn 0.25s ease;
+        }
+        .exercise-info-sheet-handle {
+            width: 40px;
+            height: 4px;
+            border-radius: 4px;
+            background: var(--border);
+            margin: 0 auto 14px;
+        }
+        .exercise-info-desc { color: var(--text-secondary); margin-bottom: 18px; }
+        .exercise-info-block { background: var(--bg-elevated); border-radius: 16px; padding: 16px; margin-bottom: 14px; }
+        .exercise-info-block:last-child { margin-bottom: 0; }
+        .exercise-info-block-title { font-weight: 700; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+        .exercise-info-block-title .icon-svg { width: 17px; height: 17px; }
 
         /* ==================== AI SCORE ==================== */
         .ai-score-container { text-align: center; padding: 40px 20px; }
@@ -1536,36 +1614,44 @@
 
         <!-- EXERCISE DETAIL -->
         <div class="screen" id="screen-exercise">
-            <button class="btn btn-secondary btn-sm" style="margin-bottom: 16px;" onclick="showScreen('screen-dashboard')" data-i18n="back_to_dashboard">חזרה</button>
-            <div class="card">
-                <h2 id="ex-title" style="margin-bottom: 8px;"></h2>
-                <p id="ex-desc" style="color: var(--text-secondary); margin-bottom: 20px;"></p>
-                <div style="background: var(--bg-elevated); border-radius: 16px; padding: 16px; margin-bottom: 20px;">
-                    <div style="font-weight: 700; margin-bottom: 8px;"><span style="display:inline-flex;vertical-align:-3px;margin-inline-end:6px;color:var(--accent);"><svg class="icon-svg" style="width:17px;height:17px;" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/></svg></span><span data-i18n="goal">מטרה</span></div>
-                    <div id="ex-goal" style="color: var(--text-secondary);"></div>
-                </div>
-                <div style="background: var(--bg-elevated); border-radius: 16px; padding: 16px; margin-bottom: 20px;">
-                    <div style="font-weight: 700; margin-bottom: 8px;"><span style="display:inline-flex;vertical-align:-3px;margin-inline-end:6px;color:var(--warning);"><svg class="icon-svg" style="width:17px;height:17px;" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/></svg></span><span data-i18n="tips">טיפים</span></div>
-                    <div id="ex-tips" style="color: var(--text-secondary);"></div>
-                </div>
-                <button class="btn btn-info" onclick="goToVideoFromExercise()" data-i18n="watch_video">צפה בסרטון הדרכה</button>
+            <div class="exercise-topbar">
+                <button class="btn btn-secondary btn-sm" onclick="showScreen('screen-dashboard')" data-i18n="back_to_dashboard">חזרה</button>
+                <button class="exercise-info-btn" id="btn-ex-info" onclick="toggleExerciseInfo()" aria-haspopup="true" aria-expanded="false" aria-controls="exercise-info-sheet" data-i18n-aria="exercise_info_label" aria-label="מטרה וטיפים">
+                    <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><line x1="12" y1="10.5" x2="12" y2="16"/><circle cx="12" cy="7.5" r="1" fill="currentColor" stroke="none"/></svg>
+                </button>
             </div>
-            <div class="card">
-                <h3 style="margin-bottom: 16px;" data-i18n="record_performance">צלם את הביצוע שלך</h3>
-                <div class="camera-container" id="camera-container">
-                    <div class="camera-placeholder" id="camera-placeholder">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-                            <circle cx="12" cy="13" r="4"/>
-                        </svg>
-                        <div data-i18n="tap_camera">לחץ כדי להפעיל מצלמה</div>
-                    </div>
-                    <video class="camera-video" id="camera-video" style="display: none;" autoplay playsinline></video>
+            <h2 id="ex-title" class="exercise-title"></h2>
+
+            <div class="exercise-section-label" data-i18n="record_performance">צלם את הביצוע שלך</div>
+            <div class="camera-container" id="camera-container">
+                <div class="camera-placeholder" id="camera-placeholder">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                        <circle cx="12" cy="13" r="4"/>
+                    </svg>
+                    <div data-i18n="tap_camera">לחץ כדי להפעיל מצלמה</div>
                 </div>
-                <div class="camera-controls">
-                    <button class="btn btn-secondary" id="btn-camera" onclick="toggleCamera()" data-i18n="enable_camera">הפעל מצלמה</button>
-                    <button class="btn btn-primary" id="btn-record" onclick="simulateRecording()" disabled data-i18n="start_recording">התחל הקלטה</button>
+                <video class="camera-video" id="camera-video" style="display: none;" autoplay playsinline></video>
+            </div>
+            <div class="camera-controls">
+                <button class="btn btn-secondary" id="btn-camera" onclick="toggleCamera()" data-i18n="enable_camera">הפעל מצלמה</button>
+                <button class="btn btn-primary" id="btn-record" onclick="simulateRecording()" disabled data-i18n="start_recording">התחל הקלטה</button>
+            </div>
+            <button class="btn btn-info exercise-watch-btn" onclick="goToVideoFromExercise()" data-i18n="watch_video">צפה בסרטון הדרכה</button>
+
+            <div class="exercise-info-backdrop" id="exercise-info-backdrop" onclick="toggleExerciseInfo(false)" hidden></div>
+            <div class="exercise-info-sheet" id="exercise-info-sheet" role="dialog" aria-modal="true" aria-label="מטרה וטיפים" hidden>
+                <div class="exercise-info-sheet-handle"></div>
+                <p id="ex-desc" class="exercise-info-desc"></p>
+                <div class="exercise-info-block">
+                    <div class="exercise-info-block-title"><span style="display:inline-flex;vertical-align:-3px;color:var(--accent);"><svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/></svg></span><span data-i18n="goal">מטרה</span></div>
+                    <div id="ex-goal"></div>
                 </div>
+                <div class="exercise-info-block">
+                    <div class="exercise-info-block-title"><span style="display:inline-flex;vertical-align:-3px;color:var(--warning);"><svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/></svg></span><span data-i18n="tips">טיפים</span></div>
+                    <div id="ex-tips"></div>
+                </div>
+                <button class="btn btn-secondary btn-sm" style="width:100%; margin-top: 16px;" onclick="toggleExerciseInfo(false)" data-i18n="close">סגור</button>
             </div>
         </div>
 
@@ -2416,6 +2502,8 @@
                 health_csv_exported: "📄 קובץ CSV הורד — עקוב/י אחרי ההנחיות למטה כדי לייבא",
                 goal: "מטרה",
                 tips: "טיפים",
+                exercise_info_label: "מטרה וטיפים",
+                close: "סגור",
                 start_this_exercise: "התחל תרגיל זה",
                 back_to_dashboard: "חזרה",
                 watch_video: "צפה בסרטון הדרכה",
@@ -2977,6 +3065,8 @@
                 health_csv_exported: "📄 CSV file downloaded — follow the guide below to import it",
                 goal: "Goal",
                 tips: "Tips",
+                exercise_info_label: "Goal & Tips",
+                close: "Close",
                 start_this_exercise: "Start This Exercise",
                 back_to_dashboard: "Back",
                 watch_video: "Watch Tutorial Video",
@@ -3538,6 +3628,8 @@
                 health_csv_exported: "📄 CSV-bestand gedownload — volg de handleiding hieronder om te importeren",
                 goal: "Doel",
                 tips: "Tips",
+                exercise_info_label: "Doel & Tips",
+                close: "Sluiten",
                 start_this_exercise: "Start Deze Oefening",
                 back_to_dashboard: "Terug",
                 watch_video: "Bekijk Instructievideo",
@@ -4099,6 +4191,8 @@
                 health_csv_exported: "📄 Archivo CSV descargado — sigue la guía de abajo para importarlo",
                 goal: "Objetivo",
                 tips: "Consejos",
+                exercise_info_label: "Objetivo y Consejos",
+                close: "Cerrar",
                 start_this_exercise: "Iniciar Este Ejercicio",
                 back_to_dashboard: "Atrás",
                 watch_video: "Ver Video Tutorial",
@@ -4476,6 +4570,14 @@
                 const key = el.dataset.i18nPlaceholder;
                 if (translations[lang] && translations[lang][key]) {
                     el.placeholder = translations[lang][key];
+                }
+            });
+
+            // Update aria-labels
+            document.querySelectorAll('[data-i18n-aria]').forEach(el => {
+                const key = el.dataset.i18nAria;
+                if (translations[lang] && translations[lang][key]) {
+                    el.setAttribute('aria-label', translations[lang][key]);
                 }
             });
 
@@ -5482,11 +5584,24 @@
             document.getElementById('camera-placeholder').style.display = 'flex';
             document.getElementById('btn-camera').textContent = '📷 ' + t('enable_camera');
             document.getElementById('btn-record').disabled = true;
+            toggleExerciseInfo(false);
             showScreen('screen-exercise');
         }
 
-        function goToVideoFromExercise() { 
-            if (currentExercise) openVideoPlayer(currentExercise.videoId); 
+        function goToVideoFromExercise() {
+            if (currentExercise) openVideoPlayer(currentExercise.videoId);
+        }
+
+        // Compact info sheet (goal/desc/tips) that overlays the exercise screen on demand,
+        // keeping the camera as the primary, always-visible content behind it.
+        function toggleExerciseInfo(forceOpen) {
+            const sheet = document.getElementById('exercise-info-sheet');
+            const backdrop = document.getElementById('exercise-info-backdrop');
+            const btn = document.getElementById('btn-ex-info');
+            const open = typeof forceOpen === 'boolean' ? forceOpen : sheet.hidden;
+            sheet.hidden = !open;
+            backdrop.hidden = !open;
+            btn.setAttribute('aria-expanded', String(open));
         }
 
         // ==================== CAMERA ====================
