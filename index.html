@@ -4867,18 +4867,18 @@
         };
 
         const achievements = [
-            { id: "first_workout", name: "first_workout", icon: "", desc: "first_workout_desc" },
-            { id: "week_streak", name: "week_streak", icon: "", desc: "week_streak_desc" },
-            { id: "month_streak", name: "month_streak", icon: "", desc: "month_streak_desc" },
-            { id: "perfect_score", name: "perfect_score", icon: "", desc: "perfect_score_desc" },
-            { id: "level_up", name: "level_up", icon: "", desc: "level_up_desc" },
-            { id: "all_exercises", name: "all_exercises", icon: "", desc: "all_exercises_desc" },
-            { id: "early_bird", name: "early_bird", icon: "", desc: "early_bird_desc" },
-            { id: "night_owl", name: "night_owl", icon: "", desc: "night_owl_desc" },
-            { id: "ten_workouts", name: "ten_workouts", icon: "", desc: "ten_workouts_desc" },
-            { id: "fifty_workouts", name: "fifty_workouts", icon: "", desc: "fifty_workouts_desc" },
-            { id: "hundred_workouts", name: "hundred_workouts", icon: "", desc: "hundred_workouts_desc" },
-            { id: "explorer", name: "explorer", icon: "", desc: "explorer_desc" }
+            { id: "first_workout", name: "first_workout", icon: "🎯", desc: "first_workout_desc" },
+            { id: "week_streak", name: "week_streak", icon: "🔥", desc: "week_streak_desc" },
+            { id: "month_streak", name: "month_streak", icon: "🏅", desc: "month_streak_desc" },
+            { id: "perfect_score", name: "perfect_score", icon: "💯", desc: "perfect_score_desc" },
+            { id: "level_up", name: "level_up", icon: "⬆️", desc: "level_up_desc" },
+            { id: "all_exercises", name: "all_exercises", icon: "🗂️", desc: "all_exercises_desc" },
+            { id: "early_bird", name: "early_bird", icon: "🌅", desc: "early_bird_desc" },
+            { id: "night_owl", name: "night_owl", icon: "🌙", desc: "night_owl_desc" },
+            { id: "ten_workouts", name: "ten_workouts", icon: "🔟", desc: "ten_workouts_desc" },
+            { id: "fifty_workouts", name: "fifty_workouts", icon: "🏆", desc: "fifty_workouts_desc" },
+            { id: "hundred_workouts", name: "hundred_workouts", icon: "👑", desc: "hundred_workouts_desc" },
+            { id: "explorer", name: "explorer", icon: "🧭", desc: "explorer_desc" }
         ];
 
         const achievementTranslations = {
@@ -5566,6 +5566,16 @@
             }
         }
 
+        // Returns the level (1-5) an exercise id belongs to, or null if not found —
+        // used by achievement checks that need "which level was this exercise from",
+        // as opposed to the user's level at the time the workout was logged.
+        function getExerciseLevelById(id) {
+            for (let lvl = 1; lvl <= 5; lvl++) {
+                if (exercisesByLevel[lvl].some(e => e.id === id)) return lvl;
+            }
+            return null;
+        }
+
         function openExerciseById(id) {
             for (let lvl = 1; lvl <= 5; lvl++) {
                 const ex = exercisesByLevel[lvl].find(e => e.id === id);
@@ -5868,7 +5878,7 @@
                     userStats.totalHours += 0.5;
                     const workoutDurationMin = 12; // typical time for one logged exercise set/session
                     workoutHistory.unshift({
-                        date: new Date(), exercise: getExerciseName(currentExercise), score: score, level: userLevel,
+                        date: new Date(), exercise: getExerciseName(currentExercise), exerciseId: currentExercise.id, score: score, level: userLevel,
                         durationMinutes: workoutDurationMin,
                         caloriesBurned: estimateWorkoutCalories(workoutDurationMin)
                     });
@@ -6134,10 +6144,23 @@
             if (userStats.workouts >= 1 && !unlockedAchievements.includes('first_workout')) newUnlocks.push('first_workout');
             if (userStats.streak >= 7 && !unlockedAchievements.includes('week_streak')) newUnlocks.push('week_streak');
             if (userStats.streak >= 30 && !unlockedAchievements.includes('month_streak')) newUnlocks.push('month_streak');
-            if (userStats.avgScore >= 100 && !unlockedAchievements.includes('perfect_score')) newUnlocks.push('perfect_score');
+            // "Got a score of 100" is about a single workout, not the running average —
+            // avgScore only reaches 100 if literally every workout ever logged was perfect.
+            if (workoutHistory.some(w => w.score >= 100) && !unlockedAchievements.includes('perfect_score')) newUnlocks.push('perfect_score');
             if (userStats.workouts >= 10 && !unlockedAchievements.includes('ten_workouts')) newUnlocks.push('ten_workouts');
             if (userStats.workouts >= 50 && !unlockedAchievements.includes('fifty_workouts')) newUnlocks.push('fifty_workouts');
             if (userStats.workouts >= 100 && !unlockedAchievements.includes('hundred_workouts')) newUnlocks.push('hundred_workouts');
+            if (userXP.level >= 2 && !unlockedAchievements.includes('level_up')) newUnlocks.push('level_up');
+            if (workoutHistory.some(w => new Date(w.date).getHours() < 7) && !unlockedAchievements.includes('early_bird')) newUnlocks.push('early_bird');
+            if (workoutHistory.some(w => new Date(w.date).getHours() >= 22) && !unlockedAchievements.includes('night_owl')) newUnlocks.push('night_owl');
+            if (!unlockedAchievements.includes('explorer')) {
+                const triedLevels = new Set(workoutHistory.map(w => w.exerciseId ? getExerciseLevelById(w.exerciseId) : null).filter(Boolean));
+                if ([1, 2, 3, 4, 5].every(lvl => triedLevels.has(lvl))) newUnlocks.push('explorer');
+            }
+            if (!unlockedAchievements.includes('all_exercises')) {
+                const triedAtLevel = new Set(workoutHistory.filter(w => w.exerciseId && getExerciseLevelById(w.exerciseId) === userLevel).map(w => w.exerciseId));
+                if (exercisesByLevel[userLevel].every(ex => triedAtLevel.has(ex.id))) newUnlocks.push('all_exercises');
+            }
 
             newUnlocks.forEach(id => {
                 unlockedAchievements.push(id);
@@ -6423,7 +6446,9 @@
             const weeks = {};
             workoutHistory.forEach(w => {
                 const d = new Date(w.date);
-                const weekKey = `${d.getFullYear()}-W${Math.ceil(d.getDate() / 7)}`;
+                // Must include the month — otherwise e.g. Jan 3rd and Feb 3rd both land in
+                // "week 1" and get silently merged into the same bucket across months.
+                const weekKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-W${Math.ceil(d.getDate() / 7)}`;
                 weeks[weekKey] = (weeks[weekKey] || 0) + 1;
             });
             const sorted = Object.entries(weeks).sort().slice(-8);
