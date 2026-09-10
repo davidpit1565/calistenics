@@ -219,10 +219,10 @@
             padding: 16px 20px; 
             cursor: pointer; 
             transition: all 0.3s ease; 
-            font-size: 1rem; 
-            text-align: right; 
+            font-size: 1rem;
+            text-align: start;
         }
-        .quiz-option:hover { 
+        .quiz-option:hover {
             border-color: var(--accent); 
             background: rgba(255,107,53,0.1); 
         }
@@ -728,15 +728,19 @@
             position: relative; 
             padding-right: 30px; 
         }
-        .journey-timeline::before { 
-            content: ""; 
-            position: absolute; 
-            right: 8px; 
-            top: 0; 
-            width: 2px; 
-            height: 100%; 
-            background: linear-gradient(to bottom,var(--accent),var(--bg-elevated)); 
+        .journey-timeline::before {
+            content: "";
+            position: absolute;
+            right: 8px;
+            top: 0;
+            width: 2px;
+            height: 100%;
+            background: linear-gradient(to bottom,var(--accent),var(--bg-elevated));
         }
+        /* No events yet: nothing for the rail to connect, so drop it and the
+           reserved gutter space rather than showing an orphan line. */
+        .journey-timeline-empty { padding-right: 0; }
+        .journey-timeline-empty::before { content: none; }
         .journey-item { 
             position: relative; 
             margin-bottom: 24px; 
@@ -1008,6 +1012,10 @@
         .xp-text {
             font-size: 0.85rem;
             color: var(--text-secondary);
+            /* "X / Y XP" is a fixed-order numeric token — without this, RTL
+               bidi reordering swaps the visual position of the two numbers. */
+            direction: ltr;
+            unicode-bidi: isolate;
         }
         .xp-progress {
             background: var(--bg-dark);
@@ -1846,8 +1854,8 @@
                 <div id="ai-grade" style="font-size: 1.5rem; font-weight: 900; margin-bottom: 16px;"></div>
                 <div class="ai-feedback" id="ai-feedback"></div>
                 <div style="margin-top: 32px;">
-                    <div style="background: var(--bg-elevated); border-radius: 16px; padding: 20px; margin-bottom: 16px; text-align: right;">
-                        <div style="font-weight: 700; margin-bottom: 12px;" data-i18n="score_breakdown">פירוח הציון</div>
+                    <div style="background: var(--bg-elevated); border-radius: 16px; padding: 20px; margin-bottom: 16px; text-align: start;">
+                        <div style="font-weight: 700; margin-bottom: 12px;" data-i18n="score_breakdown">פירוט הציון</div>
                         <div id="score-breakdown"></div>
                     </div>
                 </div>
@@ -1997,7 +2005,7 @@
                 <div style="font-size:2.4rem; font-weight:900; color: var(--accent); margin:10px 0 2px;"><span id="nutrition-remaining">0</span></div>
                 <div id="nutrition-remaining-label" style="color: var(--text-secondary); font-size:0.9rem; margin-bottom:16px;"></div>
 
-                <div style="text-align:right;">
+                <div style="text-align:start;">
                     <div style="margin-bottom:12px;">
                         <div style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:4px;">
                             <span data-i18n="protein">חלבון</span>
@@ -2155,7 +2163,7 @@
                 <p class="tagline" data-i18n="race_subtitle">אימון נגד השעון</p>
             </div>
 
-            <div class="card" style="text-align: center;">
+            <div class="card" id="race-setup" style="text-align: center;">
                 <h3 style="margin-bottom: 16px;" data-i18n="choose_race_exercise">בחר תרגיל למירוץ</h3>
                 <div class="form-group">
                     <select id="race-exercise">
@@ -2301,7 +2309,7 @@
                 <p class="tagline" data-i18n="water_subtitle">שתייה מסודרת לאורך היום</p>
             </div>
             <div class="card" style="text-align:center;">
-                <div style="font-size:2.6rem; font-weight:900; color: var(--info);"><span id="water-current">0</span><span style="font-size:1.1rem; color: var(--text-secondary);"> / <span id="water-target">0</span> ml</span></div>
+                <div style="font-size:2.6rem; font-weight:900; color: var(--info); direction:ltr; unicode-bidi:isolate;"><span id="water-current">0</span><span style="font-size:1.1rem; color: var(--text-secondary);"> / <span id="water-target">0</span> ml</span></div>
                 <div class="progress-container" style="margin:16px 0;"><div class="progress-bar" id="water-progress" style="width:0%; background: var(--info);"></div></div>
                 <div id="water-hint" style="color: var(--text-secondary); font-size:0.85rem;"></div>
             </div>
@@ -2358,7 +2366,7 @@
             </div>
             <div class="card">
                 <h3 style="margin-bottom:12px;" data-i18n="health_status_title">מה אפשרי כרגע</h3>
-                <p style="color: var(--text-secondary); line-height:1.7; font-size:0.9rem;" data-i18n="health_explain">האפליקציה רצה בדפדפן, ולכן היא לא יכולה להתחבר ישירות ל-Apple Health או ל-Samsung Health — שתי הפלטפורמות פותחות את ה-API שלהן רק לאפליקציות מקוריות (Swift / Kotlin) שמותקנות מהחנות. כדי לסנכרן באמת צריך לעטוף את האפליקציה ב-Capacitor או ב-React Native ולפרסם אותה כאפליקציה. בינתיים אפשר לייצא את הנתונים ולייבא אותם, וגם למשוך צעדים מהדפדפן אם המכשיר תומך.</p>
+                <p style="color: var(--text-secondary); line-height:1.7; font-size:0.9rem;" data-i18n="health_explain">סנכרון ישיר עם Apple Health או Samsung Health עדיין לא זמין. בינתיים אפשר לייצא ולייבא את הנתונים שלך כקובץ, וגם למשוך את מספר הצעדים מהמכשיר אם הוא תומך בכך.</p>
             </div>
             <div class="card">
                 <h3 style="margin-bottom:12px;" data-i18n="health_export_title">ייצוא וייבוא נתונים</h3>
@@ -2729,7 +2737,7 @@
                 enable_camera: "הפעל מצלמה",
                 start_recording: "התחל הקלטה",
                 analyzing: "מנתח את הסרטון שלך...",
-                score_breakdown: "פירוח הציון",
+                score_breakdown: "פירוט הציון",
                 ask_coach_title: "שאל את המאמן על הציון שלך",
                 ask_coach_placeholder: "למשל: תסביר לי יותר על טווח התנועה",
                 send: "שלח",
@@ -6607,6 +6615,10 @@
             // any history — once events exist, the timeline speaks for itself and
             // the static intro just contradicts what's shown right below it.
             if (introCard) introCard.style.display = journeyEvents.length === 0 ? '' : 'none';
+            // The vertical rail (::before) that connects timeline dots has nothing
+            // to connect with no events yet — without this class it renders as a
+            // stray orphan line next to the empty-state message.
+            timeline.classList.toggle('journey-timeline-empty', journeyEvents.length === 0);
             if (journeyEvents.length === 0) {
                 timeline.innerHTML = `<div style="color: var(--text-secondary); text-align: center;">${t('journey_empty')}</div>`;
             } else {
@@ -7765,6 +7777,7 @@
 
         function showRace() {
             showScreen('screen-race');
+            document.getElementById('race-setup').style.display = '';
             document.getElementById('race-active').style.display = 'none';
             document.getElementById('race-results').style.display = 'none';
             renderRaceHistory();
@@ -7776,6 +7789,9 @@
 
             document.getElementById('race-exercise-name').textContent = t(exercise) || exercise;
             document.getElementById('race-target-display').textContent = target;
+            // Hide the setup card while a race is running — it otherwise stays on
+            // screen with its own "Start!" button competing with the live timer.
+            document.getElementById('race-setup').style.display = 'none';
             document.getElementById('race-active').style.display = 'block';
             document.getElementById('race-results').style.display = 'none';
 
@@ -7801,6 +7817,10 @@
             }
 
             document.getElementById('race-timer').classList.remove('running');
+            // Hide the active card once the race is over — otherwise its own
+            // "Start!" button stays on screen right next to "Save Result" and
+            // silently discards the unsaved result if tapped by mistake.
+            document.getElementById('race-active').style.display = 'none';
             document.getElementById('race-results').style.display = 'block';
 
             const mins = Math.floor(raceElapsed / 60000);
@@ -7841,6 +7861,7 @@
             saveToStorage();
             showToast(t('race_saved') || '✅ תוצאת המירוץ נשמרה!');
             renderRaceHistory();
+            document.getElementById('race-setup').style.display = '';
             document.getElementById('race-active').style.display = 'none';
             document.getElementById('race-results').style.display = 'none';
         }
@@ -8225,7 +8246,10 @@
                 if (saved) {
                     const data = JSON.parse(saved);
                     if (data.userProfile) userProfile = data.userProfile;
-                    if (data.userSchedule) userSchedule = data.userSchedule;
+                    // Merge, not replace: an older save/backup missing `times`
+                    // (added after `days`) would otherwise leave userSchedule.times
+                    // undefined and crash showDashboard() on `.times[i]`.
+                    if (data.userSchedule) userSchedule = { days: [2, 4], times: {}, ...data.userSchedule };
                     // Merge rather than replace: a saved object missing a field (older
                     // save format, hand-edited backup) must not turn into NaN/undefined
                     // on screen — every field always keeps a safe numeric default.
@@ -8609,7 +8633,10 @@
                     }
                     if (!confirm(t('health_import_confirm') || 'הייבוא יחליף את כל הנתונים הקיימים. להמשיך?')) return;
                     if (data.userProfile) userProfile = data.userProfile;
-                    if (data.userSchedule) userSchedule = data.userSchedule;
+                    // Merge, not replace: an older save/backup missing `times`
+                    // (added after `days`) would otherwise leave userSchedule.times
+                    // undefined and crash showDashboard() on `.times[i]`.
+                    if (data.userSchedule) userSchedule = { days: [2, 4], times: {}, ...data.userSchedule };
                     if (data.userStats) userStats = { streak: 0, workouts: 0, avgScore: 0, totalHours: 0, ...data.userStats };
                     if (data.userLevel) userLevel = data.userLevel;
                     if (data.userScore) userScore = data.userScore;
