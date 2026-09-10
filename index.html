@@ -7516,8 +7516,12 @@
                     saveToStorage();
                     // Growth-first: never blocks the result itself — shown a
                     // moment after the user has actually seen their score, and
-                    // only on their first-ever completed workout.
-                    setTimeout(maybeShowFirstWorkoutPaywall, 1400);
+                    // only on their first-ever completed workout. Delayed past
+                    // the 3s auto-dismiss of the toast(s) checkAchievements()
+                    // just fired (e.g. "New Achievement: First Workout!", which
+                    // unlocks on this exact first workout) so the paywall never
+                    // visually collides with an achievement toast still on screen.
+                    setTimeout(maybeShowFirstWorkoutPaywall, 3300);
                 }
                 value.textContent = current;
                 circle.style.setProperty('--score-deg', (current / 100 * 360) + 'deg');
