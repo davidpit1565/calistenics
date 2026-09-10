@@ -438,11 +438,53 @@
             font-weight: 900; 
             color: var(--accent); 
         }
-        .ai-feedback { 
-            font-size: 1.1rem; 
-            line-height: 1.6; 
-            color: var(--text-secondary); 
-            margin-top: 16px; 
+        .ai-feedback {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            color: var(--text-secondary);
+            margin-top: 16px;
+        }
+
+        /* ==================== AI COACH CHAT ==================== */
+        .coach-chat-card {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            margin-bottom: 16px;
+            overflow: hidden;
+            text-align: start;
+        }
+        .coach-chat-toggle {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 16px 20px;
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .coach-chat-icon { color: var(--accent); flex-shrink: 0; display: flex; }
+        .coach-chat-icon .icon-svg { width: 20px; height: 20px; }
+        .coach-chat-body { padding: 0 16px 16px; }
+        .coach-chat-messages { display: flex; flex-direction: column; gap: 10px; max-height: 280px; overflow-y: auto; margin-bottom: 12px; }
+        .coach-chat-msg { padding: 10px 14px; border-radius: 14px; font-size: 0.9rem; line-height: 1.5; max-width: 85%; }
+        .coach-chat-msg.user { background: var(--accent); color: #fff; align-self: flex-end; border-end-end-radius: 4px; }
+        .coach-chat-msg.assistant { background: var(--bg-card); border: 1px solid var(--border); align-self: flex-start; border-start-start-radius: 4px; }
+        .coach-chat-input-row { display: flex; gap: 8px; }
+        .coach-chat-input-row input {
+            flex: 1;
+            padding: 12px 14px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.9rem;
         }
 
         /* ==================== STATS ==================== */
@@ -1782,6 +1824,22 @@
                         <div id="score-breakdown"></div>
                     </div>
                 </div>
+
+                <!-- AI COACH CHAT — ask follow-up questions about this specific result -->
+                <div class="coach-chat-card">
+                    <button class="coach-chat-toggle" id="coach-chat-toggle" onclick="toggleCoachChat()" aria-expanded="false" aria-controls="coach-chat-body">
+                        <span class="coach-chat-icon"><svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></span>
+                        <span data-i18n="ask_coach_title">שאל את המאמן על הציון שלך</span>
+                    </button>
+                    <div id="coach-chat-body" class="coach-chat-body" style="display:none;">
+                        <div id="coach-chat-messages" class="coach-chat-messages"></div>
+                        <div class="coach-chat-input-row">
+                            <input type="text" id="coach-chat-input" data-i18n-placeholder="ask_coach_placeholder" placeholder="למשל: תסביר לי יותר על טווח התנועה" onkeydown="if(event.key==='Enter'){sendCoachMessage();}">
+                            <button class="btn btn-primary btn-sm" style="width:auto; margin-top:0;" onclick="sendCoachMessage()" data-i18n="send">שלח</button>
+                        </div>
+                    </div>
+                </div>
+
                 <button class="btn btn-primary" onclick="showDashboard()" data-i18n="next_workout_btn">המשך לאימון הבא</button>
             </div>
         </div>
@@ -2636,6 +2694,11 @@
                 start_recording: "התחל הקלטה",
                 analyzing: "מנתח את הסרטון שלך...",
                 score_breakdown: "פירוח הציון",
+                ask_coach_title: "שאל את המאמן על הציון שלך",
+                ask_coach_placeholder: "למשל: תסביר לי יותר על טווח התנועה",
+                send: "שלח",
+                coach_intro_message: "שאל אותי כל דבר על התוצאה הזו — למשל \"למה טווח התנועה שלי היה נמוך?\"",
+                coach_unavailable: "הצ'אט עם המאמן ה-AI עדיין לא מוגדר.",
                 next_workout_btn: "המשך לאימון הבא",
                 nav_home: "בית",
                 nav_videos: "סרטונים",
@@ -3230,6 +3293,11 @@
                 start_recording: "Start Recording",
                 analyzing: "Analyzing your video...",
                 score_breakdown: "Score Breakdown",
+                ask_coach_title: "Ask the Coach About Your Score",
+                ask_coach_placeholder: "e.g. Explain more about my range of motion",
+                send: "Send",
+                coach_intro_message: "Ask me anything about this result — like \"why was my range of motion low?\"",
+                coach_unavailable: "The AI coach chat isn't set up yet.",
                 next_workout_btn: "Continue to Next Workout",
                 nav_home: "Home",
                 nav_videos: "Videos",
@@ -3824,6 +3892,11 @@
                 start_recording: "Start Opname",
                 analyzing: "Jouw video analyseren...",
                 score_breakdown: "Score Uitsplitsing",
+                ask_coach_title: "Vraag het de Coach over je Score",
+                ask_coach_placeholder: "bijv. Leg meer uit over mijn bewegingsbereik",
+                send: "Verstuur",
+                coach_intro_message: "Vraag me gerust iets over dit resultaat — zoals \"waarom was mijn bewegingsbereik laag?\"",
+                coach_unavailable: "De AI-coachchat is nog niet ingesteld.",
                 next_workout_btn: "Ga door naar Volgende Training",
                 nav_home: "Start",
                 nav_videos: "Video's",
@@ -4418,6 +4491,11 @@
                 start_recording: "Iniciar Grabación",
                 analyzing: "Analizando tu video...",
                 score_breakdown: "Desglose de Puntuación",
+                ask_coach_title: "Pregúntale al Entrenador sobre tu Puntuación",
+                ask_coach_placeholder: "ej. Explica más sobre mi rango de movimiento",
+                send: "Enviar",
+                coach_intro_message: "Pregúntame lo que quieras sobre este resultado — como \"¿por qué mi rango de movimiento fue bajo?\"",
+                coach_unavailable: "El chat con el entrenador AI aún no está configurado.",
                 next_workout_btn: "Continuar al Siguiente Entreno",
                 nav_home: "Inicio",
                 nav_videos: "Videos",
@@ -6117,6 +6195,18 @@
                         : '';
                     breakdown.innerHTML = repsLine + `<div style="display: flex; justify-content: space-between; margin-bottom: 8px;"><span>${t('technique') || 'טכניקה'}</span><span style="color: var(--accent);">${result.technique}%</span></div><div style="display: flex; justify-content: space-between; margin-bottom: 8px;"><span>${t('range_of_motion') || 'טווח תנועה'}</span><span style="color: var(--accent);">${result.range}%</span></div><div style="display: flex; justify-content: space-between; margin-bottom: 8px;"><span>${t('control') || 'שליטה'}</span><span style="color: var(--accent);">${result.control}%</span></div><div style="display: flex; justify-content: space-between;"><span>${t('tempo') || 'קצב'}</span><span style="color: var(--accent);">${result.tempo}%</span></div>`;
 
+                    // Context the AI coach chat below hands to the LLM so
+                    // follow-up questions ("explain the range of motion
+                    // point") are answered about THIS specific result.
+                    resetCoachChat();
+                    lastCoachContext = {
+                        exerciseName: getExerciseName(currentExercise),
+                        score, grade, reps: result.reps, isHold: result.isHold,
+                        technique: result.technique, range: result.range,
+                        control: result.control, tempo: result.tempo,
+                        feedbackKey: pickFeedbackKey(result)
+                    };
+
                     userStats.workouts++;
                     userStats.avgScore = Math.round((userStats.avgScore * (userStats.workouts - 1) + score) / userStats.workouts);
                     recordWorkoutForStreak();
@@ -6586,6 +6676,78 @@
                     el.textContent = err.message;
                     el.style.display = 'block';
                 });
+        }
+
+        // ==================== AI COACH CHAT ====================
+        // Lets the user ask follow-up questions about their own score
+        // ("explain the range of motion point") right where they got it.
+        // UI/plumbing only for now — askAICoach() is a placeholder until a
+        // real LLM API (provider + key) is wired in; see AI_COACH_SETUP.md.
+        // No cloud sync elsewhere in the app is affected by this — only the
+        // text of the question and this one result's score breakdown would
+        // ever be sent, never video or any other personal data.
+        const aiCoachConfig = { apiKey: null, endpoint: null };
+        let lastCoachContext = null;
+        let coachChatHistory = [];
+
+        function resetCoachChat() {
+            coachChatHistory = [];
+            const box = document.getElementById('coach-chat-messages');
+            if (box) box.innerHTML = '';
+            const body = document.getElementById('coach-chat-body');
+            const toggle = document.getElementById('coach-chat-toggle');
+            if (body) body.style.display = 'none';
+            if (toggle) toggle.setAttribute('aria-expanded', 'false');
+        }
+
+        function toggleCoachChat() {
+            const body = document.getElementById('coach-chat-body');
+            const toggle = document.getElementById('coach-chat-toggle');
+            const isOpen = body.style.display !== 'none';
+            body.style.display = isOpen ? 'none' : 'block';
+            toggle.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
+            if (!isOpen && coachChatHistory.length === 0) {
+                appendCoachMessage('assistant', t('coach_intro_message') || "Ask me anything about this result — like \"why was my range of motion low?\"");
+            }
+        }
+
+        function appendCoachMessage(role, text) {
+            coachChatHistory.push({ role, text });
+            const box = document.getElementById('coach-chat-messages');
+            const bubble = document.createElement('div');
+            bubble.className = `coach-chat-msg ${role}`;
+            bubble.textContent = text;
+            box.appendChild(bubble);
+            box.scrollTop = box.scrollHeight;
+        }
+
+        function sendCoachMessage() {
+            const input = document.getElementById('coach-chat-input');
+            const question = input.value.trim();
+            if (!question) return;
+            appendCoachMessage('user', question);
+            input.value = '';
+            askAICoach(question, lastCoachContext, coachChatHistory)
+                .then(answer => appendCoachMessage('assistant', answer))
+                .catch(() => appendCoachMessage('assistant', t('coach_unavailable') || "The AI coach chat isn't set up yet."));
+        }
+
+        // Placeholder — replace with a real call to an LLM API (Claude/GPT)
+        // once aiCoachConfig is filled in. Send `context` (the score
+        // breakdown) as system/context, `history` for conversation memory,
+        // and `question` as the user's new message.
+        async function askAICoach(question, context, history) {
+            if (!aiCoachConfig.apiKey || !aiCoachConfig.endpoint) {
+                return t('coach_unavailable') || "The AI coach chat isn't set up yet — an LLM API needs to be connected first.";
+            }
+            const response = await fetch(aiCoachConfig.endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${aiCoachConfig.apiKey}` },
+                body: JSON.stringify({ question, context, history })
+            });
+            if (!response.ok) throw new Error('AI coach request failed');
+            const data = await response.json();
+            return data.answer;
         }
 
         function afterAuthSuccess(identifier) {
