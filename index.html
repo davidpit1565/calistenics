@@ -6469,6 +6469,7 @@
             }
 
             bodyMetrics.push(metric);
+            bodyMetrics.sort((a, b) => new Date(a.date) - new Date(b.date));
             saveToStorage();
             addXP(10, 'metrics');
             showToast(t('measurement_saved') || '✅ המדידה נשמרה!');
@@ -7275,7 +7276,11 @@
                     if (data.userScore) userScore = data.userScore;
                     if (data.currentLang) currentLang = data.currentLang;
                     if (data.userXP) userXP = { level: 1, xp: 0, totalXP: 0, ...data.userXP };
-                    if (data.bodyMetrics) bodyMetrics = data.bodyMetrics.map(m => ({...m, date: new Date(m.date)}));
+                    // Sort chronologically: the history list and weight/body-fat charts
+                    // assume oldest-first order and only reverse it for display — a
+                    // hand-edited or merged backup file is not guaranteed to already
+                    // be stored in date order.
+                    if (data.bodyMetrics) bodyMetrics = data.bodyMetrics.map(m => ({...m, date: new Date(m.date)})).sort((a, b) => a.date - b.date);
                     if (data.nutritionLog) nutritionLog = data.nutritionLog.map(f => ({...f, date: new Date(f.date)}));
                     if (data.challengeHistory) challengeHistory = data.challengeHistory.map(c => ({...c, date: new Date(c.date)}));
                     if (data.raceHistory) raceHistory = data.raceHistory.map(r => ({...r, date: new Date(r.date)}));
@@ -7600,7 +7605,8 @@
                     version: 1,
                     userProfile, userSchedule, userStats, userLevel, userScore, userXP,
                     workoutHistory, bodyMetrics, nutritionLog, challengeHistory, raceHistory,
-                    journeyEvents, unlockedAchievements, waterLog, progressPhotos
+                    journeyEvents, unlockedAchievements, waterLog, progressPhotos,
+                    waterTargetOverride, favoriteMeals
                 };
                 const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
                 const url = URL.createObjectURL(blob);
@@ -7639,7 +7645,11 @@
                     if (data.userScore) userScore = data.userScore;
                     if (data.userXP) userXP = { level: 1, xp: 0, totalXP: 0, ...data.userXP };
                     if (data.workoutHistory) workoutHistory = data.workoutHistory.map(w => ({...w, date: new Date(w.date)}));
-                    if (data.bodyMetrics) bodyMetrics = data.bodyMetrics.map(m => ({...m, date: new Date(m.date)}));
+                    // Sort chronologically: the history list and weight/body-fat charts
+                    // assume oldest-first order and only reverse it for display — a
+                    // hand-edited or merged backup file is not guaranteed to already
+                    // be stored in date order.
+                    if (data.bodyMetrics) bodyMetrics = data.bodyMetrics.map(m => ({...m, date: new Date(m.date)})).sort((a, b) => a.date - b.date);
                     if (data.nutritionLog) nutritionLog = data.nutritionLog.map(f => ({...f, date: new Date(f.date)}));
                     if (data.challengeHistory) challengeHistory = data.challengeHistory.map(c => ({...c, date: new Date(c.date)}));
                     if (data.raceHistory) raceHistory = data.raceHistory.map(r => ({...r, date: new Date(r.date)}));
@@ -7647,6 +7657,8 @@
                     if (data.unlockedAchievements) unlockedAchievements = data.unlockedAchievements;
                     if (data.waterLog) waterLog = data.waterLog;
                     if (data.progressPhotos) progressPhotos = data.progressPhotos;
+                    if (data.waterTargetOverride) waterTargetOverride = data.waterTargetOverride;
+                    if (data.favoriteMeals) favoriteMeals = data.favoriteMeals;
                     saveToStorage();
                     showToast(t('health_imported') || 'הנתונים יובאו בהצלחה');
                     showBottomNav(true);
