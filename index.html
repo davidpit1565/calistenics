@@ -3346,6 +3346,7 @@
                 feedback_low_tempo_reps: "שמור על קצב אחיד יותר בין החזרות.",
                 feedback_low_tempo_hold: "ניכרת ירידה ביציבות לקראת סוף ההחזקה — נסה לשמור על העוצמה עד הסוף.",
                 feedback_low_technique: "שפר את זווית המצלמה והתאורה כדי שנוכל לזהות את התנועה בצורה טובה יותר.",
+                feedback_no_exercise_detected: "לא זיהינו ביצוע של {exercise} בהקלטה — ודא שאתה נראה במלואך במצלמה ושאתה בפועל מבצע את התרגיל.",
                 technique: "טכניקה",
                 range_of_motion: "טווח תנועה",
                 control: "שליטה",
@@ -4013,6 +4014,7 @@
                 feedback_low_tempo_reps: "Keep a more even pace between reps.",
                 feedback_low_tempo_hold: "Your stability dropped toward the end — try to hold strong until the finish.",
                 feedback_low_technique: "Improve the camera angle and lighting so we can track your movement better.",
+                feedback_no_exercise_detected: "We didn't detect {exercise} movement in the recording — make sure you're fully in frame and actually performing the exercise.",
                 technique: "Technique",
                 range_of_motion: "Range of Motion",
                 control: "Control",
@@ -4680,6 +4682,7 @@
                 feedback_low_tempo_reps: "Houd een gelijkmatiger tempo aan tussen herhalingen.",
                 feedback_low_tempo_hold: "Je stabiliteit nam af tegen het einde — probeer sterk te blijven tot het einde.",
                 feedback_low_technique: "Verbeter de camerahoek en verlichting zodat we je beweging beter kunnen volgen.",
+                feedback_no_exercise_detected: "We hebben geen {exercise}-beweging herkend in de opname — zorg dat je volledig in beeld bent en de oefening daadwerkelijk uitvoert.",
                 technique: "Techniek",
                 range_of_motion: "Bewegingsbereik",
                 control: "Controle",
@@ -5347,6 +5350,7 @@
                 feedback_low_tempo_reps: "Mantén un ritmo más uniforme entre repeticiones.",
                 feedback_low_tempo_hold: "Tu estabilidad bajó hacia el final — intenta mantenerte firme hasta el final.",
                 feedback_low_technique: "Mejora el ángulo de la cámara y la iluminación para poder rastrear mejor tu movimiento.",
+                feedback_no_exercise_detected: "No detectamos el movimiento de {exercise} en la grabación — asegúrate de estar completamente en cuadro y de realizar realmente el ejercicio.",
                 technique: "Técnica",
                 range_of_motion: "Rango de Movimiento",
                 control: "Control",
@@ -6292,6 +6296,29 @@
             'front_lever_tuck', 'planche_lean', 'handstand_hold', 'handstand_free',
             'front_lever', 'planche', 'human_flag'
         ]);
+        // Exercise-specific biomechanical categories: high-traffic movement patterns get a
+        // dedicated analyzer below (real joint-angle math for that movement), everything else
+        // falls back to the generic kinematic analysis. This is also what lets us tell "poor
+        // attempt" apart from "never attempted" — see analyzeKeypointSeries().
+        const PUSHUP_EXERCISES = new Set([
+            'pushups', 'diamond_pushups', 'pike_push', 'pike_pushups', 'archer_pushups',
+            'one_arm_pushup', 'handstand_pushups', 'incline_pushups'
+        ]);
+        const SQUAT_EXERCISES = new Set([
+            'bodyweight_squats', 'jump_squats', 'bulgarian_split_squat', 'pistol_squat'
+        ]);
+        const PULLUP_EXERCISES = new Set([
+            'pullups', 'chinups', 'wide_pullups', 'negative_pullups', 'australian_pull',
+            'australian_pulls', 'weighted_pullups', 'one_arm_pullup', 'muscleup', 'muscleup_prog'
+        ]);
+        const PLANK_EXERCISES = new Set(['plank', 'side_plank']);
+        function exerciseCategory(id) {
+            if (PUSHUP_EXERCISES.has(id)) return 'pushup';
+            if (SQUAT_EXERCISES.has(id)) return 'squat';
+            if (PULLUP_EXERCISES.has(id)) return 'pullup';
+            if (PLANK_EXERCISES.has(id)) return 'plank';
+            return 'generic';
+        }
         let poseDetector = null;
         let poseDetectorLoadFailed = false;
         let poseDetectorLoadingPromise = null;
@@ -7110,9 +7137,146 @@
 
         function clamp(n, lo, hi) { return Math.max(lo, Math.min(hi, n)); }
 
-        // Runs the full generic kinematic analysis on the collected keypoint time series and
-        // returns null if tracking confidence was too low to say anything honest about it.
-        function analyzeKeypointSeries(samples, isHold) {
+        // Horizontal-only sway of the hip midpoint, normalized by shoulder width — a length
+        // that stays essentially constant through a squat or pull-up rep regardless of depth,
+        // unlike torso or leg length which shrink/stretch as the body bends and would
+        // otherwise register the exercise's own motion as fake sway. Unlike computeJitter
+        // (which also counts vertical drift), this ignores the large, expected *vertical*
+        // body travel of a squat/pull-up rep and isolates real instability — swaying
+        // sideways / kipping / uneven weight distribution — which is what "control" should
+        // mean for these two families.
+        function computeLateralSway(samples) {
+            const hipX = [];
+            samples.forEach(s => {
+                const ls = kp(s.keypoints, 'left_shoulder'), rs = kp(s.keypoints, 'right_shoulder');
+                const lh = kp(s.keypoints, 'left_hip'), rh = kp(s.keypoints, 'right_hip');
+                if (!ls || !rs || !(lh || rh)) return;
+                const shoulderWidth = Math.hypot(ls.x - rs.x, ls.y - rs.y);
+                const hx = avg([lh, rh].filter(Boolean).map(p => p.x));
+                if (shoulderWidth > 5) hipX.push(hx / shoulderWidth);
+            });
+            if (hipX.length < 3) return null;
+            const medX = [...hipX].sort((a, b) => a - b)[Math.floor(hipX.length / 2)];
+            return avg(hipX.map(x => Math.abs(x - medX)));
+        }
+
+        // Elbow angle series (shoulder-elbow-wrist), averaged left/right per frame — the
+        // primary joint signal for push/pull rep movements (push-ups, pull-ups, dips, etc.).
+        function buildElbowSeries(samples) {
+            const series = [];
+            samples.forEach(s => {
+                const angles = [];
+                const la = jointAngle(kp(s.keypoints, 'left_shoulder'), kp(s.keypoints, 'left_elbow'), kp(s.keypoints, 'left_wrist'));
+                const ra = jointAngle(kp(s.keypoints, 'right_shoulder'), kp(s.keypoints, 'right_elbow'), kp(s.keypoints, 'right_wrist'));
+                if (la != null) angles.push(la);
+                if (ra != null) angles.push(ra);
+                if (angles.length) series.push({ t: s.t, v: avg(angles) });
+            });
+            return series;
+        }
+        // Knee angle series (hip-knee-ankle), averaged left/right per frame — the primary
+        // joint signal for squat-family movements.
+        function buildKneeSeries(samples) {
+            const series = [];
+            samples.forEach(s => {
+                const angles = [];
+                const la = jointAngle(kp(s.keypoints, 'left_hip'), kp(s.keypoints, 'left_knee'), kp(s.keypoints, 'left_ankle'));
+                const ra = jointAngle(kp(s.keypoints, 'right_hip'), kp(s.keypoints, 'right_knee'), kp(s.keypoints, 'right_ankle'));
+                if (la != null) angles.push(la);
+                if (ra != null) angles.push(ra);
+                if (angles.length) series.push({ t: s.t, v: avg(angles) });
+            });
+            return series;
+        }
+        // Hip alignment angle series (shoulder-hip-ankle), averaged left/right per frame — a
+        // straight body (~180deg) is the form target for push-ups and planks; sagging or
+        // piking hips pull this away from 180.
+        function buildHipAngleSeries(samples) {
+            const series = [];
+            samples.forEach(s => {
+                const angles = [];
+                const la = jointAngle(kp(s.keypoints, 'left_shoulder'), kp(s.keypoints, 'left_hip'), kp(s.keypoints, 'left_ankle'));
+                const ra = jointAngle(kp(s.keypoints, 'right_shoulder'), kp(s.keypoints, 'right_hip'), kp(s.keypoints, 'right_ankle'));
+                if (la != null) angles.push(la);
+                if (ra != null) angles.push(ra);
+                if (angles.length) series.push({ t: s.t, v: avg(angles) });
+            });
+            return series;
+        }
+        // Fraction of frames where the torso-to-legs body axis reads roughly horizontal vs
+        // roughly vertical in the image — this is what lets us tell "lying in a plank/push-up
+        // position" apart from "standing up" without any depth information: a body lying down
+        // spans mostly along x, a body standing up spans mostly along y.
+        function bodyAxisFractions(samples) {
+            let horizontal = 0, vertical = 0, counted = 0;
+            samples.forEach(s => {
+                const ls = kp(s.keypoints, 'left_shoulder'), rs = kp(s.keypoints, 'right_shoulder');
+                const lh = kp(s.keypoints, 'left_hip'), rh = kp(s.keypoints, 'right_hip');
+                const la = kp(s.keypoints, 'left_ankle'), ra = kp(s.keypoints, 'right_ankle');
+                if (!ls && !rs) return;
+                const shoulderMidX = avg([ls, rs].filter(Boolean).map(p => p.x));
+                const shoulderMidY = avg([ls, rs].filter(Boolean).map(p => p.y));
+                let endX, endY;
+                if (la || ra) {
+                    endX = avg([la, ra].filter(Boolean).map(p => p.x));
+                    endY = avg([la, ra].filter(Boolean).map(p => p.y));
+                } else if (lh || rh) {
+                    endX = avg([lh, rh].filter(Boolean).map(p => p.x));
+                    endY = avg([lh, rh].filter(Boolean).map(p => p.y));
+                } else return;
+                const dx = endX - shoulderMidX, dy = endY - shoulderMidY;
+                if (Math.hypot(dx, dy) < 5) return;
+                counted++;
+                if (Math.abs(dx) > Math.abs(dy)) horizontal++; else vertical++;
+            });
+            if (!counted) return { horizontalFraction: 0, verticalFraction: 0 };
+            return { horizontalFraction: horizontal / counted, verticalFraction: vertical / counted };
+        }
+        // Fraction of frames where the wrists sit above the shoulders in the image (arms
+        // raised overhead) — used to confirm a hanging/pull-up posture as opposed to any
+        // other vertical-body movement.
+        function armsRaisedFraction(samples) {
+            let raised = 0, counted = 0;
+            samples.forEach(s => {
+                const ls = kp(s.keypoints, 'left_shoulder'), rs = kp(s.keypoints, 'right_shoulder');
+                const lw = kp(s.keypoints, 'left_wrist'), rw = kp(s.keypoints, 'right_wrist');
+                if (!(ls || rs) || !(lw || rw)) return;
+                const shoulderY = avg([ls, rs].filter(Boolean).map(p => p.y));
+                const wristY = avg([lw, rw].filter(Boolean).map(p => p.y));
+                counted++;
+                if (wristY < shoulderY) raised++; // smaller y = higher in the image
+            });
+            return counted ? raised / counted : 0;
+        }
+        // Average absolute deviation of an angle series from a target angle (degrees).
+        function avgDeviationFrom(series, target) {
+            if (!series.length) return null;
+            return avg(series.map(p => Math.abs(p.v - target)));
+        }
+        function repTempoConsistency(repTimestamps) {
+            if (!repTimestamps || repTimestamps.length < 2) return 1;
+            const durations = [];
+            for (let i = 1; i < repTimestamps.length; i++) durations.push(repTimestamps[i] - repTimestamps[i - 1]);
+            const meanDur = avg(durations);
+            return meanDur > 0 ? clamp(1 - (stdev(durations) / meanDur), 0, 1) : 1;
+        }
+
+        // Runs the full kinematic analysis on the collected keypoint time series and returns
+        // null if tracking confidence was too low to say anything honest about it. Dispatches
+        // to a per-exercise-family analyzer (real joint-angle biomechanics) when the selected
+        // exercise is one of the high-traffic families we specifically model; everything else
+        // falls back to the generic movement-agnostic analyzer.
+        //
+        // Every family analyzer below first checks whether the exercise's core movement
+        // pattern was actually detected at all (the right body orientation plus a minimal
+        // joint-angle oscillation). If it wasn't — e.g. the user stood still, danced, or
+        // walked off camera instead of performing the selected exercise — ALL four sub-scores
+        // are reported as a real 0 rather than falling back to a "tracking looked fine"
+        // baseline. This is the fix for the reported bug where standing/dancing in front of
+        // the camera during a push-up recording still scored ~68% on technique/control/tempo:
+        // those sub-scores used to be trust proxies for how well MoveNet could see a body,
+        // which is true regardless of what that body is doing.
+        function analyzeKeypointSeries(samples, isHold, exerciseId) {
             if (!samples.length) return null;
             const allScores = [];
             samples.forEach(s => s.keypoints.forEach(k => allScores.push(k.score)));
@@ -7122,18 +7286,9 @@
             if (avgConfidence < 0.35 || frameCoverage < 0.4) {
                 return { lowConfidence: true, avgConfidence };
             }
-
-            // Elbow angle series (shoulder-elbow-wrist), averaged left/right per frame — the
-            // primary generic signal for rep-based push/pull movements.
-            const elbowSeries = [];
-            samples.forEach(s => {
-                const angles = [];
-                const la = jointAngle(kp(s.keypoints, 'left_shoulder'), kp(s.keypoints, 'left_elbow'), kp(s.keypoints, 'left_wrist'));
-                const ra = jointAngle(kp(s.keypoints, 'right_shoulder'), kp(s.keypoints, 'right_elbow'), kp(s.keypoints, 'right_wrist'));
-                if (la != null) angles.push(la);
-                if (ra != null) angles.push(ra);
-                if (angles.length) elbowSeries.push({ t: s.t, v: avg(angles) });
-            });
+            // Generic tracking-quality proxy, reused as a minority component of technique in
+            // every family analyzer (a genuinely shaky feed should still ding the score a bit).
+            const trackingQuality = clamp(avgConfidence * 100 * 0.6 + frameCoverage * 100 * 0.4, 0, 100);
 
             const jitter = computeJitter(samples); // torso-length units; smaller = steadier
             const firstHalf = samples.slice(0, Math.floor(samples.length / 2));
@@ -7141,43 +7296,139 @@
             const jitterFirst = computeJitter(firstHalf);
             const jitterSecond = computeJitter(secondHalf);
             const fatigueRatio = (jitterFirst && jitterSecond && jitterFirst > 0.001) ? jitterSecond / jitterFirst : 1;
+            const controlFromJitter = jitter != null ? clamp(Math.round(100 - jitter * 500), 0, 100) : null;
+            const tempoFromFatigue = clamp(Math.round(100 - Math.max(0, fatigueRatio - 1) * 80), 0, 100);
 
-            let reps = 0, romDeg = 0, tempoConsistency = 1;
-            if (elbowSeries.length >= 6) {
-                const { reps: r, romDeg: rom, repTimestamps } = countCycles(elbowSeries);
-                reps = r; romDeg = rom;
-                if (repTimestamps && repTimestamps.length >= 2) {
-                    const durations = [];
-                    for (let i = 1; i < repTimestamps.length; i++) durations.push(repTimestamps[i] - repTimestamps[i - 1]);
-                    const meanDur = avg(durations);
-                    tempoConsistency = meanDur > 0 ? clamp(1 - (stdev(durations) / meanDur), 0, 1) : 1;
-                }
+            const category = exerciseCategory(exerciseId);
+            const noMovement = {
+                avgConfidence, technique: 0, range: 0, control: 0, tempo: 0, overall: 0,
+                reps: 0, romDeg: 0, isHold, lowConfidence: false, noMovementDetected: true
+            };
+
+            if (category === 'pushup') {
+                const elbowSeries = buildElbowSeries(samples);
+                const { horizontalFraction } = bodyAxisFractions(samples);
+                let reps = 0, romDeg = 0, repTimestamps = [];
+                if (elbowSeries.length >= 6) ({ reps, romDeg, repTimestamps } = countCycles(elbowSeries));
+                // Core pattern: lying in a roughly horizontal plank position for a meaningful
+                // share of the recording, AND the elbow actually bending/extending at all.
+                if (horizontalFraction < 0.35 || romDeg < 15) return noMovement;
+                const hipSeries = buildHipAngleSeries(samples);
+                const hipDeviation = avgDeviationFrom(hipSeries, 180); // 0 = ruler-straight body
+                const straightness = hipDeviation != null ? clamp(100 - hipDeviation * 2, 0, 100) : trackingQuality;
+                const technique = clamp(Math.round(straightness * 0.7 + trackingQuality * 0.3), 0, 100);
+                const range = clamp(Math.round((romDeg / 70) * 100), 0, 100);
+                const control = controlFromJitter != null ? controlFromJitter : technique;
+                const tempo = reps >= 2 ? clamp(Math.round(repTempoConsistency(repTimestamps) * 100), 0, 100) : control;
+                const overall = clamp(Math.round(technique * 0.3 + range * 0.25 + control * 0.25 + tempo * 0.2), 0, 100);
+                return { avgConfidence, technique, range, control, tempo, overall, reps, romDeg, isHold, lowConfidence: false, noMovementDetected: false };
             }
 
-            // ---- Combine real measurements into the four sub-scores + overall (0-100) ----
-            // technique: how cleanly/consistently MoveNet could track the body (a trust proxy —
-            //   full biomechanical form scoring is out of scope for on-device pose estimation).
-            const technique = clamp(Math.round(avgConfidence * 100 * 0.6 + frameCoverage * 100 * 0.4), 0, 100);
-            // range: for reps, actual elbow-angle amplitude vs a generic "full rep" reference of
-            //   70deg; for holds, inverted drift of the same angle (less drift = held position better).
+            if (category === 'squat') {
+                const kneeSeries = buildKneeSeries(samples);
+                const { verticalFraction } = bodyAxisFractions(samples);
+                let reps = 0, romDeg = 0, repTimestamps = [];
+                if (kneeSeries.length >= 6) ({ reps, romDeg, repTimestamps } = countCycles(kneeSeries));
+                // Core pattern: standing upright for most of the clip AND the knee angle
+                // actually cycling down and up at all (a squat-depth attempt of some kind).
+                if (verticalFraction < 0.3 || romDeg < 15) return noMovement;
+                // Torso lean: angle of the shoulder-hip line off vertical. A little forward
+                // lean is normal in a squat, but excessive lean is a real form flaw.
+                const leanDeviations = [];
+                samples.forEach(s => {
+                    const ls = kp(s.keypoints, 'left_shoulder'), rs = kp(s.keypoints, 'right_shoulder');
+                    const lh = kp(s.keypoints, 'left_hip'), rh = kp(s.keypoints, 'right_hip');
+                    if (!(ls || rs) || !(lh || rh)) return;
+                    const sx = avg([ls, rs].filter(Boolean).map(p => p.x)), sy = avg([ls, rs].filter(Boolean).map(p => p.y));
+                    const hx = avg([lh, rh].filter(Boolean).map(p => p.x)), hy = avg([lh, rh].filter(Boolean).map(p => p.y));
+                    const angleFromVertical = Math.atan2(Math.abs(hx - sx), Math.abs(hy - sy)) * 180 / Math.PI;
+                    leanDeviations.push(angleFromVertical);
+                });
+                const avgLean = leanDeviations.length ? avg(leanDeviations) : 0;
+                const uprightness = clamp(100 - Math.max(0, avgLean - 15) * 2.5, 0, 100); // tolerate ~15deg lean
+                const technique = clamp(Math.round(uprightness * 0.6 + trackingQuality * 0.4), 0, 100);
+                const range = clamp(Math.round((romDeg / 80) * 100), 0, 100);
+                // A squat's large vertical hip travel is the exercise itself, not instability —
+                // use lateral-only sway here instead of the generic (2D) jitter metric, which
+                // would otherwise misread every real rep as "no control".
+                const lateralSway = computeLateralSway(samples);
+                const control = lateralSway != null ? clamp(Math.round(100 - lateralSway * 500), 0, 100) : technique;
+                const tempo = reps >= 2 ? clamp(Math.round(repTempoConsistency(repTimestamps) * 100), 0, 100) : control;
+                const overall = clamp(Math.round(technique * 0.3 + range * 0.25 + control * 0.25 + tempo * 0.2), 0, 100);
+                return { avgConfidence, technique, range, control, tempo, overall, reps, romDeg, isHold, lowConfidence: false, noMovementDetected: false };
+            }
+
+            if (category === 'pullup') {
+                const elbowSeries = buildElbowSeries(samples);
+                const { verticalFraction } = bodyAxisFractions(samples);
+                const armsUp = armsRaisedFraction(samples);
+                let reps = 0, romDeg = 0, repTimestamps = [];
+                if (elbowSeries.length >= 6) ({ reps, romDeg, repTimestamps } = countCycles(elbowSeries));
+                // Core pattern: hanging with arms overhead for a meaningful share of the
+                // recording, AND the elbow actually bending/extending at all.
+                if ((verticalFraction < 0.3 && armsUp < 0.25) || romDeg < 15) return noMovement;
+                const range = clamp(Math.round((romDeg / 80) * 100), 0, 100);
+                // No reliable "chin over bar" signal without knowing where the bar is, so
+                // technique blends tracking quality with how close the achieved ROM got to a
+                // full rep (a partial-range pull-up is a real, common technique flaw).
+                const technique = clamp(Math.round(trackingQuality * 0.5 + Math.min(romDeg / 80, 1) * 100 * 0.5), 0, 100);
+                // Body swinging/kipping shows up as lateral hip sway; like squats, the large
+                // *vertical* body travel of a real pull-up is the exercise itself, not
+                // instability, so we use the same lateral-only sway metric here instead of
+                // the generic (2D) jitter, which would otherwise misread every real rep as
+                // "no control".
+                const lateralSway = computeLateralSway(samples);
+                const control = lateralSway != null ? clamp(Math.round(100 - lateralSway * 500), 0, 100) : technique;
+                const tempo = reps >= 2 ? clamp(Math.round(repTempoConsistency(repTimestamps) * 100), 0, 100) : control;
+                const overall = clamp(Math.round(technique * 0.3 + range * 0.25 + control * 0.25 + tempo * 0.2), 0, 100);
+                return { avgConfidence, technique, range, control, tempo, overall, reps, romDeg, isHold, lowConfidence: false, noMovementDetected: false };
+            }
+
+            if (category === 'plank') {
+                const { horizontalFraction } = bodyAxisFractions(samples);
+                // Core pattern: a plank is a sustained hold, so most of the recording (not
+                // just a slice of it) should read as a horizontal body position.
+                if (horizontalFraction < 0.5) return noMovement;
+                const hipSeries = buildHipAngleSeries(samples);
+                const hipDeviation = avgDeviationFrom(hipSeries, 180);
+                const straightness = hipDeviation != null ? clamp(100 - hipDeviation * 2, 0, 100) : trackingQuality;
+                const hipVals = hipSeries.map(p => p.v).sort((a, b) => a - b);
+                const hipDrift = hipVals.length >= 2 ? hipVals[hipVals.length - 1] - hipVals[0] : 0;
+                const technique = clamp(Math.round(straightness * 0.7 + trackingQuality * 0.3), 0, 100);
+                const range = clamp(Math.round(100 - hipDrift * 1.5), 0, 100);
+                const control = controlFromJitter != null ? controlFromJitter : technique;
+                const tempo = tempoFromFatigue;
+                const overall = clamp(Math.round(technique * 0.3 + range * 0.25 + control * 0.25 + tempo * 0.2), 0, 100);
+                return { avgConfidence, technique, range, control, tempo, overall, reps: 0, romDeg: hipDrift, isHold, lowConfidence: false, noMovementDetected: false };
+            }
+
+            // ---- Generic fallback for exercises without a dedicated analyzer ----
+            const elbowSeries = buildElbowSeries(samples);
+            let reps = 0, romDeg = 0, tempoConsistency = 1, repTimestamps = [];
+            if (elbowSeries.length >= 6) {
+                ({ reps, romDeg, repTimestamps } = countCycles(elbowSeries));
+                tempoConsistency = repTempoConsistency(repTimestamps);
+            }
+            // Same non-attempt gate as the specific analyzers, generalized: for rep-based
+            // exercises, a near-zero elbow-angle oscillation means the target movement never
+            // happened, regardless of what family it belongs to. Holds without a dedicated
+            // analyzer keep the previous behavior (no reliable generic "is this the right
+            // pose" signal exists without knowing the target position).
+            if (!isHold && romDeg < 15) return noMovement;
+
             const idealRomDeg = 70;
             const range = isHold
                 ? clamp(Math.round(100 - (romDeg || 0) * 1.5), 0, 100)
                 : clamp(Math.round((romDeg / idealRomDeg) * 100), 0, 100);
-            // control: inverse of body-position jitter (variance of shoulder/hip position,
-            //   normalized by torso length so it works regardless of distance from camera).
-            const control = jitter != null ? clamp(Math.round(100 - jitter * 500), 0, 100) : technique;
-            // tempo: for reps, consistency of the time between reps; for holds, whether
-            //   stability held up over the duration (fatigue = jitter rising in the 2nd half).
-            const tempo = isHold
-                ? clamp(Math.round(100 - Math.max(0, fatigueRatio - 1) * 80), 0, 100)
-                : (reps >= 2 ? clamp(Math.round(tempoConsistency * 100), 0, 100) : control);
-
+            const control = controlFromJitter != null ? controlFromJitter : trackingQuality;
+            const tempo = isHold ? tempoFromFatigue : (reps >= 2 ? clamp(Math.round(tempoConsistency * 100), 0, 100) : control);
+            const technique = clamp(Math.round(trackingQuality), 0, 100);
             const overall = clamp(Math.round(technique * 0.3 + range * 0.25 + control * 0.25 + tempo * 0.2), 0, 100);
-            return { avgConfidence, technique, range, control, tempo, overall, reps, romDeg, isHold, lowConfidence: false };
+            return { avgConfidence, technique, range, control, tempo, overall, reps, romDeg, isHold, lowConfidence: false, noMovementDetected: false };
         }
 
         function pickFeedbackKey(result) {
+            if (result.noMovementDetected) return 'feedback_no_exercise_detected';
             const scores = { technique: result.technique, range: result.range, control: result.control, tempo: result.tempo };
             const weakest = Object.keys(scores).reduce((a, b) => scores[a] <= scores[b] ? a : b);
             if (weakest === 'technique') return 'feedback_low_technique';
@@ -7206,7 +7457,7 @@
             }
 
             const isHold = currentExercise && HOLD_EXERCISES.has(currentExercise.id);
-            const result = analyzeKeypointSeries(poseSamples, !!isHold);
+            const result = analyzeKeypointSeries(poseSamples, !!isHold, currentExercise && currentExercise.id);
 
             if (!result || result.lowConfidence) {
                 gradeEl.textContent = '';
@@ -7227,7 +7478,8 @@
                     clearInterval(interval);
                     gradeEl.textContent = `${t('grade') || 'ציון'}: ${grade}`;
                     gradeEl.style.color = score >= 80 ? 'var(--success)' : score >= 60 ? 'var(--warning)' : 'var(--accent)';
-                    feedback.textContent = t(pickFeedbackKey(result)) || (t('feedback_good') || 'טוב מאוד! המשך להתאמן על הטכניקה.');
+                    const feedbackText = t(pickFeedbackKey(result)) || (t('feedback_good') || 'טוב מאוד! המשך להתאמן על הטכניקה.');
+                    feedback.textContent = feedbackText.replace('{exercise}', getExerciseName(currentExercise));
                     const repsLine = (!result.isHold && result.reps > 0)
                         ? `<div style="display: flex; justify-content: space-between; margin-bottom: 8px;"><span>${t('reps_detected') || 'חזרות שזוהו'}</span><span style="color: var(--accent);">${result.reps}</span></div>`
                         : '';
