@@ -532,6 +532,14 @@
             margin-bottom: 12px; 
         }
         .workout-day-title { font-weight: 700; font-size: 1.1rem; }
+        .workout-day-rest-compact {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 20px;
+            border-right-color: var(--text-secondary);
+        }
+        .workout-day-rest-compact .workout-day-title { font-size: 0.95rem; font-weight: 500; color: var(--text-secondary); }
         .workout-day-status { 
             padding: 4px 12px; 
             border-radius: 50px; 
@@ -1557,6 +1565,7 @@
             <div id="workout-plan"></div>
             <h3 style="margin: 24px 0 16px; font-size: 1.2rem;" data-i18n="your_exercises">התרגילים שלך</h3>
             <div id="exercises-list"></div>
+            <button class="btn btn-secondary" style="margin-top: 12px;" onclick="showVideos()" data-i18n="browse_all_exercises">עיין בכל התרגילים</button>
         </div>
 
         <!-- PROFILE -->
@@ -2541,6 +2550,7 @@
                 next_workout: "אימון הבא",
                 weekly_plan: "תוכנית השבוע",
                 your_exercises: "התרגילים שלך",
+                browse_all_exercises: "עיין בכל התרגילים",
                 statistics: "סטטיסטיקות",
                 personal_details: "פרטים אישיים",
                 name: "שם",
@@ -3161,6 +3171,7 @@
                 next_workout: "Next Workout",
                 weekly_plan: "Weekly Plan",
                 your_exercises: "Your Exercises",
+                browse_all_exercises: "Browse All Exercises",
                 statistics: "Statistics",
                 personal_details: "Personal Details",
                 name: "Name",
@@ -3781,6 +3792,7 @@
                 next_workout: "Volgende Training",
                 weekly_plan: "Wekelijks Plan",
                 your_exercises: "Jouw Oefeningen",
+                browse_all_exercises: "Bekijk Alle Oefeningen",
                 statistics: "Statistieken",
                 personal_details: "Persoonlijke Gegevens",
                 name: "Naam",
@@ -4401,6 +4413,7 @@
                 next_workout: "Siguiente Entreno",
                 weekly_plan: "Plan Semanal",
                 your_exercises: "Tus Ejercicios",
+                browse_all_exercises: "Ver Todos los Ejercicios",
                 statistics: "Estadísticas",
                 personal_details: "Detalles Personales",
                 name: "Nombre",
@@ -5829,8 +5842,11 @@
                 const dayDiv = document.createElement('div');
                 dayDiv.className = 'workout-day';
                 if (!isWorkoutDay) {
-                    dayDiv.style.borderRightColor = 'var(--text-secondary)';
-                    dayDiv.innerHTML = `<div class="workout-day-header"><div class="workout-day-title">${dayNames[i]} — ${t('rest_day')}</div><div class="workout-day-status status-rest">${t('rest_day')}</div></div><div style="color: var(--text-secondary);">${t('rest_day_desc')}</div>`;
+                    // Compact single-line row — a full card repeating "Rest day —
+                    // your body recovers..." six times in a row read as broken/
+                    // redundant, not restful.
+                    dayDiv.className = 'workout-day workout-day-rest-compact';
+                    dayDiv.innerHTML = `<div class="workout-day-title">${dayNames[i]}</div><div class="workout-day-status status-rest">${t('rest_day')}</div>`;
                 } else {
                     const time = userSchedule.times[i] || '18:00';
                     const dayExercises = injuryToday ? easyExercises.slice(0, 3) : exercises.slice(0, 4);
@@ -5840,18 +5856,19 @@
                 planDiv.appendChild(dayDiv);
             }
 
+            // Only the user's current level here — the full 30-exercise library
+            // across every level (including ones still locked) already lives in
+            // the Videos tab; repeating all of it on the dashboard was dead
+            // weight, not "your exercises."
             const exList = document.getElementById('exercises-list');
             exList.innerHTML = '';
-            for (let lvl = 1; lvl <= 5; lvl++) {
-                const isUnlocked = lvl <= userLevel;
-                exercisesByLevel[lvl].forEach(ex => {
-                    const card = document.createElement('div');
-                    card.className = `exercise-card ${!isUnlocked ? 'locked' : ''}`;
-                    card.innerHTML = `<div class="exercise-name">${getExerciseName(ex)}</div><div class="exercise-desc">${getExerciseDesc(ex)}</div><span class="exercise-difficulty" style="background: ${getDifficultyColor(ex.difficulty)}20; color: ${getDifficultyColor(ex.difficulty)};">${t('difficulty_' + ex.difficulty) || ex.difficulty}</span>`;
-                    if (isUnlocked) card.onclick = () => openExercise(ex);
-                    exList.appendChild(card);
-                });
-            }
+            exercisesByLevel[userLevel].forEach(ex => {
+                const card = document.createElement('div');
+                card.className = 'exercise-card';
+                card.innerHTML = `<div class="exercise-name">${getExerciseName(ex)}</div><div class="exercise-desc">${getExerciseDesc(ex)}</div><span class="exercise-difficulty" style="background: ${getDifficultyColor(ex.difficulty)}20; color: ${getDifficultyColor(ex.difficulty)};">${t('difficulty_' + ex.difficulty) || ex.difficulty}</span>`;
+                card.onclick = () => openExercise(ex);
+                exList.appendChild(card);
+            });
             showScreen('screen-dashboard');
         }
 
