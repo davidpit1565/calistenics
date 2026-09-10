@@ -2955,6 +2955,10 @@
                 "advanced_skills": "כישורים מתקדמים",
                 "pro_level": "רמת מקצוען",
                 suggestion_deload: "התאמנת בעצימות גבוהה 3 שבועות ברצף. שבוע קל יותר (הפגה) עוזר למנוע פציעות ושחיקה.",
+                suggestion_deload_decline: "הציונים שלך ירדו משמעותית לאחרונה לעומת הקודמים — סימן אפשרי לעומס יתר. שבוע קל יותר (הפגה) עוזר לגוף להתאושש.",
+                deload_active_note: "🔄 שבוע הפגה פעיל — תרגילים קלים יותר ויעדים מופחתים עד שהביצועים יתאוששו",
+                level_up_auto_toast: "🎉 עלית רמה!",
+                level_up_auto_desc: "ביצועים עקביים וחזקים העלו אותך לרמה",
                 got_it: "הבנתי",
                 health_csv_title: "📄 ייצוא אימונים ל-Apple Health / Samsung Health",
                 health_csv_desc: "קובץ CSV עם כל האימונים שלך (תאריך, משך, קלוריות משוערות) — הפורמט היחיד שבאמת אפשר להעביר משם לפלטפורמות הבריאות, לפי ההנחיות למטה.",
@@ -3623,6 +3627,10 @@
                 "advanced_skills": "Advanced skills",
                 "pro_level": "Pro level",
                 suggestion_deload: "You've trained at high intensity for 3 straight weeks. An easier (deload) week helps prevent injury and burnout.",
+                suggestion_deload_decline: "Your scores have dropped significantly compared to your earlier sessions — a possible sign of overload. An easier (deload) week helps your body recover.",
+                deload_active_note: "🔄 Deload week active — easier exercises and reduced targets until performance recovers",
+                level_up_auto_toast: "🎉 Level up!",
+                level_up_auto_desc: "Consistent, strong performance moved you up to level",
                 got_it: "Got it",
                 health_csv_title: "📄 Export Workouts to Apple Health / Samsung Health",
                 health_csv_desc: "A CSV file with all your workouts (date, duration, estimated calories) — the only format that can realistically be moved into these health platforms, per the guide below.",
@@ -4291,6 +4299,10 @@
                 "advanced_skills": "Geavanceerde vaardigheden",
                 "pro_level": "Pro-niveau",
                 suggestion_deload: "Je hebt 3 weken op rij intensief getraind. Een lichtere week (deload) helpt blessures en burn-out te voorkomen.",
+                suggestion_deload_decline: "Je scores zijn de laatste tijd flink gedaald ten opzichte van eerdere sessies — mogelijk een teken van overbelasting. Een lichtere week (deload) helpt je lichaam herstellen.",
+                deload_active_note: "🔄 Deload-week actief — lichtere oefeningen en verlaagde doelen totdat je prestaties herstellen",
+                level_up_auto_toast: "🎉 Level omhoog!",
+                level_up_auto_desc: "Consistente, sterke prestaties brachten je naar niveau",
                 got_it: "Begrepen",
                 health_csv_title: "📄 Trainingen exporteren naar Apple Health / Samsung Health",
                 health_csv_desc: "Een CSV-bestand met al je trainingen (datum, duur, geschatte calorieën) — het enige formaat dat realistisch naar deze gezondheidsplatforms kan worden overgezet, volgens de handleiding hieronder.",
@@ -4959,6 +4971,10 @@
                 "advanced_skills": "Habilidades avanzadas",
                 "pro_level": "Nivel profesional",
                 suggestion_deload: "Has entrenado con alta intensidad durante 3 semanas seguidas. Una semana más ligera ayuda a prevenir lesiones y agotamiento.",
+                suggestion_deload_decline: "Tus puntuaciones han bajado significativamente en comparación con sesiones anteriores — una posible señal de sobrecarga. Una semana más ligera (deload) ayuda a tu cuerpo a recuperarse.",
+                deload_active_note: "🔄 Semana de descarga activa — ejercicios más fáciles y objetivos reducidos hasta que el rendimiento se recupere",
+                level_up_auto_toast: "🎉 ¡Subiste de nivel!",
+                level_up_auto_desc: "Un rendimiento constante y sólido te llevó al nivel",
                 got_it: "Entendido",
                 health_csv_title: "📄 Exportar Entrenamientos a Apple Health / Samsung Health",
                 health_csv_desc: "Un archivo CSV con todos tus entrenamientos (fecha, duración, calorías estimadas) — el único formato que realmente se puede trasladar a estas plataformas de salud, según la guía de abajo.",
@@ -6280,6 +6296,10 @@
         let lastFreezeGrantDate = null; // grants +1 freeze every 30 days, capped at 2
         let workoutHistory = [], journeyEvents = [], unlockedAchievements = [];
         let currentExercise = null, stream = null, isRecording = false;
+        // Guards the performance-based auto level-up (see maybeLevelUpFromPerformance):
+        // the workouts count at the last auto level-up, so the same streak of good
+        // scores can't level the user up more than once before fresh data comes in.
+        let performanceLevelUpWorkoutCount = 0;
 
         // ==================== POSE DETECTION (real, on-device) ====================
         // Exercise families drive how the generic kinematic analysis below interprets the
@@ -6767,6 +6787,7 @@
             ];
             const exercises = exercisesByLevel[userLevel];
             const injuryToday = isInjuryModeActiveToday();
+            const deloadActive = isDeloadWeekActive();
             const easyExercises = exercisesByLevel[1].filter(ex => ex.difficulty === 'easy' || ex.difficulty === 'medium');
             for (let i = 0; i < 7; i++) {
                 const isWorkoutDay = userSchedule.days.includes(i);
@@ -6780,9 +6801,14 @@
                     dayDiv.innerHTML = `<div class="workout-day-title">${dayNames[i]}</div><div class="workout-day-status status-rest">${t('rest_day')}</div>`;
                 } else {
                     const time = userSchedule.times[i] || '18:00';
-                    const dayExercises = injuryToday ? easyExercises.slice(0, 3) : exercises.slice(0, 4);
+                    // Injury mode (one day) and an active deload week (see
+                    // isDeloadWeekActive) both fall back to the easier level-1
+                    // exercise pool — a deload is a real periodized rest phase,
+                    // not just injury-avoidance, so it gets the same treatment.
+                    const dayExercises = (injuryToday || deloadActive) ? easyExercises.slice(0, 3) : exercises.slice(0, 4);
                     const injuryNote = injuryToday ? `<div style="color: var(--warning); font-size:0.78rem; margin-top:6px;">${t('injury_mode_note') || 'מצב פציעה פעיל — תרגילים קלים יותר להיום'}</div>` : '';
-                    dayDiv.innerHTML = `<div class="workout-day-header"><div class="workout-day-title">${dayNames[i]} — ${time}</div><div class="workout-day-status status-pending">${t('pending') || 'ממתין'}</div></div><div class="workout-exercises">${dayExercises.map(ex => `<div class="workout-exercise" onclick="openExerciseById('${ex.id}')"><div class="workout-exercise-check">○</div><div>${getExerciseName(ex)}</div><span style="margin-right: auto; color: var(--accent); display:inline-flex;"><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M10 8.5v7l6-3.5z"/></svg></span></div>`).join('')}</div>${injuryNote}`;
+                    const deloadNote = (!injuryToday && deloadActive) ? `<div style="color: var(--warning); font-size:0.78rem; margin-top:6px;">${t('deload_active_note') || '🔄 שבוע הפגה פעיל — תרגילים קלים יותר ויעדים מופחתים עד שהביצועים יתאוששו'}</div>` : '';
+                    dayDiv.innerHTML = `<div class="workout-day-header"><div class="workout-day-title">${dayNames[i]} — ${time}</div><div class="workout-day-status status-pending">${t('pending') || 'ממתין'}</div></div><div class="workout-exercises">${dayExercises.map(ex => { const tgt = computeExerciseTarget(ex); return `<div class="workout-exercise" onclick="openExerciseById('${ex.id}')"><div class="workout-exercise-check">○</div><div>${getExerciseName(ex)}</div><span style="margin-left:6px; color: var(--text-secondary); font-size:0.78rem;" dir="ltr">${tgt.value}${tgt.unit === 's' ? 's' : ''}</span><span style="margin-right: auto; color: var(--accent); display:inline-flex;"><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M10 8.5v7l6-3.5z"/></svg></span></div>`; }).join('')}</div>${injuryNote}${deloadNote}`;
                 }
                 planDiv.appendChild(dayDiv);
             }
@@ -6817,11 +6843,12 @@
             const todayIndex = new Date().getDay();
             const isWorkoutDay = userSchedule.days.includes(todayIndex);
             const injuryToday = isInjuryModeActiveToday();
+            const deloadActive = isDeloadWeekActive();
             const exercises = exercisesByLevel[userLevel];
             const easyExercises = exercisesByLevel[1].filter(ex => ex.difficulty === 'easy' || ex.difficulty === 'medium');
 
             if (isWorkoutDay) {
-                const dayExercises = injuryToday ? easyExercises.slice(0, 3) : exercises.slice(0, 4);
+                const dayExercises = (injuryToday || deloadActive) ? easyExercises.slice(0, 3) : exercises.slice(0, 4);
                 const firstExercise = dayExercises[0];
                 card.classList.remove('rest-day');
                 labelEl.textContent = t('today_workout_label') || "Today's Workout";
@@ -6873,24 +6900,59 @@
         let lastExportDate = null; // persisted; shown as a passive backup status in Settings
         let lastBackupReminderDismissedDate = null; // kept for backward-compat with existing saved data; no longer drives any UI
 
-        function checkDeloadNeeded() {
-            if (lastDeloadCheckDate) {
-                const daysSinceCheck = (new Date() - new Date(lastDeloadCheckDate)) / 86400000;
-                if (daysSinceCheck < 14) return false;
-            }
+        // Real deload signal, computed fresh from workoutHistory every time it's
+        // asked for (no throttling here — that's only appropriate for the banner
+        // nag below, not for whether the plan itself should actually go lighter).
+        // Two independent triggers, either one is enough:
+        //  - frequencyOverload: 3 straight rolling weeks of 4+ sessions — sustained
+        //    high training frequency with no built-in rest, a classic block-
+        //    periodization deload trigger (Bompa & Haff, "Periodization").
+        //  - performanceDecline: the last 5 AI-scored sessions average 15+ points
+        //    below the 5 before them — a performance decrement despite continued
+        //    training is the hallmark sign of functional overreaching (Kreher &
+        //    Schwartz, 2012, "Overtraining Syndrome"), independent of how often
+        //    the user trained.
+        function computeDeloadSignal() {
             const now = new Date();
             const cutoff = new Date(now); cutoff.setDate(cutoff.getDate() - 21);
             const recentWorkouts = workoutHistory.filter(w => new Date(w.date) >= cutoff);
-            if (recentWorkouts.length === 0) return false;
-
-            // bucket into 3 rolling weeks; a "heavy" week is 4+ sessions
             const weekCounts = [0, 0, 0];
             recentWorkouts.forEach(w => {
                 const daysAgo = Math.floor((now - new Date(w.date)) / 86400000);
                 const weekIdx = Math.min(2, Math.floor(daysAgo / 7));
                 weekCounts[weekIdx]++;
             });
-            return weekCounts.every(c => c >= 4);
+            const frequencyOverload = recentWorkouts.length > 0 && weekCounts.every(c => c >= 4);
+
+            // workoutHistory is newest-first (unshift) — the most recent 5 sessions
+            // are slice(0, 5), the 5 immediately before them are slice(5, 10).
+            const scored = workoutHistory.filter(w => typeof w.score === 'number');
+            const recent5 = scored.slice(0, 5);
+            const prior5 = scored.slice(5, 10);
+            let performanceDecline = false;
+            if (recent5.length >= 3 && prior5.length >= 3) {
+                const recentAvg = recent5.reduce((s, w) => s + w.score, 0) / recent5.length;
+                const priorAvg = prior5.reduce((s, w) => s + w.score, 0) / prior5.length;
+                performanceDecline = (priorAvg - recentAvg) >= 15;
+            }
+            return { frequencyOverload, performanceDecline, needed: frequencyOverload || performanceDecline };
+        }
+
+        // Whether the plan should actually go lighter right now (real-time, not
+        // throttled) — used to swap today's exercises for easier ones and to cut
+        // the adaptive per-exercise target, the same way isInjuryModeActiveToday()
+        // does for a one-day injury, but driven by the signal above instead of a
+        // manual toggle.
+        function isDeloadWeekActive() {
+            return computeDeloadSignal().needed;
+        }
+
+        function checkDeloadNeeded() {
+            if (lastDeloadCheckDate) {
+                const daysSinceCheck = (new Date() - new Date(lastDeloadCheckDate)) / 86400000;
+                if (daysSinceCheck < 14) return false;
+            }
+            return computeDeloadSignal().needed;
         }
 
         function dismissDeloadSuggestion() {
@@ -6908,14 +6970,19 @@
             // Deload check takes priority — it's about injury-prevention/fatigue,
             // not performance quality, so it's checked before the score-based signals.
             if (checkDeloadNeeded()) {
-                textEl.textContent = t('suggestion_deload') || 'התאמנת בעצימות גבוהה 3 שבועות ברצף. שבוע קל יותר (הפגה) עוזר למנוע פציעות ושחיקה.';
+                const signal = computeDeloadSignal();
+                textEl.textContent = (signal.performanceDecline && !signal.frequencyOverload)
+                    ? (t('suggestion_deload_decline') || 'הציונים שלך ירדו משמעותית לאחרונה לעומת הקודמים — סימן אפשרי לעומס יתר. שבוע קל יותר (הפגה) עוזר לגוף להתאושש.')
+                    : (t('suggestion_deload') || 'התאמנת בעצימות גבוהה 3 שבועות ברצף. שבוע קל יותר (הפגה) עוזר למנוע פציעות ושחיקה.');
                 card.style.display = 'block';
                 if (dismissBtn) dismissBtn.style.display = 'inline-block';
                 return;
             }
             if (dismissBtn) dismissBtn.style.display = 'none';
 
-            const recent = workoutHistory.slice(-5);
+            // workoutHistory is newest-first — the most recent 5 sessions are the
+            // first 5 elements, not the last 5.
+            const recent = workoutHistory.slice(0, 5);
             if (recent.length < 3) { card.style.display = 'none'; return; }
             const avg = recent.reduce((s, w) => s + (w.score || 0), 0) / recent.length;
             let msg = null;
@@ -6926,6 +6993,80 @@
             }
             if (msg) { textEl.textContent = msg; card.style.display = 'block'; }
             else { card.style.display = 'none'; }
+        }
+
+        // ==================== WEEKLY PLAN PROGRESSION (adaptive per-exercise target) ====================
+        // Applies the exact same principle as computeAdaptiveTarget() (RPE-autoregulation /
+        // the "10% rule") to the ongoing weekly plan, not just the daily challenge: a
+        // difficulty-tiered baseline target for THIS exercise is nudged by the user's own
+        // last 3 AI-scored sessions of it — up 10% after 3 strong sessions in a row, down
+        // 10% after 3 weak ones, otherwise held at baseline — clamped to the same
+        // +-15% band computeAdaptiveTarget uses, so an exercise the user keeps nailing
+        // keeps getting harder instead of showing the same static target forever, and one
+        // they're struggling with eases off instead of staying frustratingly fixed.
+        // During an active deload week (see isDeloadWeekActive) the target is cut instead,
+        // per standard deload guidance of roughly 40-60% volume reduction (Helms et al.,
+        // "The Muscle and Strength Pyramid") — deload always overrides the performance nudge.
+        const EXERCISE_BASE_REPS_BY_DIFFICULTY = { easy: 12, medium: 10, hard: 8, very_hard: 5, pro: 3 };
+        const EXERCISE_BASE_HOLD_SECONDS_BY_DIFFICULTY = { easy: 20, medium: 25, hard: 30, very_hard: 35, pro: 40 };
+        const DELOAD_TARGET_FACTOR = 0.6; // ~40% volume cut during an active deload week
+
+        function computeExerciseTarget(ex) {
+            const isHold = HOLD_EXERCISES.has(ex.id);
+            const base = isHold
+                ? (EXERCISE_BASE_HOLD_SECONDS_BY_DIFFICULTY[ex.difficulty] || 25)
+                : (EXERCISE_BASE_REPS_BY_DIFFICULTY[ex.difficulty] || 10);
+
+            if (isDeloadWeekActive()) {
+                return { value: Math.max(1, Math.round(base * DELOAD_TARGET_FACTOR)), unit: isHold ? 's' : 'reps', trend: 'deload' };
+            }
+
+            // Most recent 3 AI-scored sessions of THIS exact exercise, oldest→newest
+            // (workoutHistory is newest-first, so reverse the first 3 entries).
+            const history = workoutHistory.filter(w => w.exerciseId === ex.id && typeof w.score === 'number').slice(0, 3).reverse();
+            let factor = 1.0;
+            if (history.length === 3 && history.every(w => w.score >= 80)) factor = 1.10;
+            else if (history.length === 3 && history.every(w => w.score <= 45)) factor = 0.90;
+
+            const target = Math.round(base * factor);
+            const ceiling = Math.round(base * 1.15);
+            const floor = Math.round(base * 0.85);
+            const clamped = Math.min(ceiling, Math.max(floor, target));
+            return { value: clamped, unit: isHold ? 's' : 'reps', trend: factor > 1 ? 'up' : (factor < 1 ? 'down' : 'flat') };
+        }
+
+        // ==================== PERFORMANCE-BASED LEVEL-UP ====================
+        // The quiz sets the initial level, but it's a one-time snapshot. This rule lets
+        // ongoing real performance justify a level-up too, reusing the exact same signals
+        // already tracked for other adaptive features (no new heuristic invented):
+        //   - the last 5 AI-scored workouts average 85+ (sustained strength, not a fluke), AND
+        //   - the last 4 daily-challenge outcomes were all successes (mastery at THIS level's
+        //     difficulty ceiling — computeAdaptiveTarget already caps the daily challenge at
+        //     +15% of the level's base, so consistently beating it means the current level's
+        //     ceiling is no longer challenging).
+        // Guarded so it can only fire again after 5 more workouts have been logged, so one
+        // hot streak can't cascade into leveling up repeatedly on the same data.
+        function maybeLevelUpFromPerformance() {
+            if (userLevel >= 5) return false;
+            if (isDeloadWeekActive()) return false; // don't reward a deliberate deload week
+            if (userStats.workouts - performanceLevelUpWorkoutCount < 5) return false;
+
+            const recentScores = workoutHistory.filter(w => typeof w.score === 'number').slice(0, 5);
+            if (recentScores.length < 5) return false;
+            const avg = recentScores.reduce((s, w) => s + w.score, 0) / recentScores.length;
+            if (avg < 85) return false;
+
+            const recentChallenges = challengeOutcomeHistory.slice(-4);
+            if (recentChallenges.length < 4 || !recentChallenges.every(o => o.success)) return false;
+
+            userLevel++;
+            performanceLevelUpWorkoutCount = userStats.workouts;
+            const lvl = levels[userLevel];
+            const lvlName = t(lvl.name) || lvl.name;
+            addJourneyEvent(t('level_up_auto_toast') || '🎉 עלית רמה!',
+                `${t('level_up_auto_desc') || 'ביצועים עקביים וחזקים העלו אותך לרמה'} ${userLevel}: ${lvlName}`, 'levelup');
+            showToast(`${t('level_up_auto_toast') || '🎉 עלית רמה!'} ${userLevel}: ${lvlName}`);
+            return true;
         }
 
         function getExerciseDesc(ex) {
@@ -7513,6 +7654,7 @@
                     addJourneyEvent(`${t('workout_completed') || 'השלמת אימון'}: ${getExerciseName(currentExercise)}`,
                         `${t('got_score') || 'קיבלת ציון'} ${score} — ${t('keep_going') || 'המשך כך!'}`, 'workout');
                     checkAchievements();
+                    maybeLevelUpFromPerformance();
                     saveToStorage();
                     // Growth-first: never blocks the result itself — shown a
                     // moment after the user has actually seen their score, and
@@ -8048,6 +8190,7 @@
             const finished = advanceProgramProgress(def);
             checkAchievements();
             addXP(40, 'program_day');
+            maybeLevelUpFromPerformance();
             saveToStorage();
 
             showToast(finished ? (t('program_completed_toast') || 'Program completed!') : (t('program_day_completed_toast') || 'Day complete!'));
@@ -9258,6 +9401,7 @@
             challengeCompletedToday = true;
             updateChallengeButton();
             renderChallengeHistory();
+            maybeLevelUpFromPerformance();
             saveToStorage();
             showToast(`🎉 ${getMotivationalVoice('challenge_complete')}! +${currentChallenge.xp} XP`);
         }
@@ -9818,7 +9962,7 @@
                 lastWorkoutDate, streakFreezesAvailable, lastFreezeGrantDate, lastDeloadCheckDate,
                 lastExportDate, lastBackupReminderDismissedDate,
                 challengeAccepted, challengeCompletedToday, userPrograms,
-                premiumStatus, lastPaywallDismissedAt
+                premiumStatus, lastPaywallDismissedAt, performanceLevelUpWorkoutCount
             };
             localStorage.setItem('masa_data', JSON.stringify(data));
         }
@@ -9882,6 +10026,7 @@
                     // to isPremium:true from a missing/partial field.
                     if (data.premiumStatus) premiumStatus = { isPremium: false, trialActive: false, trialEndsAt: null, source: null, ...data.premiumStatus };
                     if (data.lastPaywallDismissedAt) lastPaywallDismissedAt = data.lastPaywallDismissedAt;
+                    if (data.performanceLevelUpWorkoutCount !== undefined) performanceLevelUpWorkoutCount = data.performanceLevelUpWorkoutCount;
                     return true;
                 }
             } catch (e) {
@@ -10332,7 +10477,7 @@
                     nutritionAdjustmentOffset, lastAdaptiveCheckDate, lastWorkoutDate,
                     streakFreezesAvailable, lastFreezeGrantDate, lastDeloadCheckDate,
                     challengeAccepted, challengeCompletedToday,
-                    premiumStatus, lastPaywallDismissedAt
+                    premiumStatus, lastPaywallDismissedAt, performanceLevelUpWorkoutCount
                 };
                 const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
                 const url = URL.createObjectURL(blob);
@@ -10406,6 +10551,7 @@
                     // to isPremium:true from a missing/partial field.
                     if (data.premiumStatus) premiumStatus = { isPremium: false, trialActive: false, trialEndsAt: null, source: null, ...data.premiumStatus };
                     if (data.lastPaywallDismissedAt) lastPaywallDismissedAt = data.lastPaywallDismissedAt;
+                    if (data.performanceLevelUpWorkoutCount !== undefined) performanceLevelUpWorkoutCount = data.performanceLevelUpWorkoutCount;
                     saveToStorage();
                     showToast(t('health_imported') || 'הנתונים יובאו בהצלחה');
                     showBottomNav(true);
