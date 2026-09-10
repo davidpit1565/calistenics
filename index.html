@@ -1233,7 +1233,7 @@
     </div>
 
     <!-- THEME TOGGLE -->
-    <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" aria-label="Toggle dark/light theme"></button>
+    <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" data-i18n-aria="theme_toggle_label" aria-label="החלף מצב כהה/בהיר"></button>
 
     <div class="bg-particles" id="particles"></div>
 
@@ -1382,13 +1382,13 @@
             <div class="card">
                 <h3 style="margin-bottom: 16px;" data-i18n="choose_workout_days">בחר ימי אימון</h3>
                 <div class="day-selector" id="schedule-days">
-                    <div class="day-chip" data-day="0" onclick="toggleDay(this)" data-i18n="day_sunday">ראשון</div>
-                    <div class="day-chip" data-day="1" onclick="toggleDay(this)" data-i18n="day_monday">שני</div>
-                    <div class="day-chip selected" data-day="2" onclick="toggleDay(this)" data-i18n="day_tuesday">שלישי</div>
-                    <div class="day-chip" data-day="3" onclick="toggleDay(this)" data-i18n="day_wednesday">רביעי</div>
-                    <div class="day-chip selected" data-day="4" onclick="toggleDay(this)" data-i18n="day_thursday">חמישי</div>
-                    <div class="day-chip" data-day="5" onclick="toggleDay(this)" data-i18n="day_friday">שישי</div>
-                    <div class="day-chip rest" data-day="6" onclick="toggleDay(this)" data-i18n="day_saturday">שבת</div>
+                    <div class="day-chip" data-day="0" role="button" tabindex="0" aria-pressed="false" onclick="toggleDay(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleDay(this);}" data-i18n="day_sunday">ראשון</div>
+                    <div class="day-chip" data-day="1" role="button" tabindex="0" aria-pressed="false" onclick="toggleDay(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleDay(this);}" data-i18n="day_monday">שני</div>
+                    <div class="day-chip selected" data-day="2" role="button" tabindex="0" aria-pressed="true" onclick="toggleDay(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleDay(this);}" data-i18n="day_tuesday">שלישי</div>
+                    <div class="day-chip" data-day="3" role="button" tabindex="0" aria-pressed="false" onclick="toggleDay(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleDay(this);}" data-i18n="day_wednesday">רביעי</div>
+                    <div class="day-chip selected" data-day="4" role="button" tabindex="0" aria-pressed="true" onclick="toggleDay(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleDay(this);}" data-i18n="day_thursday">חמישי</div>
+                    <div class="day-chip" data-day="5" role="button" tabindex="0" aria-pressed="false" onclick="toggleDay(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleDay(this);}" data-i18n="day_friday">שישי</div>
+                    <div class="day-chip rest" data-day="6" role="button" tabindex="0" aria-pressed="false" onclick="toggleDay(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleDay(this);}" data-i18n="day_saturday">שבת</div>
                 </div>
                 <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 20px;" data-i18n="schedule_tip">טיפ: 3-4 אימונים בשבוע הם אידיאליים למתחילים</p>
             </div>
@@ -1934,9 +1934,12 @@
             <div class="challenge-card" id="challenge-card">
                 <div class="challenge-title" id="challenge-name">טוען אתגר...</div>
                 <div class="challenge-desc" id="challenge-desc">...</div>
-                <div class="challenge-reward"><span style="display:inline-flex;vertical-align:-3px;margin-inline-end:6px;color:#ffd700;"><svg class="icon-svg" style="width:17px;height:17px;" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="5.5"/><path d="M9 13 7 21l5-2.5L17 21l-2-8"/></svg></span>+<span id="challenge-xp">50</span> XP</div>
+                <!-- dir="ltr" on the reward text: without it the bidi algorithm on an RTL
+                     page visually reverses "+50 XP" to "XP 50 +" (same class of bug already
+                     fixed for the XP bar text). -->
+                <div class="challenge-reward"><span style="display:inline-flex;vertical-align:-3px;margin-inline-end:6px;color:#ffd700;"><svg class="icon-svg" style="width:17px;height:17px;" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="5.5"/><path d="M9 13 7 21l5-2.5L17 21l-2-8"/></svg></span><span dir="ltr">+<span id="challenge-xp">50</span> XP</span></div>
                 <div class="challenge-timer" id="challenge-timer">23:59:59</div>
-                <button class="btn btn-primary" id="challenge-btn" onclick="acceptChallenge()" data-i18n="accept_challenge">קבל את האתגר!</button>
+                <button class="btn btn-primary" id="challenge-btn" onclick="acceptChallenge()">קבל את האתגר!</button>
                 <button class="btn btn-secondary btn-sm" id="race-this-challenge-btn" style="margin-top:10px; display:none;" onclick="raceThisChallenge()" data-i18n="race_this_challenge">⏱️ התחרה נגד השעון על האתגר הזה</button>
             </div>
 
@@ -1974,7 +1977,12 @@
                 <div class="race-timer" id="race-timer">00:00.00</div>
                 <div style="text-align: center; margin-bottom: 16px;">
                     <div style="font-size: 1.2rem;" id="race-exercise-name">שכיבות שמיכה</div>
-                    <div style="color: var(--text-secondary);" data-i18n="race_target">מטרה: <span id="race-target-display">20</span> חזרות</div>
+                    <!-- Split across 3 nodes (not one data-i18n on the wrapper) on purpose:
+                         the generic translator does el.innerHTML = translation, which used
+                         to blow away the nested #race-target-display span on every language
+                         load/switch — leaving the element permanently missing from the DOM
+                         and crashing startRace() the moment it tried to update it. -->
+                    <div style="color: var(--text-secondary);"><span data-i18n="race_target">מטרה</span>: <span id="race-target-display">20</span> <span data-i18n="race_target_reps">חזרות</span></div>
                 </div>
                 <div class="race-controls">
                     <button class="btn btn-success" onclick="startRace()" data-i18n="start_race">התחל!</button>
@@ -2503,6 +2511,7 @@
                 goal: "מטרה",
                 tips: "טיפים",
                 exercise_info_label: "מטרה וטיפים",
+                theme_toggle_label: "החלף מצב כהה/בהיר",
                 close: "סגור",
                 start_this_exercise: "התחל תרגיל זה",
                 back_to_dashboard: "חזרה",
@@ -2733,6 +2742,8 @@
                 accept_challenge: "קבל את האתגר!",
                 challenge_accepted: "האתגר התקבל!",
                 challenge_in_progress: "בתקדמות...",
+                complete_challenge_btn: "סמן כהושלם",
+                challenge_completed_today_btn: "הושלם היום ✓",
                 challenge_completed: "האתגר הושלם",
                 challenge_history: "היסטוריית אתגרים",
                 no_challenges: "עדיין לא השלמת אתגרים",
@@ -2756,6 +2767,7 @@
                 choose_race_exercise: "בחר תרגיל למירוץ",
                 target_reps: "מטרת חזרות",
                 race_target: "מטרה",
+                race_target_reps: "חזרות",
                 start_race: "התחל!",
                 stop_race: "עצור",
                 race_complete: "המירוץ הסתיים!",
@@ -3066,6 +3078,7 @@
                 goal: "Goal",
                 tips: "Tips",
                 exercise_info_label: "Goal & Tips",
+                theme_toggle_label: "Toggle dark/light theme",
                 close: "Close",
                 start_this_exercise: "Start This Exercise",
                 back_to_dashboard: "Back",
@@ -3296,6 +3309,8 @@
                 accept_challenge: "Accept Challenge!",
                 challenge_accepted: "Challenge accepted!",
                 challenge_in_progress: "In progress...",
+                complete_challenge_btn: "Mark as Complete",
+                challenge_completed_today_btn: "Completed Today ✓",
                 challenge_completed: "Challenge completed",
                 challenge_history: "Challenge History",
                 no_challenges: "No challenges completed yet",
@@ -3319,6 +3334,7 @@
                 choose_race_exercise: "Choose Exercise for Race",
                 target_reps: "Target Reps",
                 race_target: "Target",
+                race_target_reps: "reps",
                 start_race: "Start!",
                 stop_race: "Stop",
                 race_complete: "Race Complete!",
@@ -3629,6 +3645,7 @@
                 goal: "Doel",
                 tips: "Tips",
                 exercise_info_label: "Doel & Tips",
+                theme_toggle_label: "Wissel donker/licht thema",
                 close: "Sluiten",
                 start_this_exercise: "Start Deze Oefening",
                 back_to_dashboard: "Terug",
@@ -3859,6 +3876,8 @@
                 accept_challenge: "Uitdaging Accepteren!",
                 challenge_accepted: "Uitdaging geaccepteerd!",
                 challenge_in_progress: "Bezig...",
+                complete_challenge_btn: "Markeer als voltooid",
+                challenge_completed_today_btn: "Vandaag voltooid ✓",
                 challenge_completed: "Uitdaging voltooid",
                 challenge_history: "Uitdagingsgeschiedenis",
                 no_challenges: "Nog geen uitdagingen voltooid",
@@ -3882,6 +3901,7 @@
                 choose_race_exercise: "Kies Oefening voor Race",
                 target_reps: "Doel Herhalingen",
                 race_target: "Doel",
+                race_target_reps: "herhalingen",
                 start_race: "Start!",
                 stop_race: "Stop",
                 race_complete: "Race Voltooid!",
@@ -4192,6 +4212,7 @@
                 goal: "Objetivo",
                 tips: "Consejos",
                 exercise_info_label: "Objetivo y Consejos",
+                theme_toggle_label: "Cambiar tema oscuro/claro",
                 close: "Cerrar",
                 start_this_exercise: "Iniciar Este Ejercicio",
                 back_to_dashboard: "Atrás",
@@ -4422,6 +4443,8 @@
                 accept_challenge: "¡Aceptar Desafío!",
                 challenge_accepted: "¡Desafío aceptado!",
                 challenge_in_progress: "En progreso...",
+                complete_challenge_btn: "Marcar como completado",
+                challenge_completed_today_btn: "Completado hoy ✓",
                 challenge_completed: "Desafío completado",
                 challenge_history: "Historial de Desafíos",
                 no_challenges: "Aún no has completado desafíos",
@@ -4445,6 +4468,7 @@
                 choose_race_exercise: "Elige Ejercicio para la Carrera",
                 target_reps: "Repeticiones Objetivo",
                 race_target: "Objetivo",
+                race_target_reps: "repeticiones",
                 start_race: "¡Empezar!",
                 stop_race: "Parar",
                 race_complete: "¡Carrera Completada!",
@@ -4589,6 +4613,10 @@
             if (document.getElementById('screen-achievements').classList.contains('active')) showAchievements();
             if (document.getElementById('screen-videos').classList.contains('active')) showVideos();
             if (document.getElementById('screen-schedule').classList.contains('active')) renderScheduleTimes();
+            // Not driven by data-i18n: its text reflects a 3-state accept/complete/done
+            // flow, so it must be re-set from the new language rather than blindly
+            // overwritten to its "accept" label regardless of current state.
+            if (document.getElementById('screen-challenge').classList.contains('active')) { updateChallengeButton(); renderChallengeHistory(); }
         }
 
         // ==================== THEME ====================
@@ -5274,8 +5302,9 @@
         function toggleDay(el) {
             el.classList.toggle('selected');
             const day = parseInt(el.dataset.day);
-            if (el.classList.contains('selected')) { 
-                if (!userSchedule.days.includes(day)) userSchedule.days.push(day); 
+            el.setAttribute('aria-pressed', el.classList.contains('selected') ? 'true' : 'false');
+            if (el.classList.contains('selected')) {
+                if (!userSchedule.days.includes(day)) userSchedule.days.push(day);
             }
             else { 
                 userSchedule.days = userSchedule.days.filter(d => d !== day); 
@@ -6230,13 +6259,19 @@
         function addXP(amount, reason) {
             userXP.xp += amount;
             userXP.totalXP += amount;
-            const nextLevelXP = getXPForNextLevel();
 
-            if (userXP.xp >= nextLevelXP) {
+            // A while loop, not a single if: a big-enough award (e.g. a race + a
+            // challenge completing back to back) can cross more than one level
+            // threshold at once. A single if only ever advanced one level and left
+            // the leftover xp sitting above the next threshold, stuck until another
+            // addXP() call happened to push it over again.
+            let nextLevelXP = getXPForNextLevel();
+            while (userXP.xp >= nextLevelXP) {
                 userXP.xp -= nextLevelXP;
                 userXP.level++;
                 showToast(`🎉 ${t('level_up') || 'עלית רמה'}! ${t('level') || 'רמה'} ${userXP.level}`);
                 addJourneyEvent(`${t('level_up') || 'עלית רמה'}!`, `${t('reached_level') || 'הגעת לרמה'} ${userXP.level}`);
+                nextLevelXP = getXPForNextLevel();
             }
 
             saveToStorage();
@@ -6856,6 +6891,7 @@
 
         let currentChallenge = null;
         let challengeAccepted = false;
+        let challengeCompletedToday = false;
         let challengeHistory = [];
 
         function generateDailyChallenge() {
@@ -6869,7 +6905,31 @@
                 currentChallenge = challenges[Math.floor(Math.random() * challenges.length)];
                 localStorage.setItem('masa_challenge_date', today);
                 localStorage.setItem('masa_challenge', JSON.stringify(currentChallenge));
+                // A new day's challenge always starts fresh, even if yesterday's was
+                // accepted/completed — those flags are per-challenge, not permanent.
                 challengeAccepted = false;
+                challengeCompletedToday = false;
+            }
+        }
+
+        // Reflects the persisted accept/complete state onto the challenge button —
+        // called on every render so a reload mid-day doesn't let the same challenge
+        // be accepted or completed more than once (see acceptChallenge/completeChallenge).
+        function updateChallengeButton() {
+            const btn = document.getElementById('challenge-btn');
+            if (!btn) return;
+            if (challengeCompletedToday) {
+                btn.textContent = t('challenge_completed_today_btn') || 'הושלם היום ✓';
+                btn.disabled = true;
+                btn.onclick = null;
+            } else if (challengeAccepted) {
+                btn.textContent = t('complete_challenge_btn') || 'סמן כהושלם';
+                btn.disabled = false;
+                btn.onclick = completeChallenge;
+            } else {
+                btn.textContent = t('accept_challenge') || 'קבל את האתגר!';
+                btn.disabled = false;
+                btn.onclick = acceptChallenge;
             }
         }
 
@@ -6891,18 +6951,25 @@
         }
 
         function acceptChallenge() {
+            // Guard: without this, reloading mid-day (challengeAccepted lived only in
+            // memory before) re-rendered an enabled "Accept" button and let the same
+            // challenge be accepted — and its +10 XP farmed — over and over.
+            if (challengeAccepted || challengeCompletedToday) return;
             challengeAccepted = true;
             showToast(t('challenge_accepted') || '🔥 האתגר התקבל!');
-            document.getElementById('challenge-btn').textContent = t('challenge_in_progress') || 'בתקדמות...';
-            document.getElementById('challenge-btn').disabled = true;
             addXP(10, 'challenge_accept');
+            updateChallengeButton();
+            saveToStorage();
         }
 
         function completeChallenge() {
-            if (!challengeAccepted || !currentChallenge) return;
+            if (!challengeAccepted || challengeCompletedToday || !currentChallenge) return;
             addXP(currentChallenge.xp, 'challenge_complete');
             challengeHistory.push({ date: new Date(), challenge: currentChallenge.name, xp: currentChallenge.xp });
             challengeAccepted = false;
+            challengeCompletedToday = true;
+            updateChallengeButton();
+            renderChallengeHistory();
             saveToStorage();
             showToast(`🎉 ${t('challenge_completed') || 'האתגר הושלם'}! +${currentChallenge.xp} XP`);
         }
@@ -6911,6 +6978,7 @@
         let raceTimer = null;
         let raceStartTime = null;
         let raceElapsed = 0;
+        let lastRaceScore = 0;
         let raceHistory = [];
 
         function showRace() {
@@ -6960,13 +7028,19 @@
 
             document.getElementById('race-final-time').textContent = timeStr;
 
-            // Score based on time
-            const secondsTotal = raceElapsed / 1000;
+            // Score based on time. Stored in lastRaceScore so saveRaceResult() records
+            // the exact number shown here instead of recomputing it with a different
+            // (and, for fast times, badly wrong — it could exceed 100) formula.
+            lastRaceScore = computeRaceScore(raceElapsed / 1000);
+
+            document.getElementById('race-score-text').textContent = `${t('race_score') || 'ציון'}: ${lastRaceScore}`;
+        }
+
+        function computeRaceScore(secondsTotal) {
             let score = 100;
             if (secondsTotal > 30) score = Math.max(60, 100 - (secondsTotal - 30) * 0.5);
             if (secondsTotal > 120) score = Math.max(40, 80 - (secondsTotal - 120) * 0.2);
-
-            document.getElementById('race-score-text').textContent = `${t('race_score') || 'ציון'}: ${Math.round(score)}`;
+            return Math.round(score);
         }
 
         function saveRaceResult() {
@@ -6978,7 +7052,7 @@
                 exercise: exercise,
                 target: target,
                 time: raceElapsed,
-                score: Math.round(100 - (raceElapsed / 1000 - 30) * 0.5)
+                score: lastRaceScore
             });
 
             addXP(15, 'race');
@@ -7192,6 +7266,7 @@
                 }
             }
 
+            updateChallengeButton();
             updateChallengeTimer();
             renderChallengeHistory();
         }
@@ -7218,7 +7293,7 @@
 
             container.innerHTML = challengeHistory.slice().reverse().map(c => {
                 const d = new Date(c.date);
-                return `<div class="history-item"><div class="history-date"><div class="day">${d.getDate()}</div><div class="month">${d.toLocaleString(currentLang === 'he' ? 'he' : 'en', { month: 'short' })}</div></div><div class="history-details"><div class="history-title">${t(c.challenge) || c.challenge}</div></div><div class="history-score" style="color: #ffd700;">+${c.xp} XP</div></div>`;
+                return `<div class="history-item"><div class="history-date"><div class="day">${d.getDate()}</div><div class="month">${d.toLocaleString(currentLang === 'he' ? 'he' : 'en', { month: 'short' })}</div></div><div class="history-details"><div class="history-title">${t(c.challenge) || c.challenge}</div></div><div class="history-score" dir="ltr" style="color: #ffd700;">+${c.xp} XP</div></div>`;
             }).join('');
         }
 
@@ -7248,7 +7323,8 @@
                 waterLog, waterTargetOverride, progressPhotos, favoriteMeals,
                 nutritionAdjustmentOffset, lastAdaptiveCheckDate,
                 lastWorkoutDate, streakFreezesAvailable, lastFreezeGrantDate, lastDeloadCheckDate,
-                lastExportDate, lastBackupReminderDismissedDate
+                lastExportDate, lastBackupReminderDismissedDate,
+                challengeAccepted, challengeCompletedToday
             };
             localStorage.setItem('masa_data', JSON.stringify(data));
         }
@@ -7294,6 +7370,8 @@
                     if (data.lastDeloadCheckDate) lastDeloadCheckDate = data.lastDeloadCheckDate;
                     if (data.lastExportDate) lastExportDate = data.lastExportDate;
                     if (data.lastBackupReminderDismissedDate) lastBackupReminderDismissedDate = data.lastBackupReminderDismissedDate;
+                    if (data.challengeAccepted !== undefined) challengeAccepted = data.challengeAccepted;
+                    if (data.challengeCompletedToday !== undefined) challengeCompletedToday = data.challengeCompletedToday;
                     return true;
                 }
             } catch (e) {
@@ -7534,7 +7612,9 @@
             // reflect currently saved days on the chips
             document.querySelectorAll('#schedule-days .day-chip').forEach(chip => {
                 const day = parseInt(chip.dataset.day);
-                chip.classList.toggle('selected', userSchedule.days.includes(day));
+                const isSelected = userSchedule.days.includes(day);
+                chip.classList.toggle('selected', isSelected);
+                chip.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
             });
             renderScheduleTimes();
         }
