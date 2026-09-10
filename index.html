@@ -1067,6 +1067,12 @@
         .chart-canvas {
             max-height: 250px;
         }
+        .chart-empty-msg {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            padding: 40px 12px;
+        }
 
         /* ==================== BODY METRICS ==================== */
         .metric-input-group {
@@ -1698,8 +1704,8 @@
                 <button class="btn btn-secondary btn-sm" style="flex:1;" id="legal-tab-privacy" onclick="showLegalTab('privacy')" data-i18n="privacy_policy_title">מדיניות פרטיות</button>
                 <button class="btn btn-secondary btn-sm" style="flex:1;" id="legal-tab-terms" onclick="showLegalTab('terms')" data-i18n="terms_title">תנאי שימוש</button>
             </div>
-            <div class="card" id="legal-content-privacy" style="text-align:right; line-height:1.8; font-size:0.88rem; color:var(--text-secondary);"></div>
-            <div class="card" id="legal-content-terms" style="display:none; text-align:right; line-height:1.8; font-size:0.88rem; color:var(--text-secondary);"></div>
+            <div class="card" id="legal-content-privacy" style="text-align:start; line-height:1.8; font-size:0.88rem; color:var(--text-secondary);"></div>
+            <div class="card" id="legal-content-terms" style="display:none; text-align:start; line-height:1.8; font-size:0.88rem; color:var(--text-secondary);"></div>
         </div>
 
         <!-- HISTORY -->
@@ -1717,7 +1723,7 @@
                 <div class="header-icon"><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="19" r="2"/><circle cx="19" cy="5" r="2"/><path d="M6.5 17.5C9 14 8 9 12 9s2-5 5.5-5"/></svg></div><h1 class="logo" data-i18n="journey_title">המסע שלי</h1>
                 <p class="tagline" data-i18n="journey_subtitle">הדרך שעברת עד כאן</p>
             </div>
-            <div class="card" style="margin-bottom: 20px;">
+            <div class="card" style="margin-bottom: 20px;" id="journey-intro-card">
                 <div style="display: flex; align-items: center; gap: 16px;">
                     <div style="width:76px;height:76px;border-radius:20px;background:var(--bg-elevated);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;margin:0;color:var(--accent);"><svg class="icon-svg" style="width:29.700000000000003px;height:29.700000000000003px;" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="19" r="2"/><circle cx="19" cy="5" r="2"/><path d="M6.5 17.5C9 14 8 9 12 9s2-5 5.5-5"/></svg></div>
                     <div>
@@ -1889,18 +1895,21 @@
             <div class="chart-container">
                 <div class="chart-title"><span style="display:inline-flex;vertical-align:-3px;margin-inline-end:6px;color:var(--accent);"><svg class="icon-svg" style="width:17px;height:17px;" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M4 20h16"/></svg></span><span data-i18n="chart_workouts">אימונים לאורך זמן</span></div>
                 <canvas id="chart-workouts" class="chart-canvas"></canvas>
+                <div id="chart-workouts-empty" class="chart-empty-msg" style="display:none;" data-i18n="chart_no_data">אין עדיין נתונים — סיימו אימון כדי לראות כאן התקדמות</div>
             </div>
 
             <!-- CHART: Scores Over Time -->
             <div class="chart-container">
                 <div class="chart-title"><span style="display:inline-flex;vertical-align:-3px;margin-inline-end:6px;color:var(--accent);"><svg class="icon-svg" style="width:17px;height:17px;" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/></svg></span><span data-i18n="chart_scores">ציונים לאורך זמן</span></div>
                 <canvas id="chart-scores" class="chart-canvas"></canvas>
+                <div id="chart-scores-empty" class="chart-empty-msg" style="display:none;" data-i18n="chart_no_data">אין עדיין נתונים — סיימו אימון כדי לראות כאן התקדמות</div>
             </div>
 
             <!-- CHART: Weekly Breakdown -->
             <div class="chart-container">
                 <div class="chart-title"><span style="display:inline-flex;vertical-align:-3px;margin-inline-end:6px;color:var(--accent);"><svg class="icon-svg" style="width:17px;height:17px;" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="2"/><path d="M3 9.5h18"/><path d="M8 2.5v4M16 2.5v4"/></svg></span><span data-i18n="chart_weekly">פילוח שבועי</span></div>
                 <canvas id="chart-weekly" class="chart-canvas"></canvas>
+                <div id="chart-weekly-empty" class="chart-empty-msg" style="display:none;" data-i18n="chart_no_data">אין עדיין נתונים — סיימו אימון כדי לראות כאן התקדמות</div>
             </div>
         </div>
 
@@ -2161,6 +2170,7 @@
                     <label data-i18n="target_reps">מטרת חזרות</label>
                     <input type="number" id="race-target" value="20" min="1" max="100">
                 </div>
+                <button class="btn btn-success" style="width:100%;" onclick="startRace()" data-i18n="start_race">התחל!</button>
             </div>
 
             <div class="card" id="race-active" style="display: none;">
@@ -2479,7 +2489,7 @@
                 app_short_name: "מאסה",
                 tagline: "הדרך שלך — המשחק שלך",
                 welcome_title: "בונים גוף חזק — בלי מכון כושר",
-                welcome_desc: "5 רמות התקדמות • AI מנתח ביצוע • תוכנית אישית<br>צלם את עצמך • קהילה • והמסע שלך מתחיל עכשיו",
+                welcome_desc: "5 רמות התקדמות • AI מנתח ביצוע • תוכנית אישית<br>צלם את עצמך • והמסע שלך מתחיל עכשיו",
                 start_journey: "התחל את המסע",
                 have_account: "כבר יש לי חשבון",
                 levels: "רמות",
@@ -2492,7 +2502,7 @@
                 feature_plan: "תוכנית אישית",
                 feature_plan_desc: "מותאמת לרמה שלך, מתעדכנת כל שבוע",
                 feature_game: "משחק התקדמות",
-                feature_game_desc: "שלבים, הישגים, ולוחות תוצאות",
+                feature_game_desc: "שלבים, הישגים ומעקב התקדמות",
                 login_title: "התחברות",
                 login_subtitle: "נשלח לך קוד אימות בן 6 ספרות",
                 sign_in_with_phone: "טלפון",
@@ -2783,6 +2793,7 @@
                 chart_workouts: "אימונים לאורך זמן",
                 chart_scores: "ציונים לאורך זמן",
                 chart_weekly: "פילוח שבועי",
+                chart_no_data: "אין עדיין נתונים — סיימו אימון כדי לראות כאן התקדמות",
                 level: "רמה",
                 beginner: "מתחיל",
                 advanced: "מתקדם",
@@ -2932,7 +2943,7 @@
                 health_title: "סנכרון בריאות",
                 health_subtitle: "Apple Health / Samsung Health",
                 health_status_title: "מה אפשרי כרגע",
-                health_explain: "האפליקציה רצה בדפדפן, ולכן היא לא יכולה להתחבר ישירות ל-Apple Health או ל-Samsung Health — שתי הפלטפורמות פותחות את ה-API שלהן רק לאפליקציות מקוריות (Swift / Kotlin) שמותקנות מהחנות. כדי לסנכרן באמת צריך לעטוף את האפליקציה ב-Capacitor או ב-React Native ולפרסם אותה כאפליקציה. בינתיים אפשר לייצא את הנתונים ולייבא אותם, וגם למשוך צעדים מהדפדפן אם המכשיר תומך.",
+                health_explain: "סנכרון ישיר עם Apple Health או Samsung Health עדיין לא זמין. בינתיים אפשר לייצא ולייבא את הנתונים שלך כקובץ, וגם למשוך את מספר הצעדים מהמכשיר אם הוא תומך בכך.",
                 health_export_title: "ייצוא וייבוא נתונים",
                 health_export_desc: "ייצא את כל האימונים, המדדים והתזונה לקובץ JSON — לגיבוי או להעברה למכשיר אחר.",
                 health_export_btn: "ייצא לקובץ",
@@ -3100,7 +3111,7 @@
                 app_short_name: "Massa",
                 tagline: "Your path — Your game",
                 welcome_title: "Build a Strong Body — No Gym Needed",
-                welcome_desc: "5 progression levels • AI performance analysis • Personal plan<br>Record yourself • Community • Your journey starts now",
+                welcome_desc: "5 progression levels • AI performance analysis • Personal plan<br>Record yourself • Your journey starts now",
                 start_journey: "Start the Journey",
                 have_account: "Already have an account",
                 levels: "Levels",
@@ -3113,7 +3124,7 @@
                 feature_plan: "Personal Plan",
                 feature_plan_desc: "Tailored to your level, updates weekly",
                 feature_game: "Progression Game",
-                feature_game_desc: "Levels, achievements, and leaderboards",
+                feature_game_desc: "Levels, achievements, and progress tracking",
                 login_title: "Login",
                 login_subtitle: "We'll send you a 6-digit verification code",
                 sign_in_with_phone: "Phone",
@@ -3404,6 +3415,7 @@
                 chart_workouts: "Workouts Over Time",
                 chart_scores: "Scores Over Time",
                 chart_weekly: "Weekly Breakdown",
+                chart_no_data: "No data yet — finish a workout to see your progress here",
                 level: "Level",
                 beginner: "Beginner",
                 advanced: "Advanced",
@@ -3553,7 +3565,7 @@
                 health_title: "Health Sync",
                 health_subtitle: "Apple Health / Samsung Health",
                 health_status_title: "What's possible right now",
-                health_explain: "This app runs in the browser, so it cannot connect directly to Apple Health or Samsung Health — both platforms expose their APIs only to native apps (Swift / Kotlin) installed from the store. Real syncing requires wrapping the app in Capacitor or React Native and publishing it. In the meantime you can export and import your data, and read steps from the browser if the device supports it.",
+                health_explain: "Direct syncing with Apple Health or Samsung Health isn't available yet. In the meantime you can export and import your data as a file, and read your step count from the device if it's supported.",
                 health_export_title: "Export & Import Data",
                 health_export_desc: "Export all workouts, metrics and nutrition to a JSON file — for backup or moving to another device.",
                 health_export_btn: "Export to file",
@@ -3721,7 +3733,7 @@
                 app_short_name: "Massa",
                 tagline: "Jouw pad — Jouw spel",
                 welcome_title: "Bouw een Sterk Lichaam — Geen Gym Nodig",
-                welcome_desc: "5 niveaus • AI prestatie-analyse • Persoonlijk plan<br>Neem jezelf op • Community • Jouw reis begint nu",
+                welcome_desc: "5 niveaus • AI prestatie-analyse • Persoonlijk plan<br>Neem jezelf op • Jouw reis begint nu",
                 start_journey: "Start de Reis",
                 have_account: "Heb al een account",
                 levels: "Niveaus",
@@ -3734,7 +3746,7 @@
                 feature_plan: "Persoonlijk Plan",
                 feature_plan_desc: "Afgestemd op jouw niveau, wekelijks bijgewerkt",
                 feature_game: "Vooruitgangsspel",
-                feature_game_desc: "Niveaus, prestaties en ranglijsten",
+                feature_game_desc: "Niveaus, prestaties en voortgang bijhouden",
                 login_title: "Inloggen",
                 login_subtitle: "We sturen je een 6-cijferige verificatiecode",
                 sign_in_with_phone: "Telefoon",
@@ -4025,6 +4037,7 @@
                 chart_workouts: "Trainingen in de Tijd",
                 chart_scores: "Scores in de Tijd",
                 chart_weekly: "Wekelijkse Verdeling",
+                chart_no_data: "Nog geen gegevens — voltooi een training om hier je voortgang te zien",
                 level: "Niveau",
                 beginner: "Beginner",
                 advanced: "Gevorderd",
@@ -4174,7 +4187,7 @@
                 health_title: "Gezondheidssynchronisatie",
                 health_subtitle: "Apple Health / Samsung Health",
                 health_status_title: "Wat nu mogelijk is",
-                health_explain: "Deze app draait in de browser en kan daarom niet direct verbinden met Apple Health of Samsung Health — beide platforms openen hun API's alleen voor native apps (Swift / Kotlin) uit de store. Echt synchroniseren vereist het inpakken van de app in Capacitor of React Native en publicatie als app. Voorlopig kun je je gegevens exporteren en importeren, en stappen uit de browser lezen als het apparaat dat ondersteunt.",
+                health_explain: "Directe synchronisatie met Apple Health of Samsung Health is nog niet beschikbaar. Voorlopig kun je je gegevens exporteren en importeren als bestand, en je stappen uitlezen van het apparaat als dat wordt ondersteund.",
                 health_export_title: "Gegevens Exporteren & Importeren",
                 health_export_desc: "Exporteer alle trainingen, metingen en voeding naar een JSON-bestand — als back-up of om over te zetten.",
                 health_export_btn: "Naar bestand exporteren",
@@ -4342,7 +4355,7 @@
                 app_short_name: "Massa",
                 tagline: "Tu camino — Tu juego",
                 welcome_title: "Construye un Cuerpo Fuerte — Sin Gimnasio",
-                welcome_desc: "5 niveles de progresión • Análisis de rendimiento AI • Plan personal<br>Grábate • Comunidad • Tu viaje comienza ahora",
+                welcome_desc: "5 niveles de progresión • Análisis de rendimiento AI • Plan personal<br>Grábate • Tu viaje comienza ahora",
                 start_journey: "Iniciar el Viaje",
                 have_account: "Ya tengo una cuenta",
                 levels: "Niveles",
@@ -4355,7 +4368,7 @@
                 feature_plan: "Plan Personal",
                 feature_plan_desc: "Adaptado a tu nivel, se actualiza semanalmente",
                 feature_game: "Juego de Progresión",
-                feature_game_desc: "Niveles, logros y tablas de clasificación",
+                feature_game_desc: "Niveles, logros y seguimiento del progreso",
                 login_title: "Iniciar Sesión",
                 login_subtitle: "Te enviaremos un código de verificación de 6 dígitos",
                 sign_in_with_phone: "Teléfono",
@@ -4646,6 +4659,7 @@
                 chart_workouts: "Entrenamientos en el Tiempo",
                 chart_scores: "Puntuaciones en el Tiempo",
                 chart_weekly: "Desglose Semanal",
+                chart_no_data: "Todavía no hay datos — termina un entrenamiento para ver tu progreso aquí",
                 level: "Nivel",
                 beginner: "Principiante",
                 advanced: "Avanzado",
@@ -4795,7 +4809,7 @@
                 health_title: "Sincronización de Salud",
                 health_subtitle: "Apple Health / Samsung Health",
                 health_status_title: "Qué es posible ahora",
-                health_explain: "Esta app funciona en el navegador, por lo que no puede conectarse directamente a Apple Health ni a Samsung Health — ambas plataformas abren sus API solo a apps nativas (Swift / Kotlin) instaladas desde la tienda. Sincronizar de verdad requiere envolver la app en Capacitor o React Native y publicarla. Mientras tanto puedes exportar e importar tus datos, y leer pasos del navegador si el dispositivo lo permite.",
+                health_explain: "La sincronización directa con Apple Health o Samsung Health todavía no está disponible. Mientras tanto, puedes exportar e importar tus datos como archivo, y leer tus pasos desde el dispositivo si es compatible.",
                 health_export_title: "Exportar e Importar Datos",
                 health_export_desc: "Exporta todos los entrenos, medidas y nutrición a un archivo JSON — como copia de seguridad o para pasar a otro dispositivo.",
                 health_export_btn: "Exportar a archivo",
@@ -6588,6 +6602,11 @@
 
         function showJourney() {
             const timeline = document.getElementById('journey-timeline');
+            const introCard = document.getElementById('journey-intro-card');
+            // The "your journey starts here" hero only makes sense before there's
+            // any history — once events exist, the timeline speaks for itself and
+            // the static intro just contradicts what's shown right below it.
+            if (introCard) introCard.style.display = journeyEvents.length === 0 ? '' : 'none';
             if (journeyEvents.length === 0) {
                 timeline.innerHTML = `<div style="color: var(--text-secondary); text-align: center;">${t('journey_empty')}</div>`;
             } else {
@@ -6994,9 +7013,20 @@
         function initCharts() {
             if (typeof Chart === 'undefined') return;
 
+            // With no workout history yet, an empty Chart.js grid (just axis
+            // lines and numbers, no data) reads as broken rather than "nothing
+            // here yet" — swap in a plain message instead of rendering charts.
+            const hasHistory = workoutHistory.length > 0;
+            ['workouts', 'scores', 'weekly'].forEach(key => {
+                const canvas = document.getElementById(`chart-${key}`);
+                const empty = document.getElementById(`chart-${key}-empty`);
+                if (canvas) canvas.style.display = hasHistory ? '' : 'none';
+                if (empty) empty.style.display = hasHistory ? 'none' : '';
+            });
+
             // Workouts chart
             const workoutsCtx = document.getElementById('chart-workouts');
-            if (workoutsCtx) {
+            if (workoutsCtx && hasHistory) {
                 const workoutData = getWorkoutDataByWeek();
                 charts.workouts = new Chart(workoutsCtx, {
                     type: 'line',
@@ -7025,7 +7055,7 @@
 
             // Scores chart
             const scoresCtx = document.getElementById('chart-scores');
-            if (scoresCtx) {
+            if (scoresCtx && hasHistory) {
                 const scoreData = getScoreData();
                 charts.scores = new Chart(scoresCtx, {
                     type: 'line',
@@ -7054,7 +7084,7 @@
 
             // Weekly breakdown
             const weeklyCtx = document.getElementById('chart-weekly');
-            if (weeklyCtx) {
+            if (weeklyCtx && hasHistory) {
                 const weeklyData = getWeeklyBreakdown();
                 charts.weekly = new Chart(weeklyCtx, {
                     type: 'bar',
@@ -7152,9 +7182,13 @@
         }
 
         function getScoreData() {
+            // workoutHistory is newest-first; put the most recent 10 in chronological
+            // order (oldest -> newest) before numbering, so the labels count up left
+            // to right (#1, #2, #3...) instead of counting down like "#2, #1".
+            const recent = workoutHistory.slice(0, 10).reverse();
             return {
-                labels: workoutHistory.slice(0, 10).map((w, i) => `#${i + 1}`).reverse(),
-                data: workoutHistory.slice(0, 10).map(w => w.score).reverse()
+                labels: recent.map((w, i) => `#${i + 1}`),
+                data: recent.map(w => w.score)
             };
         }
 
@@ -7527,7 +7561,8 @@
                     const inputsEl = document.getElementById('plan-inputs-used');
                     if (inputsEl) {
                         const activityLabel = t('activity_' + userProfile.activity) || userProfile.activity;
-                        inputsEl.textContent = (t('plan_based_on_values') || 'מבוסס על') + `: ${userProfile.weight} ${t('kg') || 'ק"ג'} • ${userProfile.height} ${t('cm') || 'ס"מ'} • ${t('age') || 'גיל'} ${userProfile.age} • ${activityLabel}`;
+                        const ageLabel = (t('age') || 'גיל').replace(/\s*\*\s*$/, '');
+                        inputsEl.textContent = (t('plan_based_on_values') || 'מבוסס על') + `: ${userProfile.weight} ${t('kg') || 'ק"ג'} • ${userProfile.height} ${t('cm') || 'ס"מ'} • ${ageLabel} ${userProfile.age} • ${activityLabel}`;
                     }
 
                     // Sanity check: BMR/TDEE this high or low is physiologically implausible
