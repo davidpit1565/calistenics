@@ -1,9 +1,10 @@
 # AI Coach chat setup (do this at the office)
 
-The score screen now has a working "Ask the Coach About Your Score" chat —
-UI, message history, and the score context are all built and tested. It
-needs a real LLM connected before it can actually answer anything; right
-now it honestly says "not set up yet" instead of pretending to work.
+The score screen has a working "Ask the Coach About Your Score" chat — UI,
+message history, and the score context are all built and tested. The
+serverless proxy and client wiring are now **fully built and committed**
+(`api/coach.js`, using Anthropic's Claude). The only thing left is to set
+your own API key as a Vercel environment variable — nothing else to code.
 
 ## What this feature is (and isn't)
 - The user can ask a follow-up question about the result they just got
@@ -11,58 +12,51 @@ now it honestly says "not set up yet" instead of pretending to work.
 - Only the typed question, the score breakdown for that one exercise
   (technique/range/control/tempo/reps), and the chat history for that
   session are sent — never video, never other personal data, never
-  anything from elsewhere in the app.
-- This is a genuinely new feature, not a bug fix — it requires an LLM
-  provider account and API key, which only the account owner can create.
+  anything from elsewhere in the app. The Privacy Policy screen in the
+  app already discloses this (all 4 languages).
+- The API key is never in `index.html` or any client-side code — it lives
+  only in the Vercel project's environment variables and is read by
+  `api/coach.js`, which runs server-side.
 
-## 1. Pick a provider
-Any of these work — the code (`askAICoach()` in `index.html`, search for
-`aiCoachConfig`) expects a simple `{question, context, history}` POST and
-a `{answer}` JSON response, so whichever you pick needs a thin adapter
-matching that shape:
-- **Anthropic (Claude)** — https://console.anthropic.com — pay-per-token,
-  a new account gets a small free credit grant.
-- **OpenAI (GPT)** — https://platform.openai.com — same model, pay-per-token,
-  also has a free trial credit for new accounts.
+## 1. Get an Anthropic API key
+1. Go to **console.anthropic.com** → sign up / sign in.
+2. Add a payment method (usage-based billing; a short coaching reply
+   costs a fraction of a cent with the Haiku model this proxy uses).
+3. **API Keys** → **Create Key** → name it (e.g. "Massa Coach") → copy it
+   immediately (`sk-ant-...`) — Anthropic won't show it again.
 
-Neither is unconditionally "free forever" for real usage — a few cents
-per conversation is typical for a short coaching Q&A, but it's not zero
-once free trial credit runs out.
+## 2. Add it to Vercel
+This repo already has `vercel.json` and is set up for Vercel deployment
+(see `README.md`). Once this branch is merged to `main` (or whichever
+branch Vercel deploys from):
+1. Go to your project on **vercel.com** → **Settings** → **Environment
+   Variables**.
+2. Add a new variable: Name = `ANTHROPIC_API_KEY`, Value = the key you
+   copied, Environment = Production (and Preview if you want it working
+   on preview deployments too).
+3. **Save**, then trigger a new deployment (Vercel → Deployments → the
+   "..." menu on the latest one → **Redeploy**) so the function picks up
+   the new environment variable.
 
-## 2. Security — do not put the API key directly in `index.html`
-This app has no backend today (everything is local/client-side). Putting
-a real LLM API key straight into client-side JavaScript means anyone can
-extract it from the page source and run up your bill. Two real options:
+That's it — no code changes needed. `api/coach.js` reads
+`process.env.ANTHROPIC_API_KEY` automatically.
 
-- **Recommended: a tiny serverless proxy** — one small function (Vercel
-  Edge Function, Cloudflare Worker, or a Firebase Cloud Function, since a
-  Firebase project already exists for auth) that holds the API key
-  server-side, receives `{question, context, history}` from the app,
-  calls the LLM provider, and returns `{answer}`. Then set
-  `aiCoachConfig.endpoint` in `index.html` to that function's URL and
-  leave `aiCoachConfig.apiKey` empty (the key lives only on the server).
-- **Quick-and-dirty for internal testing only**: set `aiCoachConfig.apiKey`
-  directly for a first test on your own device — but do not ship this to
-  the App Store as-is; it exposes the key to anyone who inspects the app.
-
-## 3. Wire it in
-1. In `index.html`, find `const aiCoachConfig = { apiKey: null, endpoint: null };`.
-2. Set `endpoint` to your proxy function's URL (see step 2).
-3. If you went with the "quick test" option instead, set `apiKey` too and
-   adjust `askAICoach()`'s `fetch()` call to match your chosen provider's
-   actual request format (Anthropic and OpenAI have slightly different
-   request/response shapes — the current code assumes a proxy that
-   normalizes this to `{answer}` for you).
-4. Update the in-app Privacy Policy (`legalContent`, all 4 languages) to
-   disclose this new data flow once it's live — the question text and
-   score breakdown will now leave the device to the LLM provider. This
-   wasn't done yet since the feature sends nothing while unconfigured.
-5. Resync `app-store-prep.zip` the same way as every other `index.html`
-   change (copy into `www/`, iOS `public/`, Android `assets/public/`,
-   rebuild the zip) before building in Xcode.
+## 3. Native iOS app note
+The native app loads `index.html` as a local bundle, not from your Vercel
+URL — so a relative `fetch('/api/coach')` from inside the native app has
+nothing to reach. Two options:
+- **Simplest**: point `aiCoachConfig.endpoint` in `index.html` (search for
+  it) at the full Vercel URL instead of the relative path, e.g.
+  `https://your-project.vercel.app/api/coach` — works identically from
+  both the web build and the native app. Do this once you know your
+  Vercel project's URL, then resync `app-store-prep.zip` as usual.
+- The web/PWA build (GitHub Pages, or Vercel itself) works either way
+  since a relative path resolves correctly there.
 
 ## 4. Test
-- Open the score screen after a completed exercise, tap "Ask the Coach
-  About Your Score", ask a question, confirm you get a real answer back
-  (not the "not set up yet" message) and that it's actually relevant to
-  the score breakdown you passed in as context.
+- **Web**: open the deployed site, finish an exercise, tap "Ask the Coach
+  About Your Score", ask a question, confirm you get a real, relevant
+  answer (not "not set up yet").
+- **Native app**: after step 3's endpoint change and a fresh
+  `npx cap sync ios` + rebuild, do the same test in the Xcode simulator
+  or on a device.
