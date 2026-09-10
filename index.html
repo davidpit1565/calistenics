@@ -487,9 +487,23 @@
             font-size: 0.9rem;
         }
 
+        /* ==================== TODAY'S WORKOUT ==================== */
+        .today-workout-card {
+            background: linear-gradient(135deg, var(--accent), #ff8c5a);
+            border: none;
+            color: #fff;
+        }
+        .today-workout-label { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; opacity: 0.85; margin-bottom: 4px; }
+        .today-workout-title { font-size: 1.3rem; font-weight: 900; margin-bottom: 6px; }
+        .today-workout-card #today-workout-exercise-name { color: rgba(255,255,255,0.85) !important; }
+        .today-workout-card .btn-primary { background: #fff; color: var(--accent); box-shadow: none; }
+        .today-workout-card.rest-day { background: var(--bg-elevated); color: var(--text-primary); }
+        .today-workout-card.rest-day .today-workout-label { color: var(--text-secondary); opacity: 1; }
+        .today-workout-card.rest-day #today-workout-exercise-name { color: var(--text-secondary) !important; }
+
         /* ==================== STATS ==================== */
-        .stats-grid { 
-            display: grid; 
+        .stats-grid {
+            display: grid;
             grid-template-columns: repeat(2,1fr); 
             gap: 12px; 
             margin-top: 20px; 
@@ -1503,6 +1517,15 @@
                     <div style="font-weight: 700;" id="dash-name">שלום!</div>
                     <div id="user-level-display" class="level-badge" style="margin-top: 4px;"></div>
                 </div>
+            </div>
+            <!-- TODAY'S WORKOUT — the one thing to actually do right now, so
+                 starting a session never requires scrolling past the whole
+                 week's plan and the entire exercise library first. -->
+            <div class="card today-workout-card" id="today-workout-card">
+                <div class="today-workout-label" id="today-workout-label"></div>
+                <div class="today-workout-title" id="today-workout-title"></div>
+                <div id="today-workout-exercise-name" style="color: var(--text-secondary); margin-bottom: 16px;"></div>
+                <button class="btn btn-primary" id="today-workout-btn" onclick="startTodayWorkout()" data-i18n="start_today_workout">התחל את האימון של היום</button>
             </div>
             <div class="card" id="smart-suggestion-card" style="display:none; border-color: var(--info);">
                 <div style="display:flex; align-items:flex-start; gap:12px;">
@@ -2728,6 +2751,12 @@
                 day_friday: "שישי",
                 day_saturday: "שבת",
                 rest_day: "מנוחה",
+                today_workout_label: "האימון של היום",
+                scheduled_at: "מתוזמן לשעה",
+                ready_when_you_are: "מוכן מתי שנוח לך",
+                start_today_workout: "התחל את האימון של היום",
+                rest_day_encouragement: "גם התאוששות היא חלק מהאימון",
+                browse_exercises: "עיין בתרגילים בכל זאת",
                 workout_at: "אימון",
                 rest_day_desc: "יום מנוחה — הגוף מתאושש ומתחזק",
                 difficulty_easy: "קל",
@@ -3330,6 +3359,12 @@
                 day_friday: "Friday",
                 day_saturday: "Saturday",
                 rest_day: "Rest",
+                today_workout_label: "Today's Workout",
+                scheduled_at: "Scheduled at",
+                ready_when_you_are: "Ready when you are",
+                start_today_workout: "Start Today's Workout",
+                rest_day_encouragement: "Recovery is part of training too",
+                browse_exercises: "Browse Exercises Anyway",
                 workout_at: "Workout",
                 rest_day_desc: "Rest day — your body recovers and gets stronger",
                 difficulty_easy: "Easy",
@@ -3932,6 +3967,12 @@
                 day_friday: "Vrijdag",
                 day_saturday: "Zaterdag",
                 rest_day: "Rust",
+                today_workout_label: "Training van Vandaag",
+                scheduled_at: "Gepland om",
+                ready_when_you_are: "Klaar wanneer jij het bent",
+                start_today_workout: "Start Training van Vandaag",
+                rest_day_encouragement: "Herstel is ook onderdeel van trainen",
+                browse_exercises: "Toch Oefeningen Bekijken",
                 workout_at: "Training",
                 rest_day_desc: "Rustdag — je lichaam herstelt en wordt sterker",
                 difficulty_easy: "Makkelijk",
@@ -4534,6 +4575,12 @@
                 day_friday: "Viernes",
                 day_saturday: "Sábado",
                 rest_day: "Descanso",
+                today_workout_label: "Entrenamiento de Hoy",
+                scheduled_at: "Programado a las",
+                ready_when_you_are: "Listo cuando tú quieras",
+                start_today_workout: "Iniciar Entrenamiento de Hoy",
+                rest_day_encouragement: "La recuperación también es parte del entrenamiento",
+                browse_exercises: "Ver Ejercicios de Todas Formas",
                 workout_at: "Entreno",
                 rest_day_desc: "Día de descanso — tu cuerpo se recupera y se fortalece",
                 difficulty_easy: "Fácil",
@@ -5716,6 +5763,8 @@
             document.getElementById('injury-toggle').classList.toggle('active', isInjuryModeActiveToday());
             renderSmartSuggestion();
 
+            renderTodayWorkoutCard();
+
             const planDiv = document.getElementById('workout-plan');
             planDiv.innerHTML = '';
             const dayNames = [
@@ -5754,6 +5803,50 @@
                 });
             }
             showScreen('screen-dashboard');
+        }
+
+        // The single primary action for "I opened the app to train right
+        // now" — no scrolling past stats and the full weekly plan required.
+        let todayWorkoutExerciseId = null;
+        function renderTodayWorkoutCard() {
+            const card = document.getElementById('today-workout-card');
+            const labelEl = document.getElementById('today-workout-label');
+            const titleEl = document.getElementById('today-workout-title');
+            const nameEl = document.getElementById('today-workout-exercise-name');
+            const btnEl = document.getElementById('today-workout-btn');
+            if (!card) return;
+
+            const todayIndex = new Date().getDay();
+            const isWorkoutDay = userSchedule.days.includes(todayIndex);
+            const injuryToday = isInjuryModeActiveToday();
+            const exercises = exercisesByLevel[userLevel];
+            const easyExercises = exercisesByLevel[1].filter(ex => ex.difficulty === 'easy' || ex.difficulty === 'medium');
+
+            if (isWorkoutDay) {
+                const dayExercises = injuryToday ? easyExercises.slice(0, 3) : exercises.slice(0, 4);
+                const firstExercise = dayExercises[0];
+                card.classList.remove('rest-day');
+                labelEl.textContent = t('today_workout_label') || "Today's Workout";
+                titleEl.textContent = userSchedule.times[todayIndex] ? `${t('scheduled_at') || 'Scheduled at'} ${userSchedule.times[todayIndex]}` : (t('ready_when_you_are') || 'Ready when you are');
+                nameEl.textContent = firstExercise ? getExerciseName(firstExercise) : '';
+                btnEl.textContent = t('start_today_workout') || 'Start Today’s Workout';
+                todayWorkoutExerciseId = firstExercise ? firstExercise.id : null;
+            } else {
+                card.classList.add('rest-day');
+                labelEl.textContent = t('rest_day') || 'Rest Day';
+                titleEl.textContent = t('rest_day_encouragement') || 'Recovery is part of training too';
+                nameEl.textContent = t('rest_day_desc') || '';
+                btnEl.textContent = t('browse_exercises') || 'Browse Exercises Anyway';
+                todayWorkoutExerciseId = null;
+            }
+        }
+
+        function startTodayWorkout() {
+            if (todayWorkoutExerciseId) {
+                openExerciseById(todayWorkoutExerciseId);
+            } else {
+                showVideos();
+            }
         }
 
         function getExerciseName(ex) {
