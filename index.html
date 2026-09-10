@@ -3127,6 +3127,7 @@
                 streak_desc: "קבל תזכורת אם לא התאמנת היום",
                 notif_enabled: "התראות הופעלו!",
                 notif_denied: "נדרשת הרשאה",
+                notif_permission_off: "🔕 הרשאת התראות כבויה במכשיר",
                 workout_in: "אימון בעוד",
                 daily_challenge: "אתגר יומי",
                 streak_alert: "תזכורת רצף",
@@ -3776,6 +3777,7 @@
                 streak_desc: "Get reminded if you haven't trained today",
                 notif_enabled: "Notifications enabled!",
                 notif_denied: "Permission required",
+                notif_permission_off: "🔕 Notification permission is off",
                 workout_in: "Workout in",
                 daily_challenge: "Daily Challenge",
                 streak_alert: "Streak Alert",
@@ -4425,6 +4427,7 @@
                 streak_desc: "Krijg een herinnering als je vandaag niet hebt getraind",
                 notif_enabled: "Meldingen ingeschakeld!",
                 notif_denied: "Toestemming vereist",
+                notif_permission_off: "🔕 Meldingsrechtigen zijn uitgeschakeld",
                 workout_in: "Training over",
                 daily_challenge: "Dagelijkse Uitdaging",
                 streak_alert: "Streak Waarschuwing",
@@ -5074,6 +5077,7 @@
                 streak_desc: "Recibe un recordatorio si no has entrenado hoy",
                 notif_enabled: "¡Notificaciones activadas!",
                 notif_denied: "Permiso requerido",
+                notif_permission_off: "🔕 El permiso de notificaciones está desactivado",
                 workout_in: "Entreno en",
                 daily_challenge: "Desafío Diario",
                 streak_alert: "Alerta de Racha",
@@ -8726,8 +8730,16 @@
         // 2. Plain web/PWA build: the browser Notification API as a
         //    best-effort fallback, which only fires while this tab is open.
         let notificationsEnabled = false;
-        let dailyReminderEnabled = false;
-        let streakReminderEnabled = false;
+        // Default to true (opt-out) so that granting OS notification
+        // permission via ANY of the three toggles turns all reminder types
+        // on together. Being true here is just a stored preference though —
+        // it never implies real permission was granted; showNotifications()
+        // reconciles these against the actual OS/browser permission state
+        // every time the settings screen opens, and refreshDailyChallengeReminder()/
+        // refreshStreakReminders() never schedule anything unless that
+        // permission is actually granted.
+        let dailyReminderEnabled = true;
+        let streakReminderEnabled = true;
 
         const NOTIF_ID = { WORKOUT: 1000, DAILY_CHALLENGE: 2000, STREAK_TODAY: 3001, STREAK_TOMORROW: 3002 };
 
@@ -8750,6 +8762,35 @@
                 return perm === 'granted';
             }
             return false;
+        }
+
+        // Reads the CURRENT OS/browser permission state without prompting
+        // (Notification.permission for web, LocalNotifications.checkPermissions()
+        // for the native Capacitor build) so callers can tell real permission
+        // apart from a merely-stored preference. Returns 'granted', 'denied',
+        // or 'default' (native's 'prompt'/'prompt-with-rationale' map to
+        // 'default' too — permission was simply never decided yet).
+        async function getNotificationPermissionState() {
+            if (isNativeApp()) {
+                const plugin = getLocalNotificationsPlugin();
+                if (!plugin) return 'denied';
+                try {
+                    const result = await plugin.checkPermissions();
+                    if (result.display === 'granted') return 'granted';
+                    if (result.display === 'denied') return 'denied';
+                    return 'default';
+                } catch (e) {
+                    return 'denied';
+                }
+            }
+            if ('Notification' in window) {
+                return Notification.permission;
+            }
+            return 'denied';
+        }
+
+        async function isNotificationPermissionGranted() {
+            return (await getNotificationPermissionState()) === 'granted';
         }
 
         async function toggleNotifications() {
@@ -8777,6 +8818,18 @@
             dailyReminderEnabled = !dailyReminderEnabled;
             document.getElementById('daily-toggle').classList.toggle('active', dailyReminderEnabled);
             localStorage.setItem('masa_daily_remind', dailyReminderEnabled);
+
+            if (dailyReminderEnabled) {
+                const granted = await requestNotificationPermission();
+                if (!granted) {
+                    showToast(t('notif_denied') || '❌ Permission needed');
+                    dailyReminderEnabled = false;
+                    document.getElementById('daily-toggle').classList.remove('active');
+                    localStorage.setItem('masa_daily_remind', false);
+                    saveToStorage();
+                    return;
+                }
+            }
             await refreshDailyChallengeReminder();
             saveToStorage();
         }
@@ -8785,6 +8838,18 @@
             streakReminderEnabled = !streakReminderEnabled;
             document.getElementById('streak-toggle').classList.toggle('active', streakReminderEnabled);
             localStorage.setItem('masa_streak_remind', streakReminderEnabled);
+
+            if (streakReminderEnabled) {
+                const granted = await requestNotificationPermission();
+                if (!granted) {
+                    showToast(t('notif_denied') || '❌ Permission needed');
+                    streakReminderEnabled = false;
+                    document.getElementById('streak-toggle').classList.remove('active');
+                    localStorage.setItem('masa_streak_remind', false);
+                    saveToStorage();
+                    return;
+                }
+            }
             await refreshStreakReminders();
             saveToStorage();
         }
@@ -8815,7 +8880,10 @@
             const plugin = getLocalNotificationsPlugin();
             if (!isNativeApp() || !plugin) return;
             await plugin.cancel({ notifications: [{ id: NOTIF_ID.DAILY_CHALLENGE }] }).catch(() => {});
-            if (!dailyReminderEnabled) return;
+            // dailyReminderEnabled defaults to true, but that's only a stored
+            // preference — never schedule for real unless the OS/browser has
+            // actually granted permission.
+            if (!dailyReminderEnabled || !(await isNotificationPermissionGranted())) return;
             await plugin.schedule({
                 notifications: [{
                     id: NOTIF_ID.DAILY_CHALLENGE,
@@ -8835,7 +8903,10 @@
             const plugin = getLocalNotificationsPlugin();
             if (!isNativeApp() || !plugin) return;
             await plugin.cancel({ notifications: [{ id: NOTIF_ID.STREAK_TODAY }, { id: NOTIF_ID.STREAK_TOMORROW }] }).catch(() => {});
-            if (!streakReminderEnabled || userStats.streak <= 0) return;
+            // streakReminderEnabled defaults to true, but that's only a stored
+            // preference — never schedule for real unless the OS/browser has
+            // actually granted permission.
+            if (!streakReminderEnabled || userStats.streak <= 0 || !(await isNotificationPermissionGranted())) return;
 
             const title = t('streak_alert') || 'Streak Reminder';
             const body = `${t('dont_break_streak') || "Don't break your streak of"} ${userStats.streak}!`;
@@ -9040,10 +9111,31 @@
             }).join('');
         }
 
-        function showNotifications() {
+        async function showNotifications() {
             hideMoreMenu();
             showScreen('screen-notifications');
             applySmartReminderHint();
+
+            // Reconcile stored preferences with REALITY: a stored `true` (the
+            // toggles' own default, or an OS-level permission revoked since
+            // last time, e.g. in iOS Settings) must never be displayed as "on"
+            // when the OS/browser has not actually granted permission — that
+            // would be the exact misleading state this screen must avoid.
+            const permState = await getNotificationPermissionState();
+            if (permState !== 'granted' && (notificationsEnabled || dailyReminderEnabled || streakReminderEnabled)) {
+                // Only surface a toast when permission was explicitly denied
+                // (a real regression, e.g. revoked in iOS Settings) — a fresh
+                // user whose permission was simply never asked yet ('default')
+                // just sees the toggles correctly off, with no extra noise.
+                if (permState === 'denied') {
+                    showToast(t('notif_permission_off') || '🔕 Notification permission is off');
+                }
+                notificationsEnabled = false;
+                dailyReminderEnabled = false;
+                streakReminderEnabled = false;
+                saveToStorage();
+            }
+
             document.getElementById('notif-toggle').classList.toggle('active', notificationsEnabled);
             document.getElementById('daily-toggle').classList.toggle('active', dailyReminderEnabled);
             document.getElementById('streak-toggle').classList.toggle('active', streakReminderEnabled);
