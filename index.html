@@ -954,21 +954,24 @@
             from { transform: translateX(100%); opacity: 0; } 
             to { transform: translateX(0); opacity: 1; } 
         }
-        .toast { 
-            position: fixed; 
-            bottom: calc(var(--nav-height) + 20px); 
-            left: 50%; 
-            transform: translateX(-50%); 
-            background: var(--bg-elevated); 
-            border: 1px solid var(--accent); 
-            color: var(--text-primary); 
-            padding: 16px 24px; 
-            border-radius: 16px; 
-            font-weight: 700; 
-            z-index: 1000; 
-            animation: slideIn 0.3s ease; 
-            box-shadow: 0 8px 32px rgba(0,0,0,0.4); 
-            white-space: nowrap;
+        .toast {
+            position: fixed;
+            bottom: calc(var(--nav-height) + 20px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg-elevated);
+            border: 1px solid var(--accent);
+            color: var(--text-primary);
+            padding: 16px 24px;
+            border-radius: 16px;
+            font-weight: 700;
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+            white-space: normal;
+            max-width: calc(100vw - 32px);
+            width: max-content;
+            text-align: center;
         }
 
         /* ==================== LOADING OVERLAY ==================== */
@@ -1386,7 +1389,7 @@
             </div>
             <div class="stats-grid">
                 <div class="stat-box"><div class="stat-value">5</div><div class="stat-label" data-i18n="levels">רמות</div></div>
-                <div class="stat-box"><div class="stat-value">30+</div><div class="stat-label" data-i18n="exercises">תרגילים</div></div>
+                <div class="stat-box"><div class="stat-value">67</div><div class="stat-label" data-i18n="exercises">תרגילים</div></div>
                 <div class="stat-box"><div class="stat-value">AI</div><div class="stat-label" data-i18n="ai_analysis">ניתוח ביצוע</div></div>
                 <div class="stat-box"><div class="stat-value">100</div><div class="stat-label" data-i18n="max_score">נקודות מקס</div></div>
             </div>
@@ -9552,9 +9555,16 @@
                     app: 'masa-calisthenics',
                     version: 1,
                     userProfile, userSchedule, userStats, userLevel, userScore, userXP,
-                    workoutHistory, bodyMetrics, nutritionLog, challengeHistory, raceHistory,
+                    workoutHistory, bodyMetrics, nutritionLog, challengeHistory, challengeOutcomeHistory, raceHistory,
                     journeyEvents, unlockedAchievements, waterLog, progressPhotos,
-                    waterTargetOverride, favoriteMeals, userPrograms
+                    waterTargetOverride, favoriteMeals, userPrograms,
+                    // These track "did I already do X today" / streak-guard state — without
+                    // them a restore looks complete but silently forgets today's daily
+                    // challenge and the streak's last-counted date (see saveToStorage()).
+                    notificationsEnabled, dailyReminderEnabled, streakReminderEnabled,
+                    nutritionAdjustmentOffset, lastAdaptiveCheckDate, lastWorkoutDate,
+                    streakFreezesAvailable, lastFreezeGrantDate, lastDeloadCheckDate,
+                    challengeAccepted, challengeCompletedToday
                 };
                 const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
                 const url = URL.createObjectURL(blob);
@@ -9612,6 +9622,17 @@
                     if (data.waterTargetOverride) waterTargetOverride = data.waterTargetOverride;
                     if (data.favoriteMeals) favoriteMeals = data.favoriteMeals;
                     if (data.userPrograms) userPrograms = { activeId: null, currentWeek: 1, currentDay: 1, completedPrograms: [], ...data.userPrograms };
+                    if (data.notificationsEnabled !== undefined) notificationsEnabled = data.notificationsEnabled;
+                    if (data.dailyReminderEnabled !== undefined) dailyReminderEnabled = data.dailyReminderEnabled;
+                    if (data.streakReminderEnabled !== undefined) streakReminderEnabled = data.streakReminderEnabled;
+                    if (data.nutritionAdjustmentOffset !== undefined) nutritionAdjustmentOffset = data.nutritionAdjustmentOffset;
+                    if (data.lastAdaptiveCheckDate) lastAdaptiveCheckDate = data.lastAdaptiveCheckDate;
+                    if (data.lastWorkoutDate) lastWorkoutDate = data.lastWorkoutDate;
+                    if (data.streakFreezesAvailable !== undefined) streakFreezesAvailable = data.streakFreezesAvailable;
+                    if (data.lastFreezeGrantDate) lastFreezeGrantDate = data.lastFreezeGrantDate;
+                    if (data.lastDeloadCheckDate) lastDeloadCheckDate = data.lastDeloadCheckDate;
+                    if (data.challengeAccepted !== undefined) challengeAccepted = data.challengeAccepted;
+                    if (data.challengeCompletedToday !== undefined) challengeCompletedToday = data.challengeCompletedToday;
                     saveToStorage();
                     showToast(t('health_imported') || 'הנתונים יובאו בהצלחה');
                     showBottomNav(true);
