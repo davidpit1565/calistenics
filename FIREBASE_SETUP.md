@@ -7,7 +7,7 @@ history etc. all stay on-device exactly as before.
 
 ## 1. Create the Firebase project
 1. Go to https://console.firebase.google.com → **Add project** → give it a
-   name (e.g. "Calisthenics Journey") → follow the wizard (Google Analytics
+   name (e.g. "Massa Calisthenics") → follow the wizard (Google Analytics
    is optional, skip it if you don't want it).
 2. Inside the project, click **Build → Authentication → Get started**.
 3. Under **Sign-in method**, enable:
@@ -43,7 +43,7 @@ history etc. all stay on-device exactly as before.
 ## 3. iOS-specific setup (needed for phone SMS to work in the native app)
 1. In Firebase Console → Project Settings → **Your apps** → also add an
    **iOS app** using the same bundle ID as the Capacitor app
-   (`com.calisthenicsjourney.app`, from `capacitor.config.ts`).
+   (`com.massacalisthenics.app`, from `capacitor.config.ts`).
 2. Download the generated **`GoogleService-Info.plist`** and drag it into
    the Xcode project (`ios/App/App/`), added to the `App` target.
 3. Under Firebase Console → Project Settings → **Cloud Messaging** →
