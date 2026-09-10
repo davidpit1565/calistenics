@@ -1,18 +1,25 @@
 <!DOCTYPE html>
-<html lang="he" dir="rtl">
+<html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>מסע קליסטניקס | Calisthenics Journey</title>
+    <title>Calisthenics Journey</title>
     <meta name="theme-color" content="#0a0a0f">
     <meta name="description" content="Calisthenics training journey — 5 levels, personal plan, nutrition and progress tracking">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="מסע קליסטניקס">
-    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%230a0a0f'/%3E%3Cg stroke='%23ff6b35' stroke-width='11' stroke-linecap='round' fill='none'%3E%3Crect x='24' y='75' width='20' height='30' rx='6'/%3E%3Crect x='136' y='75' width='20' height='30' rx='6'/%3E%3Cpath d='M52 90h76'/%3E%3C/g%3E%3C/svg%3E">
+    <meta name="apple-mobile-web-app-title" content="Calisthenics Journey">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="icons/icon-32.png" sizes="32x32" type="image/png">
+    <link rel="icon" href="icons/icon-16.png" sizes="16x16" type="image/png">
+    <link rel="apple-touch-icon" href="icons/icon-180.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="icons/icon-152.png">
+    <link rel="apple-touch-icon" sizes="167x167" href="icons/icon-167.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="icons/icon-120.png">
+    <link rel="stylesheet" href="vendor/fonts/heebo.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700;900&display=swap');
+        /* Heebo font is vendored locally (vendor/fonts/heebo.css) so it loads offline. */
 
         /* ==================== CSS VARIABLES ==================== */
         :root {
@@ -87,14 +94,18 @@
         }
 
         /* ==================== APP CONTAINER ==================== */
-        .app-container { 
-            position: relative; 
-            z-index: 1; 
-            max-width: 480px; 
-            margin: 0 auto; 
-            padding: 20px; 
+        .app-container {
+            position: relative;
+            z-index: 1;
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 20px;
+            /* Clears the fixed language selector / theme toggle (top:16px, ~40px tall)
+               so screens whose first row starts at the very top (dashboard, profile)
+               don't render underneath them. */
+            padding-top: 76px;
             padding-bottom: calc(var(--nav-height) + var(--safe-bottom) + 20px);
-            min-height: 100vh; 
+            min-height: 100vh;
         }
 
         /* ==================== HEADER ==================== */
@@ -267,14 +278,15 @@
         }
 
         /* ==================== CAMERA ==================== */
-        .camera-container { 
-            position: relative; 
-            width: 100%; 
-            aspect-ratio: 3/4; 
-            background: var(--bg-elevated); 
-            border-radius: 20px; 
-            overflow: hidden; 
-            border: 2px solid var(--border); 
+        .camera-container {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1/1;
+            max-height: 46vh;
+            background: var(--bg-elevated);
+            border-radius: 20px;
+            overflow: hidden;
+            border: 2px solid var(--border);
         }
         .camera-video { 
             width: 100%; 
@@ -305,6 +317,83 @@
             margin-top: 16px; 
         }
         .camera-controls .btn { flex: 1; margin-top: 0; }
+
+        /* ==================== EXERCISE SCREEN (compact header + full-focus camera) ==================== */
+        .exercise-topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+        .exercise-topbar .btn-sm { margin-bottom: 0; }
+        .exercise-info-btn {
+            flex-shrink: 0;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 1px solid var(--border);
+            background: var(--bg-elevated);
+            color: var(--text-primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: border-color 0.2s ease;
+            padding: 0;
+        }
+        .exercise-info-btn:hover, .exercise-info-btn[aria-expanded="true"] { border-color: var(--accent); color: var(--accent); }
+        .exercise-info-btn svg { width: 20px; height: 20px; }
+        .exercise-title {
+            font-size: 1.4rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+            line-height: 1.2;
+        }
+        .exercise-section-label {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            margin-bottom: 8px;
+        }
+        .exercise-watch-btn { margin-top: 12px; }
+
+        /* Info bottom-sheet: goal/desc/tips, collapsed by default so the camera stays primary */
+        .exercise-info-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 98;
+        }
+        .exercise-info-sheet {
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 99;
+            background: var(--bg-card);
+            border-top: 1px solid var(--border);
+            border-radius: 20px 20px 0 0;
+            box-shadow: 0 -8px 32px rgba(0,0,0,0.4);
+            max-height: 70vh;
+            overflow-y: auto;
+            padding: 14px 20px calc(20px + var(--safe-bottom));
+            animation: fadeIn 0.25s ease;
+        }
+        .exercise-info-sheet-handle {
+            width: 40px;
+            height: 4px;
+            border-radius: 4px;
+            background: var(--border);
+            margin: 0 auto 14px;
+        }
+        .exercise-info-desc { color: var(--text-secondary); margin-bottom: 18px; }
+        .exercise-info-block { background: var(--bg-elevated); border-radius: 16px; padding: 16px; margin-bottom: 14px; }
+        .exercise-info-block:last-child { margin-bottom: 0; }
+        .exercise-info-block-title { font-weight: 700; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+        .exercise-info-block-title .icon-svg { width: 17px; height: 17px; }
 
         /* ==================== AI SCORE ==================== */
         .ai-score-container { text-align: center; padding: 40px 20px; }
@@ -674,6 +763,15 @@
         .nav-item span { font-size: 1.3rem; }
         .nav-item .icon-svg, .more-icon .icon-svg { width: 22px; height: 22px; stroke: currentColor; }
         .more-icon { display: flex; align-items: center; justify-content: center; color: var(--text-primary); }
+        .more-group-title { font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.03em; margin: 16px 4px 4px; }
+        .more-group-title:first-child { margin-top: 4px; }
+        .more-group { margin-bottom: 6px; }
+        .more-row { display: flex; align-items: center; gap: 14px; padding: 13px 6px; cursor: pointer; border-radius: 10px; }
+        .more-row:hover, .more-row:active { background: var(--bg-elevated); }
+        .more-group .more-row + .more-row { border-top: 1px solid var(--border); border-radius: 0; }
+        .more-row .more-icon { width: 22px; height: 22px; flex-shrink: 0; color: var(--accent); }
+        .more-row .more-icon .icon-svg { width: 20px; height: 20px; }
+        .more-row-label { font-size: 0.92rem; }
         .header-icon {
             width: 46px; height: 46px; border-radius: 14px;
             background: var(--bg-elevated); border: 1px solid var(--border);
@@ -790,7 +888,7 @@
 
         /* ==================== RESPONSIVE ==================== */
         @media (max-width: 400px) { 
-            .app-container { padding: 12px; padding-bottom: calc(var(--nav-height) + var(--safe-bottom) + 12px); } 
+            .app-container { padding: 12px; padding-top: 68px; padding-bottom: calc(var(--nav-height) + var(--safe-bottom) + 12px); }
             .logo { font-size: 1.8rem; } 
             .achievement-grid { grid-template-columns: repeat(2,1fr); } 
         }
@@ -1104,7 +1202,10 @@
             color: var(--text-secondary);
         }
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="vendor/chart.umd.min.js"></script>
+    <!-- On-device pose detection (TensorFlow.js + MoveNet) used for real exercise-performance analysis -->
+    <script src="vendor/tf.min.js"></script>
+    <script src="vendor/pose-detection.min.js"></script>
 </head><body>
     <!-- LOADING OVERLAY -->
     <div class="loading-overlay" id="loading-overlay">
@@ -1125,8 +1226,8 @@
 
     <!-- LANGUAGE SELECTOR -->
     <div class="lang-selector" id="lang-selector">
-        <button class="lang-btn" data-lang="he" onclick="setLanguage('he')">HE</button>
         <button class="lang-btn" data-lang="en" onclick="setLanguage('en')">EN</button>
+        <button class="lang-btn" data-lang="he" onclick="setLanguage('he')">HE</button>
         <button class="lang-btn" data-lang="nl" onclick="setLanguage('nl')">NL</button>
         <button class="lang-btn" data-lang="es" onclick="setLanguage('es')">ES</button>
     </div>
@@ -1513,36 +1614,44 @@
 
         <!-- EXERCISE DETAIL -->
         <div class="screen" id="screen-exercise">
-            <button class="btn btn-secondary btn-sm" style="margin-bottom: 16px;" onclick="showScreen('screen-dashboard')" data-i18n="back_to_dashboard">חזרה</button>
-            <div class="card">
-                <h2 id="ex-title" style="margin-bottom: 8px;"></h2>
-                <p id="ex-desc" style="color: var(--text-secondary); margin-bottom: 20px;"></p>
-                <div style="background: var(--bg-elevated); border-radius: 16px; padding: 16px; margin-bottom: 20px;">
-                    <div style="font-weight: 700; margin-bottom: 8px;"><span style="display:inline-flex;vertical-align:-3px;margin-inline-end:6px;color:var(--accent);"><svg class="icon-svg" style="width:17px;height:17px;" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/></svg></span><span data-i18n="goal">מטרה</span></div>
-                    <div id="ex-goal" style="color: var(--text-secondary);"></div>
-                </div>
-                <div style="background: var(--bg-elevated); border-radius: 16px; padding: 16px; margin-bottom: 20px;">
-                    <div style="font-weight: 700; margin-bottom: 8px;"><span style="display:inline-flex;vertical-align:-3px;margin-inline-end:6px;color:var(--warning);"><svg class="icon-svg" style="width:17px;height:17px;" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/></svg></span><span data-i18n="tips">טיפים</span></div>
-                    <div id="ex-tips" style="color: var(--text-secondary);"></div>
-                </div>
-                <button class="btn btn-info" onclick="goToVideoFromExercise()" data-i18n="watch_video">צפה בסרטון הדרכה</button>
+            <div class="exercise-topbar">
+                <button class="btn btn-secondary btn-sm" onclick="showScreen('screen-dashboard')" data-i18n="back_to_dashboard">חזרה</button>
+                <button class="exercise-info-btn" id="btn-ex-info" onclick="toggleExerciseInfo()" aria-haspopup="true" aria-expanded="false" aria-controls="exercise-info-sheet" data-i18n-aria="exercise_info_label" aria-label="מטרה וטיפים">
+                    <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><line x1="12" y1="10.5" x2="12" y2="16"/><circle cx="12" cy="7.5" r="1" fill="currentColor" stroke="none"/></svg>
+                </button>
             </div>
-            <div class="card">
-                <h3 style="margin-bottom: 16px;" data-i18n="record_performance">צלם את הביצוע שלך</h3>
-                <div class="camera-container" id="camera-container">
-                    <div class="camera-placeholder" id="camera-placeholder">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-                            <circle cx="12" cy="13" r="4"/>
-                        </svg>
-                        <div data-i18n="tap_camera">לחץ כדי להפעיל מצלמה</div>
-                    </div>
-                    <video class="camera-video" id="camera-video" style="display: none;" autoplay playsinline></video>
+            <h2 id="ex-title" class="exercise-title"></h2>
+
+            <div class="exercise-section-label" data-i18n="record_performance">צלם את הביצוע שלך</div>
+            <div class="camera-container" id="camera-container">
+                <div class="camera-placeholder" id="camera-placeholder">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                        <circle cx="12" cy="13" r="4"/>
+                    </svg>
+                    <div data-i18n="tap_camera">לחץ כדי להפעיל מצלמה</div>
                 </div>
-                <div class="camera-controls">
-                    <button class="btn btn-secondary" id="btn-camera" onclick="toggleCamera()" data-i18n="enable_camera">הפעל מצלמה</button>
-                    <button class="btn btn-primary" id="btn-record" onclick="simulateRecording()" disabled data-i18n="start_recording">התחל הקלטה</button>
+                <video class="camera-video" id="camera-video" style="display: none;" autoplay playsinline></video>
+            </div>
+            <div class="camera-controls">
+                <button class="btn btn-secondary" id="btn-camera" onclick="toggleCamera()" data-i18n="enable_camera">הפעל מצלמה</button>
+                <button class="btn btn-primary" id="btn-record" onclick="simulateRecording()" disabled data-i18n="start_recording">התחל הקלטה</button>
+            </div>
+            <button class="btn btn-info exercise-watch-btn" onclick="goToVideoFromExercise()" data-i18n="watch_video">צפה בסרטון הדרכה</button>
+
+            <div class="exercise-info-backdrop" id="exercise-info-backdrop" onclick="toggleExerciseInfo(false)" hidden></div>
+            <div class="exercise-info-sheet" id="exercise-info-sheet" role="dialog" aria-modal="true" aria-label="מטרה וטיפים" hidden>
+                <div class="exercise-info-sheet-handle"></div>
+                <p id="ex-desc" class="exercise-info-desc"></p>
+                <div class="exercise-info-block">
+                    <div class="exercise-info-block-title"><span style="display:inline-flex;vertical-align:-3px;color:var(--accent);"><svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/></svg></span><span data-i18n="goal">מטרה</span></div>
+                    <div id="ex-goal"></div>
                 </div>
+                <div class="exercise-info-block">
+                    <div class="exercise-info-block-title"><span style="display:inline-flex;vertical-align:-3px;color:var(--warning);"><svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/></svg></span><span data-i18n="tips">טיפים</span></div>
+                    <div id="ex-tips"></div>
+                </div>
+                <button class="btn btn-secondary btn-sm" style="width:100%; margin-top: 16px;" onclick="toggleExerciseInfo(false)" data-i18n="close">סגור</button>
             </div>
         </div>
 
@@ -2075,77 +2184,77 @@
     </div>
 
     <!-- BOTTOM NAV -->
-    <nav class="bottom-nav" id="bottom-nav" style="display: none;">
-        <div class="nav-item active" onclick="showDashboard()"><span><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11.5 12 4l8 7.5"/><path d="M6 10v10h12V10"/><path d="M10 20v-6h4v6"/></svg></span><div data-i18n="nav_home">בית</div></div>
-        <div class="nav-item" onclick="showVideos()"><span><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M10 8.5v7l6-3.5z"/></svg></span><div data-i18n="nav_videos">סרטונים</div></div>
-        <div class="nav-item" onclick="showStats()"><span><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M4 20h16"/></svg></span><div data-i18n="nav_stats">סטטיסטיקה</div></div>
-        <div class="nav-item" onclick="showJourney()"><span><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="19" r="2"/><circle cx="19" cy="5" r="2"/><path d="M6.5 17.5C9 14 8 9 12 9s2-5 5.5-5"/></svg></span><div data-i18n="nav_journey">המסע</div></div>
-        <div class="nav-item" onclick="showMoreMenu()"><span><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></svg></span><div data-i18n="nav_more">עוד</div></div>
+    <nav class="bottom-nav" id="bottom-nav" style="display: none;" role="tablist" aria-label="ניווט ראשי">
+        <div class="nav-item active" role="tab" tabindex="0" aria-selected="true" aria-label="בית" onclick="showDashboard()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showDashboard();}"><span><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11.5 12 4l8 7.5"/><path d="M6 10v10h12V10"/><path d="M10 20v-6h4v6"/></svg></span><div data-i18n="nav_home">בית</div></div>
+        <div class="nav-item" role="tab" tabindex="0" aria-selected="false" aria-label="סרטונים" onclick="showVideos()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showVideos();}"><span><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M10 8.5v7l6-3.5z"/></svg></span><div data-i18n="nav_videos">סרטונים</div></div>
+        <div class="nav-item" role="tab" tabindex="0" aria-selected="false" aria-label="סטטיסטיקה" onclick="showStats()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showStats();}"><span><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M4 20h16"/></svg></span><div data-i18n="nav_stats">סטטיסטיקה</div></div>
+        <div class="nav-item" role="tab" tabindex="0" aria-selected="false" aria-label="המסע" onclick="showJourney()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showJourney();}"><span><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="19" r="2"/><circle cx="19" cy="5" r="2"/><path d="M6.5 17.5C9 14 8 9 12 9s2-5 5.5-5"/></svg></span><div data-i18n="nav_journey">המסע</div></div>
+        <div class="nav-item" role="tab" tabindex="0" aria-selected="false" aria-label="עוד" onclick="showMoreMenu()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showMoreMenu();}"><span><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></svg></span><div data-i18n="nav_more">עוד</div></div>
     </nav>
 
     <!-- MORE MENU OVERLAY -->
     <div id="more-menu" style="display: none; position: fixed; bottom: calc(var(--nav-height) + var(--safe-bottom)); left: 0; right: 0; background: var(--bg-card); border-top: 1px solid var(--border); z-index: 99; padding: 16px; border-radius: 20px 20px 0 0; box-shadow: 0 -8px 32px rgba(0,0,0,0.4); max-height: 70vh; overflow-y: auto;">
-        <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); margin: 4px 4px 10px;" data-i18n="more_group_progress">התקדמות</div>
-        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 18px;">
-            <div style="text-align: center; padding: 12px; cursor: pointer; border-radius: 12px;" onclick="showAchievements(); hideMoreMenu();">
+        <div class="more-group-title" data-i18n="more_group_progress">התקדמות</div>
+        <div class="more-group">
+            <div class="more-row" onclick="showAchievements(); hideMoreMenu();">
                 <div class="more-icon"><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="5.5"/><path d="M9 13 7 21l5-2.5L17 21l-2-8"/></svg></div>
-                <div style="font-size: 0.75rem; margin-top: 4px;" data-i18n="nav_achievements">הישגים</div>
+                <div class="more-row-label" data-i18n="nav_achievements">הישגים</div>
             </div>
-            <div style="text-align: center; padding: 12px; cursor: pointer; border-radius: 12px;" onclick="showHistory(); hideMoreMenu();">
+            <div class="more-row" onclick="showHistory(); hideMoreMenu();">
                 <div class="more-icon"><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13"/><circle cx="3.5" cy="6" r="1.2" fill="currentColor" stroke="none"/><circle cx="3.5" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="3.5" cy="18" r="1.2" fill="currentColor" stroke="none"/></svg></div>
-                <div style="font-size: 0.75rem; margin-top: 4px;" data-i18n="nav_history">היסטוריה</div>
+                <div class="more-row-label" data-i18n="nav_history">היסטוריה</div>
             </div>
-            <div style="text-align: center; padding: 12px; cursor: pointer; border-radius: 12px;" onclick="showChallenge(); hideMoreMenu();">
+            <div class="more-row" onclick="showChallenge(); hideMoreMenu();">
                 <div class="more-icon"><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3c-1 3-4.5 5-4.5 9.5a4.5 4.5 0 0 0 9 0c0-1.2-.7-2.2-1-3.2.8 1 1.5 2.6 1.5 4.2a5 5 0 0 1-10 0C6.5 8.5 10 6.5 12 3z"/></svg></div>
-                <div style="font-size: 0.75rem; margin-top: 4px;" data-i18n="nav_challenge">אתגר</div>
+                <div class="more-row-label" data-i18n="nav_challenge">אתגר</div>
             </div>
-            <div style="text-align: center; padding: 12px; cursor: pointer; border-radius: 12px;" onclick="showRace(); hideMoreMenu();">
+            <div class="more-row" onclick="showRace(); hideMoreMenu();">
                 <div class="more-icon"><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13.5" r="8"/><path d="M12 13.5V9"/><path d="M10 2h4"/><path d="M12 2v2.5"/></svg></div>
-                <div style="font-size: 0.75rem; margin-top: 4px;" data-i18n="nav_race">מירוץ</div>
+                <div class="more-row-label" data-i18n="nav_race">מירוץ</div>
             </div>
         </div>
 
-        <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); margin: 4px 4px 10px;" data-i18n="more_group_health">בריאות</div>
-        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 18px;">
-            <div style="text-align: center; padding: 12px; cursor: pointer; border-radius: 12px;" onclick="showNutrition(); hideMoreMenu();">
+        <div class="more-group-title" data-i18n="more_group_health">בריאות</div>
+        <div class="more-group">
+            <div class="more-row" onclick="showNutrition(); hideMoreMenu();">
                 <div class="more-icon"><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2v6a2 2 0 0 0 4 0V2"/><path d="M9 10v12"/><path d="M17 2c-1.5 0-3 2-3 5s1.2 4.5 3 4.5V22"/></svg></div>
-                <div style="font-size: 0.75rem; margin-top: 4px;" data-i18n="nav_nutrition">תזונה</div>
+                <div class="more-row-label" data-i18n="nav_nutrition">תזונה</div>
             </div>
-            <div style="text-align: center; padding: 12px; cursor: pointer; border-radius: 12px;" onclick="showWater(); hideMoreMenu();">
+            <div class="more-row" onclick="showWater(); hideMoreMenu();">
                 <div class="more-icon"><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2s6.5 7.5 6.5 12A6.5 6.5 0 0 1 5.5 14C5.5 9.5 12 2 12 2z"/></svg></div>
-                <div style="font-size: 0.75rem; margin-top: 4px;" data-i18n="nav_water">מים</div>
+                <div class="more-row-label" data-i18n="nav_water">מים</div>
             </div>
-            <div style="text-align: center; padding: 12px; cursor: pointer; border-radius: 12px;" onclick="showMetrics(); hideMoreMenu();">
+            <div class="more-row" onclick="showMetrics(); hideMoreMenu();">
                 <div class="more-icon"><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="18" height="10" rx="2"/><path d="M7 7v3M11 7v5M15 7v3M19 7v5"/></svg></div>
-                <div style="font-size: 0.75rem; margin-top: 4px;" data-i18n="nav_metrics">מדדים</div>
+                <div class="more-row-label" data-i18n="nav_metrics">מדדים</div>
             </div>
-            <div style="text-align: center; padding: 12px; cursor: pointer; border-radius: 12px;" onclick="showRecovery(); hideMoreMenu();">
+            <div class="more-row" onclick="showRecovery(); hideMoreMenu();">
                 <div class="more-icon"><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 8.5c0 4.5-8.5 11-8.5 11s-8.5-6.5-8.5-11a4.5 4.5 0 0 1 8.5-2 4.5 4.5 0 0 1 8.5 2z"/><path d="M4 12h3l2 3 3-6 2 3h4"/></svg></div>
-                <div style="font-size: 0.75rem; margin-top: 4px;" data-i18n="nav_recovery">מתיחות</div>
+                <div class="more-row-label" data-i18n="nav_recovery">מתיחות</div>
             </div>
-            <div style="text-align: center; padding: 12px; cursor: pointer; border-radius: 12px;" onclick="showHealth(); hideMoreMenu();">
+            <div class="more-row" onclick="showHealth(); hideMoreMenu();">
                 <div class="more-icon"><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5 19.5 6v6c0 5-3.2 8.5-7.5 9.5-4.3-1-7.5-4.5-7.5-9.5V6z"/><path d="M12 9.5v5M9.5 12h5"/></svg></div>
-                <div style="font-size: 0.75rem; margin-top: 4px;" data-i18n="nav_health">Health Sync</div>
+                <div class="more-row-label" data-i18n="nav_health">Health Sync</div>
             </div>
         </div>
 
-        <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); margin: 4px 4px 10px;" data-i18n="more_group_system">מערכת</div>
-        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
-            <div style="text-align: center; padding: 12px; cursor: pointer; border-radius: 12px;" onclick="showProfile(); hideMoreMenu();">
+        <div class="more-group-title" data-i18n="more_group_system">מערכת</div>
+        <div class="more-group">
+            <div class="more-row" onclick="showProfile(); hideMoreMenu();">
                 <div class="more-icon"><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4.5 21c0-4.2 3.5-7 7.5-7s7.5 2.8 7.5 7"/></svg></div>
-                <div style="font-size: 0.75rem; margin-top: 4px;" data-i18n="nav_profile">פרופיל</div>
+                <div class="more-row-label" data-i18n="nav_profile">פרופיל</div>
             </div>
-            <div style="text-align: center; padding: 12px; cursor: pointer; border-radius: 12px;" onclick="showScheduleEditor(); hideMoreMenu();">
+            <div class="more-row" onclick="showScheduleEditor(); hideMoreMenu();">
                 <div class="more-icon"><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="2"/><path d="M3 9.5h18"/><path d="M8 2.5v4M16 2.5v4"/></svg></div>
-                <div style="font-size: 0.75rem; margin-top: 4px;" data-i18n="nav_schedule">לוח אימונים</div>
+                <div class="more-row-label" data-i18n="nav_schedule">לוח אימונים</div>
             </div>
-            <div style="text-align: center; padding: 12px; cursor: pointer; border-radius: 12px;" onclick="showNotifications(); hideMoreMenu();">
+            <div class="more-row" onclick="showNotifications(); hideMoreMenu();">
                 <div class="more-icon"><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8.5a6 6 0 0 0-12 0c0 7-3 8-3 8h18s-3-1-3-8z"/><path d="M10 19.5a2 2 0 0 0 4 0"/></svg></div>
-                <div style="font-size: 0.75rem; margin-top: 4px;" data-i18n="nav_notif">התראות</div>
+                <div class="more-row-label" data-i18n="nav_notif">התראות</div>
             </div>
-            <div style="text-align: center; padding: 12px; cursor: pointer; border-radius: 12px;" onclick="showOffline(); hideMoreMenu();">
+            <div class="more-row" onclick="showOffline(); hideMoreMenu();">
                 <div class="more-icon"><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><path d="M17 18a4 4 0 0 0 0-8 5 5 0 0 0-9.6-1.5A4 4 0 0 0 6 18h6"/><path d="M3 3l18 18"/></svg></div>
-                <div style="font-size: 0.75rem; margin-top: 4px;" data-i18n="nav_offline">Offline</div>
+                <div class="more-row-label" data-i18n="nav_offline">Offline</div>
             </div>
         </div>
     </div>
@@ -2393,6 +2502,8 @@
                 health_csv_exported: "📄 קובץ CSV הורד — עקוב/י אחרי ההנחיות למטה כדי לייבא",
                 goal: "מטרה",
                 tips: "טיפים",
+                exercise_info_label: "מטרה וטיפים",
+                close: "סגור",
                 start_this_exercise: "התחל תרגיל זה",
                 back_to_dashboard: "חזרה",
                 watch_video: "צפה בסרטון הדרכה",
@@ -2443,6 +2554,15 @@
                 chart_scores: "ציונים לאורך זמן",
                 chart_weekly: "פילוח שבועי",
                 level: "רמה",
+                beginner: "מתחיל",
+                advanced: "מתקדם",
+                intermediate: "בינוני",
+                advanced_plus: "מתקדם+",
+                pro: "מקצוען",
+                building_base: "בניית בסיס",
+                strengthening: "חיזוק",
+                approaching_advanced: "מתקרב למתקדם",
+                hard_exercises: "תרגילים קשים",
                 reached_level: "הגעת לרמה",
 
                 // Body Metrics
@@ -2451,6 +2571,7 @@
                 add_measurement: "הוסף מדידה חדשה",
                 weight: "משקל (ק\"ג)",
                 body_fat: "אחוז שומן (%)",
+                body_fat_short: "שומן",
                 chest: "חזה (ס\"מ)",
                 waist: "מותן (ס\"מ)",
                 arms: "ידיים (ס\"מ)",
@@ -2704,6 +2825,17 @@
                 feedback_excellent: "ביצוע מצוין! הטכניקה שלך משתפרת.",
                 feedback_nice: "יפה! שים לב לזוויות המפרקים.",
                 feedback_great: "מעולה! כמעט מושלם, המשך כך!",
+                loading_pose_model: "טוען מודל ניתוח תנועה...",
+                pose_model_unavailable: "לא ניתן לטעון את מודל ניתוח התנועה כרגע (יש צורך בחיבור לאינטרנט בפעם הראשונה).",
+                low_confidence_warning: "לא הצלחנו לזהות את התנוחה בבירור — ודא שאתה נראה במלואך במצלמה ושיש תאורה טובה.",
+                analysis_unavailable: "לא ניתן היה לנתח את הביצוע.",
+                reps_detected: "חזרות שזוהו",
+                feedback_low_range_reps: "טווח התנועה קצר — נסה לרדת/לעלות עמוק יותר בכל חזרה.",
+                feedback_low_range_hold: "שים לב לשמור על התנוחה המדויקת לאורך כל ההחזקה.",
+                feedback_low_control: "זוהו תנועות מיותרות — נסה להתמקד ביציבות ובשליטה.",
+                feedback_low_tempo_reps: "שמור על קצב אחיד יותר בין החזרות.",
+                feedback_low_tempo_hold: "ניכרת ירידה ביציבות לקראת סוף ההחזקה — נסה לשמור על העוצמה עד הסוף.",
+                feedback_low_technique: "שפר את זווית המצלמה והתאורה כדי שנוכל לזהות את התנועה בצורה טובה יותר.",
                 technique: "טכניקה",
                 range_of_motion: "טווח תנועה",
                 control: "שליטה",
@@ -2933,6 +3065,8 @@
                 health_csv_exported: "📄 CSV file downloaded — follow the guide below to import it",
                 goal: "Goal",
                 tips: "Tips",
+                exercise_info_label: "Goal & Tips",
+                close: "Close",
                 start_this_exercise: "Start This Exercise",
                 back_to_dashboard: "Back",
                 watch_video: "Watch Tutorial Video",
@@ -2983,6 +3117,15 @@
                 chart_scores: "Scores Over Time",
                 chart_weekly: "Weekly Breakdown",
                 level: "Level",
+                beginner: "Beginner",
+                advanced: "Advanced",
+                intermediate: "Intermediate",
+                advanced_plus: "Advanced+",
+                pro: "Pro",
+                building_base: "Building your base",
+                strengthening: "Strengthening",
+                approaching_advanced: "Approaching advanced",
+                hard_exercises: "Hard exercises",
                 reached_level: "You reached level",
 
                 // Body Metrics
@@ -2991,6 +3134,7 @@
                 add_measurement: "Add New Measurement",
                 weight: "Weight (kg)",
                 body_fat: "Body Fat (%)",
+                body_fat_short: "fat",
                 chest: "Chest (cm)",
                 waist: "Waist (cm)",
                 arms: "Arms (cm)",
@@ -3244,6 +3388,17 @@
                 feedback_excellent: "Excellent performance! Your technique is improving.",
                 feedback_nice: "Nice! Pay attention to joint angles.",
                 feedback_great: "Great! Almost perfect, keep it up!",
+                loading_pose_model: "Loading motion-analysis model...",
+                pose_model_unavailable: "Couldn't load the motion-analysis model right now (requires an internet connection the first time).",
+                low_confidence_warning: "We couldn't clearly detect your pose — make sure your full body is visible and the lighting is good.",
+                analysis_unavailable: "We couldn't analyze this performance.",
+                reps_detected: "Reps detected",
+                feedback_low_range_reps: "Your range of motion was short — try going deeper on each rep.",
+                feedback_low_range_hold: "Focus on holding the exact position throughout the hold.",
+                feedback_low_control: "Extra movement detected — focus on stability and control.",
+                feedback_low_tempo_reps: "Keep a more even pace between reps.",
+                feedback_low_tempo_hold: "Your stability dropped toward the end — try to hold strong until the finish.",
+                feedback_low_technique: "Improve the camera angle and lighting so we can track your movement better.",
                 technique: "Technique",
                 range_of_motion: "Range of Motion",
                 control: "Control",
@@ -3473,6 +3628,8 @@
                 health_csv_exported: "📄 CSV-bestand gedownload — volg de handleiding hieronder om te importeren",
                 goal: "Doel",
                 tips: "Tips",
+                exercise_info_label: "Doel & Tips",
+                close: "Sluiten",
                 start_this_exercise: "Start Deze Oefening",
                 back_to_dashboard: "Terug",
                 watch_video: "Bekijk Instructievideo",
@@ -3523,6 +3680,15 @@
                 chart_scores: "Scores in de Tijd",
                 chart_weekly: "Wekelijkse Verdeling",
                 level: "Niveau",
+                beginner: "Beginner",
+                advanced: "Gevorderd",
+                intermediate: "Gemiddeld",
+                advanced_plus: "Gevorderd+",
+                pro: "Pro",
+                building_base: "Basis opbouwen",
+                strengthening: "Kracht opbouwen",
+                approaching_advanced: "Op weg naar gevorderd",
+                hard_exercises: "Zware oefeningen",
                 reached_level: "Je bereikte niveau",
 
                 // Body Metrics
@@ -3531,6 +3697,7 @@
                 add_measurement: "Nieuwe Meting Toevoegen",
                 weight: "Gewicht (kg)",
                 body_fat: "Lichaamsvet (%)",
+                body_fat_short: "vet",
                 chest: "Borst (cm)",
                 waist: "Taille (cm)",
                 arms: "Armen (cm)",
@@ -3784,6 +3951,17 @@
                 feedback_excellent: "Uitstekende prestatie! Je techniek verbetert.",
                 feedback_nice: "Mooi! Let op de gewrichtshoeken.",
                 feedback_great: "Geweldig! Bijna perfect, blijf zo doorgaan!",
+                loading_pose_model: "Bewegingsanalysemodel wordt geladen...",
+                pose_model_unavailable: "Kon het bewegingsanalysemodel nu niet laden (de eerste keer is een internetverbinding nodig).",
+                low_confidence_warning: "We konden je houding niet duidelijk herkennen — zorg dat je hele lichaam zichtbaar is en de verlichting goed is.",
+                analysis_unavailable: "We konden deze uitvoering niet analyseren.",
+                reps_detected: "Gedetecteerde herhalingen",
+                feedback_low_range_reps: "Je bewegingsbereik was kort — probeer dieper te gaan bij elke herhaling.",
+                feedback_low_range_hold: "Let op dat je de exacte positie vasthoudt gedurende de hele hold.",
+                feedback_low_control: "Extra beweging gedetecteerd — focus op stabiliteit en controle.",
+                feedback_low_tempo_reps: "Houd een gelijkmatiger tempo aan tussen herhalingen.",
+                feedback_low_tempo_hold: "Je stabiliteit nam af tegen het einde — probeer sterk te blijven tot het einde.",
+                feedback_low_technique: "Verbeter de camerahoek en verlichting zodat we je beweging beter kunnen volgen.",
                 technique: "Techniek",
                 range_of_motion: "Bewegingsbereik",
                 control: "Controle",
@@ -4013,6 +4191,8 @@
                 health_csv_exported: "📄 Archivo CSV descargado — sigue la guía de abajo para importarlo",
                 goal: "Objetivo",
                 tips: "Consejos",
+                exercise_info_label: "Objetivo y Consejos",
+                close: "Cerrar",
                 start_this_exercise: "Iniciar Este Ejercicio",
                 back_to_dashboard: "Atrás",
                 watch_video: "Ver Video Tutorial",
@@ -4063,6 +4243,15 @@
                 chart_scores: "Puntuaciones en el Tiempo",
                 chart_weekly: "Desglose Semanal",
                 level: "Nivel",
+                beginner: "Principiante",
+                advanced: "Avanzado",
+                intermediate: "Intermedio",
+                advanced_plus: "Avanzado+",
+                pro: "Profesional",
+                building_base: "Construyendo tu base",
+                strengthening: "Fortalecimiento",
+                approaching_advanced: "Acercándose a avanzado",
+                hard_exercises: "Ejercicios difíciles",
                 reached_level: "Alcanzaste el nivel",
 
                 // Body Metrics
@@ -4071,6 +4260,7 @@
                 add_measurement: "Añadir Nueva Medida",
                 weight: "Peso (kg)",
                 body_fat: "Grasa Corporal (%)",
+                body_fat_short: "grasa",
                 chest: "Pecho (cm)",
                 waist: "Cintura (cm)",
                 arms: "Brazos (cm)",
@@ -4324,6 +4514,17 @@
                 feedback_excellent: "¡Excelente rendimiento! Tu técnica está mejorando.",
                 feedback_nice: "¡Bien! Presta atención a los ángulos de las articulaciones.",
                 feedback_great: "¡Genial! Casi perfecto, ¡sigue así!",
+                loading_pose_model: "Cargando modelo de análisis de movimiento...",
+                pose_model_unavailable: "No se pudo cargar el modelo de análisis de movimiento ahora (requiere conexión a internet la primera vez).",
+                low_confidence_warning: "No pudimos detectar tu postura con claridad — asegúrate de que todo tu cuerpo sea visible y haya buena iluminación.",
+                analysis_unavailable: "No pudimos analizar este rendimiento.",
+                reps_detected: "Repeticiones detectadas",
+                feedback_low_range_reps: "Tu rango de movimiento fue corto — intenta ir más profundo en cada repetición.",
+                feedback_low_range_hold: "Concéntrate en mantener la posición exacta durante toda la sujeción.",
+                feedback_low_control: "Se detectó movimiento adicional — concéntrate en la estabilidad y el control.",
+                feedback_low_tempo_reps: "Mantén un ritmo más uniforme entre repeticiones.",
+                feedback_low_tempo_hold: "Tu estabilidad bajó hacia el final — intenta mantenerte firme hasta el final.",
+                feedback_low_technique: "Mejora el ángulo de la cámara y la iluminación para poder rastrear mejor tu movimiento.",
                 technique: "Técnica",
                 range_of_motion: "Rango de Movimiento",
                 control: "Control",
@@ -4341,7 +4542,7 @@
             }
         };
 
-        let currentLang = 'he';
+        let currentLang = 'en';
 
         function setLanguage(lang) {
             currentLang = lang;
@@ -4369,6 +4570,14 @@
                 const key = el.dataset.i18nPlaceholder;
                 if (translations[lang] && translations[lang][key]) {
                     el.placeholder = translations[lang][key];
+                }
+            });
+
+            // Update aria-labels
+            document.querySelectorAll('[data-i18n-aria]').forEach(el => {
+                const key = el.dataset.i18nAria;
+                if (translations[lang] && translations[lang][key]) {
+                    el.setAttribute('aria-label', translations[lang][key]);
                 }
             });
 
@@ -4428,31 +4637,31 @@
             plank: "pSHjTRowC_U",
             pike_push: "2rT3T8bN5mQ",
             hollow_hold: "p7aMtsXz9Ho",
-            arch_hold: "",
+            arch_hold: "n5ca7UfDr90",
             diamond_pushups: "J0DnG1a8HZI",
             pullups: "eGo4IYlbE5g",
             dips: "2z8JmcrW-As",
             lsit: "IUZJoSP6d4w",
             pike_pushups: "2rT3T8bN5mQ",
             australian_pulls: "0iQb8b5Kh4Y",
-            archer_pushups: "",
+            archer_pushups: "MxVbNel13Ek",
             chinups: "brhRXlOhsAM",
-            pseudo_planche: "",
+            pseudo_planche: "L7GKps5ygkQ",
             tuck_lsit: "IUZJoSP6d4w",
             wide_pullups: "eGo4IYlbE5g",
-            handstand_hold: "",
-            one_arm_pushup: "",
-            muscleup_prog: "",
-            front_lever_tuck: "",
-            planche_lean: "",
+            handstand_hold: "sQonfkuqxkI",
+            one_arm_pushup: "xp1tgjT_3k0",
+            muscleup_prog: "v-0wjaMx9RM",
+            front_lever_tuck: "lkGhntOoLNk",
+            planche_lean: "wKV5zVJTYBo",
             weighted_pullups: "eGo4IYlbE5g",
-            handstand_pushups: "",
-            muscleup: "",
-            front_lever: "",
-            planche: "",
+            handstand_pushups: "C-nRd78NGY4",
+            muscleup: "YSe03rIY-xQ",
+            front_lever: "vRc_6uFvwEw",
+            planche: "OmKfROtB45Q",
             one_arm_pullup: "brhRXlOhsAM",
-            handstand_free: "",
-            human_flag: ""
+            handstand_free: "qhFMf7I67Dc",
+            human_flag: "DtraL3XSrtQ"
         };
 
         // ==================== QUIZ QUESTIONS ====================
@@ -4742,6 +4951,57 @@
         let lastFreezeGrantDate = null; // grants +1 freeze every 30 days, capped at 2
         let workoutHistory = [], journeyEvents = [], unlockedAchievements = [];
         let currentExercise = null, stream = null, isRecording = false;
+
+        // ==================== POSE DETECTION (real, on-device) ====================
+        // Exercise families drive how the generic kinematic analysis below interprets the
+        // keypoint time series. "reps" = dynamic push/pull movements counted as oscillations;
+        // "hold" = static isometric/skill holds analyzed for stability/jitter instead of reps.
+        const REP_BASED_EXERCISES = new Set([
+            'pushups', 'diamond_pushups', 'pike_push', 'pike_pushups', 'archer_pushups',
+            'one_arm_pushup', 'handstand_pushups', 'australian_pull', 'australian_pulls',
+            'pullups', 'chinups', 'wide_pullups', 'dips', 'muscleup_prog', 'muscleup',
+            'weighted_pullups', 'one_arm_pullup'
+        ]);
+        const HOLD_EXERCISES = new Set([
+            'plank', 'hollow_hold', 'arch_hold', 'lsit', 'tuck_lsit', 'pseudo_planche',
+            'front_lever_tuck', 'planche_lean', 'handstand_hold', 'handstand_free',
+            'front_lever', 'planche', 'human_flag'
+        ]);
+        let poseDetector = null;
+        let poseDetectorLoadFailed = false;
+        let poseDetectorLoadingPromise = null;
+        let poseSampleTimer = null;
+        let poseSamples = []; // { t: msSinceStart, keypoints: [{x,y,score,name}] }
+        let recordingStartTs = 0;
+
+        // Lazily creates (once) and caches the MoveNet detector. Model weights are fetched
+        // from Google's TF-Hub CDN on first use and cached by the service worker afterward;
+        // if the fetch fails (e.g. offline first run) we degrade gracefully instead of crashing.
+        async function ensurePoseDetector() {
+            if (poseDetector) return poseDetector;
+            if (poseDetectorLoadFailed) return null;
+            if (poseDetectorLoadingPromise) return poseDetectorLoadingPromise;
+            poseDetectorLoadingPromise = (async () => {
+                try {
+                    if (typeof tf === 'undefined' || typeof poseDetection === 'undefined') {
+                        throw new Error('pose-detection libraries not loaded');
+                    }
+                    await tf.setBackend('webgl').catch(() => tf.setBackend('cpu'));
+                    await tf.ready();
+                    poseDetector = await poseDetection.createDetector(
+                        poseDetection.SupportedModels.MoveNet,
+                        { modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING }
+                    );
+                    console.log('[pose] MoveNet detector ready');
+                    return poseDetector;
+                } catch (err) {
+                    console.error('[pose] failed to load pose model', err);
+                    poseDetectorLoadFailed = true;
+                    return null;
+                }
+            })();
+            return poseDetectorLoadingPromise;
+        }
 
         function createParticles() {
             const container = document.getElementById('particles');
@@ -5324,11 +5584,24 @@
             document.getElementById('camera-placeholder').style.display = 'flex';
             document.getElementById('btn-camera').textContent = '📷 ' + t('enable_camera');
             document.getElementById('btn-record').disabled = true;
+            toggleExerciseInfo(false);
             showScreen('screen-exercise');
         }
 
-        function goToVideoFromExercise() { 
-            if (currentExercise) openVideoPlayer(currentExercise.videoId); 
+        function goToVideoFromExercise() {
+            if (currentExercise) openVideoPlayer(currentExercise.videoId);
+        }
+
+        // Compact info sheet (goal/desc/tips) that overlays the exercise screen on demand,
+        // keeping the camera as the primary, always-visible content behind it.
+        function toggleExerciseInfo(forceOpen) {
+            const sheet = document.getElementById('exercise-info-sheet');
+            const backdrop = document.getElementById('exercise-info-backdrop');
+            const btn = document.getElementById('btn-ex-info');
+            const open = typeof forceOpen === 'boolean' ? forceOpen : sheet.hidden;
+            sheet.hidden = !open;
+            backdrop.hidden = !open;
+            btn.setAttribute('aria-expanded', String(open));
         }
 
         // ==================== CAMERA ====================
@@ -5347,6 +5620,8 @@
                     video.srcObject = stream; video.style.display = 'block';
                     placeholder.style.display = 'none';
                     btn.textContent = '📷 ' + t('disable_camera'); recordBtn.disabled = false;
+                    // Warm up the pose model in the background so it's ready by the time recording starts.
+                    ensurePoseDetector();
                 } catch (err) { 
                     showToast(t('camera_error')); 
                 }
@@ -5355,47 +5630,237 @@
 
         function simulateRecording() {
             const btn = document.getElementById('btn-record');
+            const video = document.getElementById('camera-video');
             if (!isRecording) {
-                isRecording = true; 
+                isRecording = true;
+                poseSamples = [];
+                recordingStartTs = performance.now();
                 btn.textContent = '⏹️ ' + (t('stop_recording') || 'עצור הקלטה');
                 btn.style.background = 'linear-gradient(135deg, #ff6b6b, #ee5a5a)';
+
+                // Sample the live video through MoveNet every ~120ms for the duration of the
+                // recording window (real frames, not a fake timer) — frequent enough to catch
+                // rep cycles, sparse enough to stay light on battery/CPU.
+                ensurePoseDetector().then(detector => {
+                    if (!detector || !isRecording) return;
+                    poseSampleTimer = setInterval(async () => {
+                        if (!isRecording || !video || video.readyState < 2) return;
+                        try {
+                            const poses = await detector.estimatePoses(video, { flipHorizontal: false });
+                            if (poses && poses[0] && poses[0].keypoints) {
+                                poseSamples.push({ t: performance.now() - recordingStartTs, keypoints: poses[0].keypoints });
+                            }
+                        } catch (err) {
+                            console.error('[pose] estimatePoses failed', err);
+                        }
+                    }, 120);
+                });
+
                 setTimeout(() => {
-                    isRecording = false; 
+                    isRecording = false;
+                    if (poseSampleTimer) { clearInterval(poseSampleTimer); poseSampleTimer = null; }
                     btn.textContent = '🔴 ' + t('start_recording');
-                    btn.style.background = ''; 
+                    btn.style.background = '';
                     analyzePerformance();
                 }, 3000);
             }
         }
 
-        // ==================== AI SCORE ====================
+        // ==================== AI SCORE (real, on-device kinematic analysis) ====================
+        // Named MoveNet (17-point COCO) keypoints we use.
+        function kp(keypoints, name) {
+            const p = keypoints.find(k => k.name === name);
+            return (p && p.score >= 0.3) ? p : null;
+        }
+        // Angle at vertex b (degrees), formed by points a-b-c.
+        function jointAngle(a, b, c) {
+            if (!a || !b || !c) return null;
+            const v1x = a.x - b.x, v1y = a.y - b.y, v2x = c.x - b.x, v2y = c.y - b.y;
+            const m1 = Math.hypot(v1x, v1y), m2 = Math.hypot(v2x, v2y);
+            if (m1 < 1e-3 || m2 < 1e-3) return null;
+            let cos = (v1x * v2x + v1y * v2y) / (m1 * m2);
+            cos = Math.max(-1, Math.min(1, cos));
+            return Math.acos(cos) * 180 / Math.PI;
+        }
+        function avg(nums) { return nums.length ? nums.reduce((a, b) => a + b, 0) / nums.length : null; }
+        function stdev(nums) {
+            if (nums.length < 2) return 0;
+            const m = avg(nums);
+            return Math.sqrt(avg(nums.map(n => (n - m) * (n - m))));
+        }
+
+        // Counts oscillations (reps) in an angle time series via a hysteresis state machine:
+        // the 10th/90th percentile of the signal defines its working range, and a rep is
+        // counted every time the signal rises from the low band back up into the high band.
+        // This is a generic peak/trough detector — it doesn't know "push-up" vs "pull-up",
+        // it just counts real up-down cycles in the tracked joint angle.
+        function countCycles(series) {
+            if (series.length < 6) return { reps: 0, romDeg: 0 };
+            const vals = series.map(p => p.v).sort((a, b) => a - b);
+            const p10 = vals[Math.floor(vals.length * 0.1)];
+            const p90 = vals[Math.floor(vals.length * 0.9)];
+            const rom = p90 - p10;
+            const mid = (p90 + p10) / 2;
+            const hi = mid + rom * 0.2, lo = mid - rom * 0.2;
+            let reps = 0, sawLow = series[0].v < lo;
+            const repTimestamps = [];
+            for (let i = 1; i < series.length; i++) {
+                const v = series[i].v;
+                if (v < lo) sawLow = true;
+                else if (v > hi && sawLow) { reps++; sawLow = false; repTimestamps.push(series[i].t); }
+            }
+            return { reps, romDeg: rom, repTimestamps };
+        }
+
+        // Builds a normalized (scale-invariant) jitter signal for a hold: average distance
+        // of shoulder/hip midpoints from their own median position, in units of torso length.
+        function computeJitter(samples) {
+            const torsoLens = [], midX = [], midY = [];
+            samples.forEach(s => {
+                const ls = kp(s.keypoints, 'left_shoulder'), rs = kp(s.keypoints, 'right_shoulder');
+                const lh = kp(s.keypoints, 'left_hip'), rh = kp(s.keypoints, 'right_hip');
+                if (ls && rs && lh && rh) {
+                    const shoulderMidX = (ls.x + rs.x) / 2, shoulderMidY = (ls.y + rs.y) / 2;
+                    const hipMidX = (lh.x + rh.x) / 2, hipMidY = (lh.y + rh.y) / 2;
+                    const torso = Math.hypot(shoulderMidX - hipMidX, shoulderMidY - hipMidY);
+                    if (torso > 5) {
+                        torsoLens.push(torso);
+                        midX.push((shoulderMidX + hipMidX) / 2 / torso);
+                        midY.push((shoulderMidY + hipMidY) / 2 / torso);
+                    }
+                }
+            });
+            if (midX.length < 3) return null;
+            const medX = [...midX].sort((a, b) => a - b)[Math.floor(midX.length / 2)];
+            const medY = [...midY].sort((a, b) => a - b)[Math.floor(midY.length / 2)];
+            const dists = midX.map((x, i) => Math.hypot(x - medX, midY[i] - medY));
+            return avg(dists);
+        }
+
+        function clamp(n, lo, hi) { return Math.max(lo, Math.min(hi, n)); }
+
+        // Runs the full generic kinematic analysis on the collected keypoint time series and
+        // returns null if tracking confidence was too low to say anything honest about it.
+        function analyzeKeypointSeries(samples, isHold) {
+            if (!samples.length) return null;
+            const allScores = [];
+            samples.forEach(s => s.keypoints.forEach(k => allScores.push(k.score)));
+            const avgConfidence = avg(allScores) || 0;
+            const trackedFrames = samples.filter(s => kp(s.keypoints, 'left_shoulder') || kp(s.keypoints, 'right_shoulder')).length;
+            const frameCoverage = trackedFrames / samples.length;
+            if (avgConfidence < 0.35 || frameCoverage < 0.4) {
+                return { lowConfidence: true, avgConfidence };
+            }
+
+            // Elbow angle series (shoulder-elbow-wrist), averaged left/right per frame — the
+            // primary generic signal for rep-based push/pull movements.
+            const elbowSeries = [];
+            samples.forEach(s => {
+                const angles = [];
+                const la = jointAngle(kp(s.keypoints, 'left_shoulder'), kp(s.keypoints, 'left_elbow'), kp(s.keypoints, 'left_wrist'));
+                const ra = jointAngle(kp(s.keypoints, 'right_shoulder'), kp(s.keypoints, 'right_elbow'), kp(s.keypoints, 'right_wrist'));
+                if (la != null) angles.push(la);
+                if (ra != null) angles.push(ra);
+                if (angles.length) elbowSeries.push({ t: s.t, v: avg(angles) });
+            });
+
+            const jitter = computeJitter(samples); // torso-length units; smaller = steadier
+            const firstHalf = samples.slice(0, Math.floor(samples.length / 2));
+            const secondHalf = samples.slice(Math.floor(samples.length / 2));
+            const jitterFirst = computeJitter(firstHalf);
+            const jitterSecond = computeJitter(secondHalf);
+            const fatigueRatio = (jitterFirst && jitterSecond && jitterFirst > 0.001) ? jitterSecond / jitterFirst : 1;
+
+            let reps = 0, romDeg = 0, tempoConsistency = 1;
+            if (elbowSeries.length >= 6) {
+                const { reps: r, romDeg: rom, repTimestamps } = countCycles(elbowSeries);
+                reps = r; romDeg = rom;
+                if (repTimestamps && repTimestamps.length >= 2) {
+                    const durations = [];
+                    for (let i = 1; i < repTimestamps.length; i++) durations.push(repTimestamps[i] - repTimestamps[i - 1]);
+                    const meanDur = avg(durations);
+                    tempoConsistency = meanDur > 0 ? clamp(1 - (stdev(durations) / meanDur), 0, 1) : 1;
+                }
+            }
+
+            // ---- Combine real measurements into the four sub-scores + overall (0-100) ----
+            // technique: how cleanly/consistently MoveNet could track the body (a trust proxy —
+            //   full biomechanical form scoring is out of scope for on-device pose estimation).
+            const technique = clamp(Math.round(avgConfidence * 100 * 0.6 + frameCoverage * 100 * 0.4), 0, 100);
+            // range: for reps, actual elbow-angle amplitude vs a generic "full rep" reference of
+            //   70deg; for holds, inverted drift of the same angle (less drift = held position better).
+            const idealRomDeg = 70;
+            const range = isHold
+                ? clamp(Math.round(100 - (romDeg || 0) * 1.5), 0, 100)
+                : clamp(Math.round((romDeg / idealRomDeg) * 100), 0, 100);
+            // control: inverse of body-position jitter (variance of shoulder/hip position,
+            //   normalized by torso length so it works regardless of distance from camera).
+            const control = jitter != null ? clamp(Math.round(100 - jitter * 500), 0, 100) : technique;
+            // tempo: for reps, consistency of the time between reps; for holds, whether
+            //   stability held up over the duration (fatigue = jitter rising in the 2nd half).
+            const tempo = isHold
+                ? clamp(Math.round(100 - Math.max(0, fatigueRatio - 1) * 80), 0, 100)
+                : (reps >= 2 ? clamp(Math.round(tempoConsistency * 100), 0, 100) : control);
+
+            const overall = clamp(Math.round(technique * 0.3 + range * 0.25 + control * 0.25 + tempo * 0.2), 0, 100);
+            return { avgConfidence, technique, range, control, tempo, overall, reps, romDeg, isHold, lowConfidence: false };
+        }
+
+        function pickFeedbackKey(result) {
+            const scores = { technique: result.technique, range: result.range, control: result.control, tempo: result.tempo };
+            const weakest = Object.keys(scores).reduce((a, b) => scores[a] <= scores[b] ? a : b);
+            if (weakest === 'technique') return 'feedback_low_technique';
+            if (weakest === 'range') return result.isHold ? 'feedback_low_range_hold' : 'feedback_low_range_reps';
+            if (weakest === 'control') return 'feedback_low_control';
+            return result.isHold ? 'feedback_low_tempo_hold' : 'feedback_low_tempo_reps';
+        }
+
         function analyzePerformance() {
             showScreen('screen-score');
-            const score = Math.round(60 + Math.random() * 30);
-            const grade = score >= 90 ? 'A+' : score >= 80 ? 'A' : score >= 70 ? 'B' : score >= 60 ? 'C' : 'D';
-            let current = 0;
-            const circle = document.getElementById('score-circle');
             const value = document.getElementById('ai-score');
             const gradeEl = document.getElementById('ai-grade');
             const feedback = document.getElementById('ai-feedback');
             const breakdown = document.getElementById('score-breakdown');
+            const circle = document.getElementById('score-circle');
+            value.textContent = '0';
+            circle.style.setProperty('--score-deg', '0deg');
 
-            const feedbacks = [
-                t('feedback_good') || "טוב מאוד! המשך להתאמן על הטכניקה.",
-                t('feedback_excellent') || "ביצוע מצוין! הטכניקה שלך משתפרת.",
-                t('feedback_nice') || "יפה! שים לב לזוויות המפרקים.",
-                t('feedback_great') || "מעולה! כמעט מושלם, המשך כך!"
-            ];
+            // Honest fallback: no camera frames / model never loaded → never fabricate a score.
+            if (poseDetectorLoadFailed || !poseSamples.length) {
+                gradeEl.textContent = '';
+                gradeEl.style.color = 'var(--text-secondary)';
+                feedback.textContent = poseDetectorLoadFailed ? (t('pose_model_unavailable') || 'לא ניתן היה לנתח את הביצוע.') : (t('analysis_unavailable') || 'לא ניתן היה לנתח את הביצוע.');
+                breakdown.innerHTML = '';
+                return;
+            }
+
+            const isHold = currentExercise && HOLD_EXERCISES.has(currentExercise.id);
+            const result = analyzeKeypointSeries(poseSamples, !!isHold);
+
+            if (!result || result.lowConfidence) {
+                gradeEl.textContent = '';
+                gradeEl.style.color = 'var(--warning)';
+                feedback.textContent = t('low_confidence_warning') || 'לא הצלחנו לזהות את התנוחה בבירור — ודא שאתה נראה במלואך במצלמה.';
+                breakdown.innerHTML = '';
+                return;
+            }
+
+            const score = result.overall;
+            const grade = score >= 90 ? 'A+' : score >= 80 ? 'A' : score >= 70 ? 'B' : score >= 60 ? 'C' : 'D';
+            let current = 0;
 
             const interval = setInterval(() => {
                 current += 2;
                 if (current >= score) {
-                    current = score; 
+                    current = score;
                     clearInterval(interval);
                     gradeEl.textContent = `${t('grade') || 'ציון'}: ${grade}`;
                     gradeEl.style.color = score >= 80 ? 'var(--success)' : score >= 60 ? 'var(--warning)' : 'var(--accent)';
-                    feedback.textContent = feedbacks[Math.floor(Math.random() * feedbacks.length)];
-                    breakdown.innerHTML = `<div style="display: flex; justify-content: space-between; margin-bottom: 8px;"><span>${t('technique') || 'טכניקה'}</span><span style="color: var(--accent);">${Math.round(score * 0.9)}%</span></div><div style="display: flex; justify-content: space-between; margin-bottom: 8px;"><span>${t('range_of_motion') || 'טווח תנועה'}</span><span style="color: var(--accent);">${Math.round(score * 0.85)}%</span></div><div style="display: flex; justify-content: space-between; margin-bottom: 8px;"><span>${t('control') || 'שליטה'}</span><span style="color: var(--accent);">${Math.round(score * 0.95)}%</span></div><div style="display: flex; justify-content: space-between;"><span>${t('tempo') || 'קצב'}</span><span style="color: var(--accent);">${Math.round(score * 0.88)}%</span></div>`;
+                    feedback.textContent = t(pickFeedbackKey(result)) || (t('feedback_good') || 'טוב מאוד! המשך להתאמן על הטכניקה.');
+                    const repsLine = (!result.isHold && result.reps > 0)
+                        ? `<div style="display: flex; justify-content: space-between; margin-bottom: 8px;"><span>${t('reps_detected') || 'חזרות שזוהו'}</span><span style="color: var(--accent);">${result.reps}</span></div>`
+                        : '';
+                    breakdown.innerHTML = repsLine + `<div style="display: flex; justify-content: space-between; margin-bottom: 8px;"><span>${t('technique') || 'טכניקה'}</span><span style="color: var(--accent);">${result.technique}%</span></div><div style="display: flex; justify-content: space-between; margin-bottom: 8px;"><span>${t('range_of_motion') || 'טווח תנועה'}</span><span style="color: var(--accent);">${result.range}%</span></div><div style="display: flex; justify-content: space-between; margin-bottom: 8px;"><span>${t('control') || 'שליטה'}</span><span style="color: var(--accent);">${result.control}%</span></div><div style="display: flex; justify-content: space-between;"><span>${t('tempo') || 'קצב'}</span><span style="color: var(--accent);">${result.tempo}%</span></div>`;
 
                     userStats.workouts++;
                     userStats.avgScore = Math.round((userStats.avgScore * (userStats.workouts - 1) + score) / userStats.workouts);
@@ -5407,7 +5872,7 @@
                         durationMinutes: workoutDurationMin,
                         caloriesBurned: estimateWorkoutCalories(workoutDurationMin)
                     });
-                    addJourneyEvent(`${t('workout_completed') || 'השלמת אימון'}: ${getExerciseName(currentExercise)}`, 
+                    addJourneyEvent(`${t('workout_completed') || 'השלמת אימון'}: ${getExerciseName(currentExercise)}`,
                         `${t('got_score') || 'קיבלת ציון'} ${score} — ${t('keep_going') || 'המשך כך!'}`);
                     checkAchievements();
                     saveToStorage();
@@ -5458,7 +5923,7 @@
             he: {
                 privacy: `<p><strong>מסע קליסטניקס</strong> מכבדת את פרטיותך. הנה מה שחשוב לדעת:</p>
                     <p><strong>איזה מידע נאסף:</strong> האפליקציה אינה שולחת את הנתונים שלך לשום שרת שלנו. כל מה שאתה מזין — שם, גיל, משקל, גובה, היסטוריית אימונים, מדדי גוף, יומן תזונה, תמונות — נשמר <strong>אך ורק על המכשיר שלך</strong>. איננו רואים ואיננו יכולים לשחזר את המידע שלך.</p>
-                    <p><strong>שירותי צד שלישי:</strong> האפליקציה מתקשרת ישירות מהמכשיר שלך עם Open Food Facts (חיפוש ערכים תזונתיים) ו-YouTube (סרטוני הדרכה). לשירותים אלו מדיניות פרטיות משלהם.</p>
+                    <p><strong>שירותי צד שלישי:</strong> האפליקציה מתקשרת ישירות מהמכשיר שלך עם Open Food Facts (חיפוש ערכים תזונתיים), YouTube (סרטוני הדרכה), ו-Google/TensorFlow.js (הורדת מודל זיהוי תנוחה לצורך ניתוח AI — התמונה עצמה מנותחת במכשיר ואינה נשלחת לשום שרת). לשירותים אלו מדיניות פרטיות משלהם.</p>
                     <p><strong>הרשאות מכשיר:</strong> מצלמה, התראות וחיישני תנועה — כולם נשארים על המכשיר בלבד.</p>
                     <p><strong>מחיקת נתונים:</strong> מחיקת האפליקציה או ניקוי נתוני דפדפן מוחקת הכל לצמיתות. ייצוא גיבוי זמין בכל עת.</p>
                     <p><strong>קטינים:</strong> האפליקציה אינה מיועדת לילדים מתחת לגיל 13.</p>`,
@@ -5471,7 +5936,7 @@
             en: {
                 privacy: `<p><strong>Calisthenics Journey</strong> respects your privacy. Here's what matters:</p>
                     <p><strong>What data we collect:</strong> The app does not send your data to any server we operate. Everything you enter — name, age, weight, height, workout history, body metrics, nutrition log, photos — is stored <strong>only on your device</strong>. We cannot see or recover your data.</p>
-                    <p><strong>Third-party services:</strong> The app communicates directly from your device with Open Food Facts (nutrition lookup) and YouTube (instructional videos). These services have their own privacy policies.</p>
+                    <p><strong>Third-party services:</strong> The app communicates directly from your device with Open Food Facts (nutrition lookup), YouTube (instructional videos), and Google/TensorFlow.js (downloads the on-device pose-detection model used for AI form analysis — your camera video itself is analyzed on your device and never uploaded anywhere). These services have their own privacy policies.</p>
                     <p><strong>Device permissions:</strong> Camera, notifications, and motion sensors — all stay on-device only.</p>
                     <p><strong>Data deletion:</strong> Uninstalling the app or clearing browser data permanently deletes everything. Manual backup export is available anytime.</p>
                     <p><strong>Children:</strong> The app is not intended for children under 13.</p>`,
@@ -5484,7 +5949,7 @@
             nl: {
                 privacy: `<p><strong>Calisthenics Journey</strong> respecteert je privacy. Dit is belangrijk om te weten:</p>
                     <p><strong>Welke gegevens we verzamelen:</strong> De app stuurt je gegevens niet naar een server die wij beheren. Alles wat je invoert — naam, leeftijd, gewicht, lengte, trainingsgeschiedenis, lichaamsmetingen, voedingslogboek, foto's — wordt <strong>alleen op je apparaat</strong> opgeslagen. Wij kunnen je gegevens niet zien of herstellen.</p>
-                    <p><strong>Diensten van derden:</strong> De app communiceert rechtstreeks vanaf je apparaat met Open Food Facts (voedingswaarden opzoeken) en YouTube (instructievideo's). Deze diensten hebben hun eigen privacybeleid.</p>
+                    <p><strong>Diensten van derden:</strong> De app communiceert rechtstreeks vanaf je apparaat met Open Food Facts (voedingswaarden opzoeken), YouTube (instructievideo's), en Google/TensorFlow.js (downloadt het model voor houdingsherkenning dat wordt gebruikt voor AI-vormanalyse — je camerabeeld zelf wordt op je apparaat geanalyseerd en nooit geüpload). Deze diensten hebben hun eigen privacybeleid.</p>
                     <p><strong>Apparaatmachtigingen:</strong> Camera, meldingen en bewegingssensoren — blijven allemaal alleen op het apparaat.</p>
                     <p><strong>Gegevens verwijderen:</strong> De app verwijderen of browsergegevens wissen verwijdert alles permanent. Handmatige back-up export is altijd beschikbaar.</p>
                     <p><strong>Kinderen:</strong> De app is niet bedoeld voor kinderen onder de 13 jaar.</p>`,
@@ -5497,7 +5962,7 @@
             es: {
                 privacy: `<p><strong>Calisthenics Journey</strong> respeta tu privacidad. Esto es lo importante:</p>
                     <p><strong>Qué datos recopilamos:</strong> La app no envía tus datos a ningún servidor nuestro. Todo lo que ingresas — nombre, edad, peso, altura, historial de entrenamientos, medidas corporales, registro nutricional, fotos — se guarda <strong>solo en tu dispositivo</strong>. No podemos ver ni recuperar tus datos.</p>
-                    <p><strong>Servicios de terceros:</strong> La app se comunica directamente desde tu dispositivo con Open Food Facts (búsqueda nutricional) y YouTube (videos instructivos). Estos servicios tienen sus propias políticas de privacidad.</p>
+                    <p><strong>Servicios de terceros:</strong> La app se comunica directamente desde tu dispositivo con Open Food Facts (búsqueda nutricional), YouTube (videos instructivos), y Google/TensorFlow.js (descarga el modelo de detección de postura usado para el análisis de forma con IA — tu video de cámara se analiza en tu dispositivo y nunca se sube a ningún servidor). Estos servicios tienen sus propias políticas de privacidad.</p>
                     <p><strong>Permisos del dispositivo:</strong> Cámara, notificaciones y sensores de movimiento — todos permanecen solo en el dispositivo.</p>
                     <p><strong>Eliminación de datos:</strong> Desinstalar la app o borrar los datos del navegador elimina todo permanentemente. La exportación manual de respaldo está disponible en cualquier momento.</p>
                     <p><strong>Menores:</strong> La app no está destinada a menores de 13 años.</p>`,
@@ -5601,7 +6066,7 @@
                     const d = w.date; 
                     const day = d.getDate(); 
                     const month = d.toLocaleString(currentLang === 'he' ? 'he' : 'en', { month: 'short' });
-                    return `<div class="history-item"><div class="history-date"><div class="day">${day}</div><div class="month">${month}</div></div><div class="history-details"><div class="history-title">${w.exercise}</div><div class="history-meta">${t('level') || 'רמה'} ${w.level} • ${d.toLocaleTimeString(currentLang === 'he' ? 'he' : 'en', {hour: '2-digit', minute: '2-digit'})}</div></div><div class="history-score">${w.score}</div></div>`;
+                    return `<div class="history-item"><div class="history-date"><div class="day">${day}</div><div class="month">${month}</div></div><div class="history-details"><div class="history-title">${t(w.exercise) || w.exercise}</div><div class="history-meta">${t('level') || 'רמה'} ${w.level} • ${d.toLocaleTimeString(currentLang === 'he' ? 'he' : 'en', {hour: '2-digit', minute: '2-digit'})}</div></div><div class="history-score">${w.score}</div></div>`;
                 }).join('');
             }
             showScreen('screen-history');
@@ -5790,6 +6255,9 @@
             const percent = Math.min(100, (userXP.xp / nextLevelXP) * 100);
 
             xpEl.textContent = `${t('level') || 'Level'} ${userXP.level}`;
+            // dir="ltr" keeps "120 / 500 XP" in reading order inside an RTL page —
+            // without it the browser's bidi algorithm visually reorders it to "XP 500 / 120".
+            xpText.setAttribute('dir', 'ltr');
             xpText.textContent = `${userXP.xp} / ${nextLevelXP} XP`;
             xpFill.style.width = `${percent}%`;
 
@@ -6018,7 +6486,7 @@
 
             container.innerHTML = bodyMetrics.slice().reverse().map(m => {
                 const d = new Date(m.date);
-                return `<div class="history-item"><div class="history-date"><div class="day">${d.getDate()}</div><div class="month">${d.toLocaleString(currentLang === 'he' ? 'he' : 'en', { month: 'short' })}</div></div><div class="history-details"><div class="history-title">${m.weight} ${t('kg') || 'ק"ג'}</div><div class="history-meta">${m.fat > 0 ? m.fat + '% שומן' : ''}</div></div></div>`;
+                return `<div class="history-item"><div class="history-date"><div class="day">${d.getDate()}</div><div class="month">${d.toLocaleString(currentLang === 'he' ? 'he' : 'en', { month: 'short' })}</div></div><div class="history-details"><div class="history-title">${m.weight} ${t('kg') || 'ק"ג'}</div><div class="history-meta">${m.fat > 0 ? m.fat + '% ' + (t('body_fat_short') || t('body_fat') || 'fat') : ''}</div></div></div>`;
             }).join('');
         }
 
@@ -6792,7 +7260,10 @@
                     const data = JSON.parse(saved);
                     if (data.userProfile) userProfile = data.userProfile;
                     if (data.userSchedule) userSchedule = data.userSchedule;
-                    if (data.userStats) userStats = data.userStats;
+                    // Merge rather than replace: a saved object missing a field (older
+                    // save format, hand-edited backup) must not turn into NaN/undefined
+                    // on screen — every field always keeps a safe numeric default.
+                    if (data.userStats) userStats = { streak: 0, workouts: 0, avgScore: 0, totalHours: 0, ...data.userStats };
                     if (data.workoutHistory) {
                         workoutHistory = data.workoutHistory.map(w => ({...w, date: new Date(w.date)}));
                     }
@@ -6803,7 +7274,7 @@
                     if (data.userLevel) userLevel = data.userLevel;
                     if (data.userScore) userScore = data.userScore;
                     if (data.currentLang) currentLang = data.currentLang;
-                    if (data.userXP) userXP = data.userXP;
+                    if (data.userXP) userXP = { level: 1, xp: 0, totalXP: 0, ...data.userXP };
                     if (data.bodyMetrics) bodyMetrics = data.bodyMetrics.map(m => ({...m, date: new Date(m.date)}));
                     if (data.nutritionLog) nutritionLog = data.nutritionLog.map(f => ({...f, date: new Date(f.date)}));
                     if (data.challengeHistory) challengeHistory = data.challengeHistory.map(c => ({...c, date: new Date(c.date)}));
@@ -7163,10 +7634,10 @@
                     if (!confirm(t('health_import_confirm') || 'הייבוא יחליף את כל הנתונים הקיימים. להמשיך?')) return;
                     if (data.userProfile) userProfile = data.userProfile;
                     if (data.userSchedule) userSchedule = data.userSchedule;
-                    if (data.userStats) userStats = data.userStats;
+                    if (data.userStats) userStats = { streak: 0, workouts: 0, avgScore: 0, totalHours: 0, ...data.userStats };
                     if (data.userLevel) userLevel = data.userLevel;
                     if (data.userScore) userScore = data.userScore;
-                    if (data.userXP) userXP = data.userXP;
+                    if (data.userXP) userXP = { level: 1, xp: 0, totalXP: 0, ...data.userXP };
                     if (data.workoutHistory) workoutHistory = data.workoutHistory.map(w => ({...w, date: new Date(w.date)}));
                     if (data.bodyMetrics) bodyMetrics = data.bodyMetrics.map(m => ({...m, date: new Date(m.date)}));
                     if (data.nutritionLog) nutritionLog = data.nutritionLog.map(f => ({...f, date: new Date(f.date)}));
@@ -7236,50 +7707,33 @@
 
         // ==================== PWA ====================
         function initPWA() {
-            // Manifest is injected at runtime so the app stays a single file
-            try {
-                const icon = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='110' fill='%230a0a0f'/%3E%3Cg stroke='%23ff6b35' stroke-width='30' stroke-linecap='round' fill='none'%3E%3Crect x='66' y='212' width='58' height='88' rx='18'/%3E%3Crect x='388' y='212' width='58' height='88' rx='18'/%3E%3Cpath d='M148 256h216'/%3E%3C/g%3E%3C/svg%3E";
-                const manifest = {
-                    name: t('app_title'),
-                    short_name: t('app_short_name'),
-                    start_url: ".",
-                    display: "standalone",
-                    background_color: "#0a0a0f",
-                    theme_color: "#0a0a0f",
-                    lang: currentLang,
-                    dir: currentLang === 'he' ? "rtl" : "ltr",
-                    icons: [
-                        { src: icon, sizes: "512x512", type: "image/svg+xml", purpose: "any maskable" }
-                    ]
-                };
-                const link = document.createElement('link');
-                link.rel = 'manifest';
-                try {
-                    const blob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
-                    link.href = URL.createObjectURL(blob);
-                } catch (blobErr) {
-                    // Fallback for environments without createObjectURL
-                    link.href = 'data:application/manifest+json;charset=utf-8,' + encodeURIComponent(JSON.stringify(manifest));
-                }
-                document.head.appendChild(link);
-            } catch (e) {
-                console.warn('Manifest injection failed:', e);
-            }
+            // manifest.json and app icons are static files served next to index.html
+            // (see <link rel="manifest"> and <link rel="apple-touch-icon"> in <head>).
+            document.documentElement.lang = currentLang;
+            document.documentElement.dir = currentLang === 'he' ? 'rtl' : 'ltr';
 
-            // Optional service worker for true offline caching.
-            // Requires a separate sw.js next to index.html — silently skipped if absent.
+            // Service worker caches the app shell for real offline support.
             if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
-                navigator.serviceWorker.register('sw.js').catch(() => {
-                    console.info('No sw.js found — app still works offline via localStorage.');
+                navigator.serviceWorker.register('sw.js').catch((e) => {
+                    console.warn('Service worker registration failed:', e);
                 });
             }
         }
 
         // ==================== UPDATED INIT ====================
+        function detectInitialLanguage() {
+            const saved = localStorage.getItem('masa_lang');
+            if (saved && translations[saved]) return saved;
+            const browserLang = (navigator.language || 'en').slice(0, 2).toLowerCase();
+            if (translations[browserLang]) return browserLang;
+            return 'en';
+        }
+
         function init() {
             initTheme();
             initKeyboardDetection();
             createParticles();
+            currentLang = detectInitialLanguage();
 
             const hasData = loadFromStorage();
             if (hasData && userProfile.name) {
