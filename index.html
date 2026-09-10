@@ -5466,8 +5466,9 @@
                 if (timeInput) userSchedule.times[day] = timeInput.value;
             });
             saveToStorage();
-            showBottomNav(true); 
-            showDashboard(); 
+            refreshWorkoutReminders();
+            showBottomNav(true);
+            showDashboard();
             showToast(t('welcome_back'));
         }
 
@@ -5964,6 +5965,7 @@
                     userStats.workouts++;
                     userStats.avgScore = Math.round((userStats.avgScore * (userStats.workouts - 1) + score) / userStats.workouts);
                     recordWorkoutForStreak();
+                    refreshStreakReminders();
                     userStats.totalHours += 0.5;
                     const workoutDurationMin = 12; // typical time for one logged exercise set/session
                     workoutHistory.unshift({
@@ -7119,85 +7121,193 @@
         }
 
         // ==================== NOTIFICATIONS ====================
+        // Two real delivery paths:
+        // 1. Inside the Capacitor-wrapped iOS/Android app: genuine OS-level
+        //    local notifications (@capacitor/local-notifications, already a
+        //    declared dependency in capacitor-app/package.json — `npx cap
+        //    sync` links it natively) that fire even while the app is
+        //    closed or the phone is locked.
+        // 2. Plain web/PWA build: the browser Notification API as a
+        //    best-effort fallback, which only fires while this tab is open.
         let notificationsEnabled = false;
         let dailyReminderEnabled = false;
         let streakReminderEnabled = false;
 
-        function toggleNotifications() {
+        const NOTIF_ID = { WORKOUT: 1000, DAILY_CHALLENGE: 2000, STREAK_TODAY: 3001, STREAK_TOMORROW: 3002 };
+
+        function isNativeApp() {
+            return !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+        }
+        function getLocalNotificationsPlugin() {
+            return (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications) || null;
+        }
+
+        async function requestNotificationPermission() {
+            if (isNativeApp()) {
+                const plugin = getLocalNotificationsPlugin();
+                if (!plugin) return false;
+                const result = await plugin.requestPermissions();
+                return result.display === 'granted';
+            }
+            if ('Notification' in window) {
+                const perm = await Notification.requestPermission();
+                return perm === 'granted';
+            }
+            return false;
+        }
+
+        async function toggleNotifications() {
             notificationsEnabled = !notificationsEnabled;
             document.getElementById('notif-toggle').classList.toggle('active', notificationsEnabled);
             localStorage.setItem('masa_notif', notificationsEnabled);
 
-            if (notificationsEnabled && 'Notification' in window) {
-                Notification.requestPermission().then(permission => {
-                    if (permission === 'granted') {
-                        showToast(t('notif_enabled') || '🔔 התראות הופעלו!');
-                    } else {
-                        showToast(t('notif_denied') || '❌ נדרשת הרשאה');
-                        notificationsEnabled = false;
-                        document.getElementById('notif-toggle').classList.remove('active');
-                    }
-                });
+            if (notificationsEnabled) {
+                const granted = await requestNotificationPermission();
+                if (!granted) {
+                    showToast(t('notif_denied') || '❌ Permission needed');
+                    notificationsEnabled = false;
+                    document.getElementById('notif-toggle').classList.remove('active');
+                    localStorage.setItem('masa_notif', false);
+                    saveToStorage();
+                    return;
+                }
+                showToast(t('notif_enabled') || '🔔 Notifications enabled!');
             }
+            await refreshWorkoutReminders();
             saveToStorage();
         }
 
-        function toggleDailyReminder() {
+        async function toggleDailyReminder() {
             dailyReminderEnabled = !dailyReminderEnabled;
             document.getElementById('daily-toggle').classList.toggle('active', dailyReminderEnabled);
             localStorage.setItem('masa_daily_remind', dailyReminderEnabled);
+            await refreshDailyChallengeReminder();
             saveToStorage();
         }
 
-        function toggleStreakReminder() {
+        async function toggleStreakReminder() {
             streakReminderEnabled = !streakReminderEnabled;
             document.getElementById('streak-toggle').classList.toggle('active', streakReminderEnabled);
             localStorage.setItem('masa_streak_remind', streakReminderEnabled);
+            await refreshStreakReminders();
             saveToStorage();
         }
 
+        async function refreshWorkoutReminders() {
+            const plugin = getLocalNotificationsPlugin();
+            if (!isNativeApp() || !plugin) return;
+            const cancelIds = [0, 1, 2, 3, 4, 5, 6].map(d => ({ id: NOTIF_ID.WORKOUT + d }));
+            await plugin.cancel({ notifications: cancelIds }).catch(() => {});
+            if (!notificationsEnabled) return;
+
+            const reminderMinutes = parseInt(document.getElementById('reminder-time')?.value || 30);
+            const notifications = (userSchedule.days || []).map(day => {
+                const timeStr = userSchedule.times[day] || '18:00';
+                const [h, m] = timeStr.split(':').map(Number);
+                const totalMin = (((h * 60 + m - reminderMinutes) % 1440) + 1440) % 1440;
+                return {
+                    id: NOTIF_ID.WORKOUT + day,
+                    title: t('workout_reminder') || 'Workout Reminder',
+                    body: t('workout_in') || `Workout in ${reminderMinutes} minutes!`,
+                    schedule: { on: { weekday: day + 1, hour: Math.floor(totalMin / 60), minute: totalMin % 60 }, allowWhileIdle: true }
+                };
+            });
+            if (notifications.length) await plugin.schedule({ notifications }).catch(() => {});
+        }
+
+        async function refreshDailyChallengeReminder() {
+            const plugin = getLocalNotificationsPlugin();
+            if (!isNativeApp() || !plugin) return;
+            await plugin.cancel({ notifications: [{ id: NOTIF_ID.DAILY_CHALLENGE }] }).catch(() => {});
+            if (!dailyReminderEnabled) return;
+            await plugin.schedule({
+                notifications: [{
+                    id: NOTIF_ID.DAILY_CHALLENGE,
+                    title: t('daily_challenge') || 'Daily Challenge',
+                    body: t('new_challenge') || 'A new challenge is waiting for you!',
+                    schedule: { on: { hour: 8, minute: 0 }, allowWhileIdle: true }
+                }]
+            }).catch(() => {});
+        }
+
+        // Scheduled as one-time "today" + "tomorrow" notifications (not a
+        // repeating daily rule) and refreshed on every app launch and every
+        // time a workout is logged, so a day you already trained never
+        // pings you at 9pm — a repeating OS-level rule can't check that on
+        // its own without a backend to query at fire time.
+        async function refreshStreakReminders() {
+            const plugin = getLocalNotificationsPlugin();
+            if (!isNativeApp() || !plugin) return;
+            await plugin.cancel({ notifications: [{ id: NOTIF_ID.STREAK_TODAY }, { id: NOTIF_ID.STREAK_TOMORROW }] }).catch(() => {});
+            if (!streakReminderEnabled || userStats.streak <= 0) return;
+
+            const title = t('streak_alert') || 'Streak Reminder';
+            const body = `${t('dont_break_streak') || "Don't break your streak of"} ${userStats.streak}!`;
+            const now = new Date();
+            const todayWorkedOut = workoutHistory.some(w => new Date(w.date).toDateString() === now.toDateString());
+            const today9pm = new Date(now); today9pm.setHours(21, 0, 0, 0);
+            const notifications = [];
+            if (!todayWorkedOut && today9pm > now) {
+                notifications.push({ id: NOTIF_ID.STREAK_TODAY, title, body, schedule: { at: today9pm, allowWhileIdle: true } });
+            }
+            const tomorrow9pm = new Date(today9pm.getTime() + 86400000);
+            notifications.push({ id: NOTIF_ID.STREAK_TOMORROW, title, body, schedule: { at: tomorrow9pm, allowWhileIdle: true } });
+            await plugin.schedule({ notifications }).catch(() => {});
+        }
+
+        async function refreshAllNotifications() {
+            await refreshWorkoutReminders();
+            await refreshDailyChallengeReminder();
+            await refreshStreakReminders();
+        }
+
+        // Best-effort in-app fallback for the plain web/PWA build — only
+        // fires while this tab is open, guarded per-day so it can't spam
+        // the same reminder on every 60s tick within its trigger window.
         function checkNotifications() {
-            if (!notificationsEnabled || !('Notification' in window)) return;
+            if (isNativeApp() || !notificationsEnabled || !('Notification' in window)) return;
 
             const now = new Date();
             const hour = now.getHours();
+            const todayKey = now.toDateString();
 
-            // Check workout reminders
             userSchedule.days.forEach(day => {
-                if (day === now.getDay()) {
-                    const timeStr = userSchedule.times[day] || '18:00';
-                    const [h, m] = timeStr.split(':').map(Number);
-                    const workoutTime = new Date();
-                    workoutTime.setHours(h, m, 0);
-
-                    const reminderMinutes = parseInt(document.getElementById('reminder-time')?.value || 30);
-                    const reminderTime = new Date(workoutTime.getTime() - reminderMinutes * 60000);
-
-                    if (now >= reminderTime && now < workoutTime) {
-                        new Notification(t('workout_reminder') || 'תזכורת אימון', {
-                            body: t('workout_in') || `אימון בעוד ${reminderMinutes} דקות!`,
-                            icon: '💪'
-                        });
-                    }
+                if (day !== now.getDay()) return;
+                const timeStr = userSchedule.times[day] || '18:00';
+                const [h, m] = timeStr.split(':').map(Number);
+                const workoutTime = new Date(now); workoutTime.setHours(h, m, 0, 0);
+                const reminderMinutes = parseInt(document.getElementById('reminder-time')?.value || 30);
+                const reminderTime = new Date(workoutTime.getTime() - reminderMinutes * 60000);
+                const firedKey = `masa_notif_fired_workout_${todayKey}`;
+                if (now >= reminderTime && now < workoutTime && localStorage.getItem(firedKey) !== '1') {
+                    new Notification(t('workout_reminder') || 'Workout Reminder', {
+                        body: t('workout_in') || `Workout in ${reminderMinutes} minutes!`,
+                        icon: 'icons/icon-192.png'
+                    });
+                    localStorage.setItem(firedKey, '1');
                 }
             });
 
-            // Daily challenge reminder (8 AM)
             if (dailyReminderEnabled && hour === 8) {
-                new Notification(t('daily_challenge') || 'אתגר יומי', {
-                    body: t('new_challenge') || 'יש אתגר חדש מחכה לך!',
-                    icon: '🔥'
-                });
+                const firedKey = `masa_notif_fired_daily_${todayKey}`;
+                if (localStorage.getItem(firedKey) !== '1') {
+                    new Notification(t('daily_challenge') || 'Daily Challenge', {
+                        body: t('new_challenge') || 'A new challenge is waiting for you!',
+                        icon: 'icons/icon-192.png'
+                    });
+                    localStorage.setItem(firedKey, '1');
+                }
             }
 
-            // Streak reminder (9 PM if no workout today)
             if (streakReminderEnabled && hour === 21 && userStats.streak > 0) {
-                const todayWorkouts = workoutHistory.filter(w => new Date(w.date).toDateString() === now.toDateString());
-                if (todayWorkouts.length === 0) {
-                    new Notification(t('streak_alert') || 'תזכורת רצף', {
-                        body: t('dont_break_streak') || `אל תשבור את הרצף של ${userStats.streak} ימים!`,
-                        icon: '⚡'
+                const firedKey = `masa_notif_fired_streak_${todayKey}`;
+                const todayWorkouts = workoutHistory.filter(w => new Date(w.date).toDateString() === todayKey);
+                if (todayWorkouts.length === 0 && localStorage.getItem(firedKey) !== '1') {
+                    new Notification(t('streak_alert') || 'Streak Reminder', {
+                        body: `${t('dont_break_streak') || "Don't break your streak of"} ${userStats.streak}!`,
+                        icon: 'icons/icon-192.png'
                     });
+                    localStorage.setItem(firedKey, '1');
                 }
             }
         }
@@ -7854,6 +7964,7 @@
                 setLanguage(currentLang);
                 showBottomNav(true);
                 showDashboard();
+                refreshAllNotifications();
             } else {
                 setLanguage(currentLang);
             }
