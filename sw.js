@@ -1,4 +1,4 @@
-const CACHE_NAME = 'masa-calisthenics-v2';
+const CACHE_NAME = 'masa-calisthenics-v3';
 const APP_SHELL = [
   './',
   './index.html',
@@ -6,6 +6,8 @@ const APP_SHELL = [
   './vendor/chart.umd.min.js',
   './vendor/tf.min.js',
   './vendor/pose-detection.min.js',
+  './vendor/firebase-app-compat.js',
+  './vendor/firebase-auth-compat.js',
   './vendor/fonts/heebo.css',
   './vendor/fonts/NGS6v5_NC0k9P9H0TbFhsqMA6aw.woff2',
   './vendor/fonts/NGS6v5_NC0k9P9GKTbFhsqMA6aw.woff2',
