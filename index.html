@@ -786,67 +786,146 @@
         .history-score { font-size: 1.5rem; font-weight: 900; color: var(--success); }
 
         /* ==================== ACHIEVEMENTS ==================== */
-        .achievement-grid { 
-            display: grid; 
-            grid-template-columns: repeat(3,1fr); 
-            gap: 12px; 
+        .achievements-progress-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; }
+        .achievements-progress-count { font-size: 1.7rem; font-weight: 900; color: var(--accent); }
+        .achievements-progress-count span { color: var(--text-secondary); font-weight: 700; font-size: 1.1rem; }
+        .achievements-progress-label { font-size: 0.85rem; color: var(--text-secondary); }
+        .achievements-progress-track { height: 10px; border-radius: 6px; background: var(--bg-elevated); overflow: hidden; }
+        .achievements-progress-fill { height: 100%; border-radius: 6px; background: linear-gradient(90deg,var(--accent),#ffb38a); transition: width .6s cubic-bezier(.2,.8,.3,1); }
+        .achievement-grid {
+            display: grid;
+            grid-template-columns: repeat(3,1fr);
+            gap: 12px;
         }
-        .achievement-item { 
-            background: var(--bg-card); 
-            border: 2px solid var(--border); 
-            border-radius: 16px; 
-            padding: 20px 10px; 
-            text-align: center; 
-            transition: all 0.3s ease; 
+        .achievement-item {
+            position: relative;
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: 16px;
+            padding: 18px 10px 14px;
+            text-align: center;
+            transition: all 0.3s ease;
         }
-        .achievement-item.unlocked { 
-            border-color: var(--accent); 
-            background: rgba(255,107,53,0.1); 
+        .achievement-item.unlocked {
+            border-color: var(--accent);
+            background: rgba(255,107,53,0.1);
+            box-shadow: 0 0 0 1px var(--accent-glow), 0 6px 18px -8px var(--accent-glow);
         }
-        .achievement-icon { font-size: 2.5rem; margin-bottom: 8px; }
+        .achievement-item.achievement-just-unlocked { animation: achievementPop .55s cubic-bezier(.2,.8,.3,1.3) both; }
+        @keyframes achievementPop { from { opacity: 0; transform: scale(.7); } to { opacity: 1; transform: scale(1); } }
+        .achievement-icon { font-size: 2.4rem; margin-bottom: 8px; line-height: 1; position: relative; z-index: 1; }
+        /* Locked tiles stay legible (name still readable) but the icon itself
+           reads as "not earned yet" via grayscale + dimming, with a small
+           lock badge doing the rest of the storytelling. */
+        .achievement-item:not(.unlocked) .achievement-icon { filter: grayscale(1) brightness(0.75); opacity: 0.55; }
+        .achievement-item:not(.unlocked) .achievement-name { color: var(--text-secondary); }
         .achievement-name { font-size: 0.8rem; font-weight: 700; }
-        .achievement-item:not(.unlocked) { opacity: 0.4; }
+        .achievement-lock {
+            position: absolute; top: 8px; inset-inline-end: 8px;
+            width: 20px; height: 20px; border-radius: 50%;
+            background: var(--bg-elevated); border: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: center;
+            color: var(--text-secondary);
+        }
+        .achievement-lock .icon-svg { width: 10px; height: 10px; stroke-width: 2.5; }
 
         /* ==================== JOURNEY ==================== */
-        .journey-timeline { 
-            position: relative; 
-            padding-right: 30px; 
+        /* Logical (inset-inline / padding-inline) properties throughout so the
+           rail and markers mirror to the correct side under dir="rtl" instead
+           of always sitting physically on the right. */
+        .journey-timeline {
+            position: relative;
+            padding-inline-start: 48px;
         }
         .journey-timeline::before {
             content: "";
             position: absolute;
-            right: 8px;
-            top: 0;
+            inset-inline-start: 17px;
+            top: 4px;
+            bottom: 4px;
             width: 2px;
-            height: 100%;
             background: linear-gradient(to bottom,var(--accent),var(--bg-elevated));
         }
         /* No events yet: nothing for the rail to connect, so drop it and the
            reserved gutter space rather than showing an orphan line. */
-        .journey-timeline-empty { padding-right: 0; }
+        .journey-timeline-empty { padding-inline-start: 0; }
         .journey-timeline-empty::before { content: none; }
-        .journey-item { 
-            position: relative; 
-            margin-bottom: 24px; 
-            padding: 16px; 
-            background: var(--bg-elevated); 
-            border-radius: 16px; 
-            border-right: 3px solid var(--accent); 
+        .journey-item {
+            position: relative;
+            margin-bottom: 18px;
+            padding: 14px 16px;
+            background: var(--bg-elevated);
+            border-radius: 16px;
+            border: 1px solid var(--border);
         }
-        .journey-item::before { 
-            content: ""; 
-            position: absolute; 
-            right: -26px; 
-            top: 20px; 
-            width: 12px; 
-            height: 12px; 
-            border-radius: 50%; 
-            background: var(--accent); 
-            border: 3px solid var(--bg-dark); 
+        .journey-item-new { animation: journeyItemIn .5s cubic-bezier(.2,.8,.3,1.1) both; }
+        @keyframes journeyItemIn {
+            from { opacity: 0; transform: translateY(10px) scale(.94); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
         }
+        .journey-marker {
+            position: absolute;
+            inset-inline-start: -48px;
+            top: 10px;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: var(--bg-card);
+            border: 2px solid var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent);
+            box-shadow: 0 0 0 4px var(--bg-dark);
+        }
+        .journey-marker .icon-svg { width: 16px; height: 16px; }
+        .journey-marker.marker-achievement { border-color: var(--warning); color: var(--warning); }
+        .journey-marker.marker-streak { border-color: var(--danger); color: var(--danger); }
+        .journey-marker.marker-level { border-color: #ffd700; color: #ffd700; }
+        .journey-marker.marker-start { border-color: var(--info); color: var(--info); }
         .journey-date { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 4px; }
         .journey-title { font-weight: 700; margin-bottom: 4px; }
         .journey-desc { font-size: 0.9rem; color: var(--text-secondary); }
+        .journey-empty-state { text-align: center; padding: 36px 20px; }
+        .journey-empty-icon {
+            width: 84px; height: 84px; border-radius: 24px;
+            background: var(--bg-elevated); border: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 18px; color: var(--accent);
+        }
+        .journey-empty-icon .icon-svg { width: 34px; height: 34px; }
+        .journey-empty-title { font-weight: 700; font-size: 1.15rem; margin-bottom: 8px; }
+        .journey-empty-desc { color: var(--text-secondary); font-size: 0.9rem; line-height: 1.6; max-width: 320px; margin: 0 auto; }
+
+        /* ==================== RECOVERY / STRETCHING ==================== */
+        .recovery-tab-active { border-color: var(--accent) !important; color: var(--accent) !important; background: var(--accent-glow) !important; }
+        .recovery-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 14px;
+            background: var(--bg-elevated);
+            border-radius: 14px;
+            border: 1px solid var(--border);
+            margin-bottom: 10px;
+        }
+        .recovery-item-icon {
+            flex-shrink: 0;
+            width: 42px; height: 42px; border-radius: 12px;
+            background: var(--bg-card); border: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: center;
+            color: var(--accent);
+        }
+        .recovery-item-icon .icon-svg { width: 21px; height: 21px; }
+        .recovery-item-name { font-weight: 700; font-size: 0.92rem; flex: 1; }
+        .recovery-item-time {
+            flex-shrink: 0;
+            font-size: 0.8rem; font-weight: 800; color: var(--accent);
+            background: var(--accent-glow);
+            border-radius: 20px;
+            padding: 5px 12px;
+            white-space: nowrap;
+        }
 
         /* ==================== VIDEOS ==================== */
         .video-card { 
@@ -1826,14 +1905,10 @@
                 <div class="header-icon"><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="19" r="2"/><circle cx="19" cy="5" r="2"/><path d="M6.5 17.5C9 14 8 9 12 9s2-5 5.5-5"/></svg></div><h1 class="logo" data-i18n="journey_title">המסע שלי</h1>
                 <p class="tagline" data-i18n="journey_subtitle">הדרך שעברת עד כאן</p>
             </div>
-            <div class="card" style="margin-bottom: 20px;" id="journey-intro-card">
-                <div style="display: flex; align-items: center; gap: 16px;">
-                    <div style="width:76px;height:76px;border-radius:20px;background:var(--bg-elevated);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;margin:0;color:var(--accent);"><svg class="icon-svg" style="width:29.700000000000003px;height:29.700000000000003px;" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="19" r="2"/><circle cx="19" cy="5" r="2"/><path d="M6.5 17.5C9 14 8 9 12 9s2-5 5.5-5"/></svg></div>
-                    <div>
-                        <div style="font-weight: 700; font-size: 1.2rem;" data-i18n="journey_starts">המסע מתחיל כאן</div>
-                        <div style="color: var(--text-secondary);" data-i18n="journey_desc">כל שלב, כל ניצחון, כל כישלון — הכל מתועד</div>
-                    </div>
-                </div>
+            <div class="card journey-empty-state" id="journey-intro-card">
+                <div class="journey-empty-icon"><svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="19" r="2"/><circle cx="19" cy="5" r="2"/><path d="M6.5 17.5C9 14 8 9 12 9s2-5 5.5-5"/></svg></div>
+                <div class="journey-empty-title" data-i18n="journey_starts">המסע מתחיל כאן</div>
+                <div class="journey-empty-desc" data-i18n="journey_desc">כל שלב, כל ניצחון, כל כישלון — הכל מתועד</div>
             </div>
             <div class="journey-timeline" id="journey-timeline"></div>
         </div>
@@ -1845,10 +1920,10 @@
                 <p class="tagline" data-i18n="achievements_subtitle">אסוף את כל המדליות</p>
             </div>
             <div class="card" style="margin-bottom: 20px;">
-                <div class="stats-grid">
-                    <div class="stat-box"><div class="stat-value" id="ach-unlocked">0</div><div class="stat-label" data-i18n="unlocked">נפתחו</div></div>
-                    <div class="stat-box"><div class="stat-value" id="ach-total">0</div><div class="stat-label" data-i18n="total">סה"כ</div></div>
+                <div class="achievements-progress-head">
+                    <div class="achievements-progress-count"><span id="ach-unlocked">0</span><span>/<span id="ach-total">0</span> <span data-i18n="unlocked">נפתחו</span></span></div>
                 </div>
+                <div class="achievements-progress-track"><div class="achievements-progress-fill" id="achievements-progress-fill" style="width:0%;"></div></div>
             </div>
             <div class="achievement-grid" id="achievement-grid"></div>
         </div>
@@ -6521,8 +6596,8 @@
             document.getElementById('result-endurance').textContent = enduranceCount ? Math.round(endurance / enduranceCount) : 0;
             document.getElementById('result-mobility').textContent = mobilityCount ? Math.round(mobility / mobilityCount) : 0;
 
-            addJourneyEvent(t('journey_started') || 'התחלת את המסע!', 
-                (t('quiz_completed') || `השלמת את הקוויז ונקבעת לרמה ${userLevel}: ${lvlName}`));
+            addJourneyEvent(t('journey_started') || 'התחלת את המסע!',
+                (t('quiz_completed') || `השלמת את הקוויז ונקבעת לרמה ${userLevel}: ${lvlName}`), 'start');
             saveToStorage();
             showScreen('screen-results');
         }
@@ -7184,7 +7259,7 @@
                     });
                     syncWorkoutToHealthKit(workoutDurationMin, workoutCalories);
                     addJourneyEvent(`${t('workout_completed') || 'השלמת אימון'}: ${getExerciseName(currentExercise)}`,
-                        `${t('got_score') || 'קיבלת ציון'} ${score} — ${t('keep_going') || 'המשך כך!'}`);
+                        `${t('got_score') || 'קיבלת ציון'} ${score} — ${t('keep_going') || 'המשך כך!'}`, 'workout');
                     checkAchievements();
                     saveToStorage();
                     // Growth-first: never blocks the result itself — shown a
@@ -7416,8 +7491,22 @@
         }
 
         // ==================== JOURNEY ====================
-        function addJourneyEvent(title, desc) { 
-            journeyEvents.unshift({ date: new Date(), title: title, desc: desc }); 
+        // One SVG marker per event kind so the timeline reads at a glance
+        // (game-style progress feed) instead of every entry looking identical.
+        const JOURNEY_MARKER_ICONS = {
+            start: '<circle cx="5" cy="19" r="2"/><circle cx="19" cy="5" r="2"/><path d="M6.5 17.5C9 14 8 9 12 9s2-5 5.5-5"/>',
+            workout: '<circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/>',
+            achievement: '<circle cx="12" cy="8" r="5.5"/><path d="M9 13 7 21l5-2.5L17 21l-2-8"/>',
+            streak: '<path d="M12 2.5c1.2 4-3.5 5.3-3.5 9a3.5 3.5 0 0 0 7 0c0-1.3-.7-2-.9-3 1 1 1.9 2.7 1.9 4.8a5 5 0 0 1-10 0c0-4.8 3.6-6.8 5.5-10.8z"/>',
+            level: '<path d="M12 3.5 14.4 9l6 .6-4.5 4 1.3 5.9L12 16.6l-5.2 2.9 1.3-5.9-4.5-4 6-.6z"/>',
+            program: '<rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/><path d="m9 15.5 2 2 4-4.5"/>'
+        };
+        function journeyMarkerIcon(type) {
+            return `<div class="journey-marker marker-${type}"><svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true">${JOURNEY_MARKER_ICONS[type] || JOURNEY_MARKER_ICONS.workout}</svg></div>`;
+        }
+
+        function addJourneyEvent(title, desc, type) {
+            journeyEvents.unshift({ date: new Date(), title: title, desc: desc, type: type || 'workout' });
             saveToStorage();
         }
 
@@ -7433,11 +7522,15 @@
             // stray orphan line next to the empty-state message.
             timeline.classList.toggle('journey-timeline-empty', journeyEvents.length === 0);
             if (journeyEvents.length === 0) {
-                timeline.innerHTML = `<div style="color: var(--text-secondary); text-align: center;">${t('journey_empty')}</div>`;
+                timeline.innerHTML = '';
             } else {
-                timeline.innerHTML = journeyEvents.map(e => {
+                timeline.innerHTML = journeyEvents.map((e, i) => {
                     const d = e.date;
-                    return `<div class="journey-item"><div class="journey-date">${d.toLocaleDateString(currentLang === 'he' ? 'he' : 'en')} • ${d.toLocaleTimeString(currentLang === 'he' ? 'he' : 'en', {hour: '2-digit', minute: '2-digit'})}</div><div class="journey-title">${e.title}</div><div class="journey-desc">${e.desc}</div></div>`;
+                    // Only the newest entry (index 0) plays the pop-in animation —
+                    // replaying it on every older card each time the screen is
+                    // reopened would feel noisy rather than like a fresh moment.
+                    const newClass = i === 0 ? ' journey-item-new' : '';
+                    return `<div class="journey-item${newClass}">${journeyMarkerIcon(e.type || 'workout')}<div class="journey-date">${d.toLocaleDateString(currentLang === 'he' ? 'he' : 'en')} • ${d.toLocaleTimeString(currentLang === 'he' ? 'he' : 'en', {hour: '2-digit', minute: '2-digit'})}</div><div class="journey-title">${e.title}</div><div class="journey-desc">${e.desc}</div></div>`;
                 }).join('');
             }
             showScreen('screen-journey');
@@ -7507,26 +7600,40 @@
 
             newUnlocks.forEach(id => {
                 unlockedAchievements.push(id);
+                justUnlockedAchievementIds.push(id);
                 const ach = achievements.find(a => a.id === id);
-                if (ach) { 
+                if (ach) {
                     const achName = (achievementTranslations[currentLang] && achievementTranslations[currentLang][ach.name]) || ach.name;
-                    showToast(`🏆 ${t('new_achievement') || 'הישג חדש'}: ${achName}!`); 
-                    addJourneyEvent(`${t('new_achievement') || 'הישג חדש'}: ${achName}`, 
-                        (achievementTranslations[currentLang] && achievementTranslations[currentLang][ach.desc]) || ach.desc); 
+                    showToast(`🏆 ${t('new_achievement') || 'הישג חדש'}: ${achName}!`);
+                    addJourneyEvent(`${t('new_achievement') || 'הישג חדש'}: ${achName}`,
+                        (achievementTranslations[currentLang] && achievementTranslations[currentLang][ach.desc]) || ach.desc,
+                        ach.id.includes('streak') ? 'streak' : 'achievement');
                 }
             });
             if (newUnlocks.length > 0) saveToStorage();
         }
 
+        // IDs unlocked since the achievements screen was last shown — rendered
+        // with a pop-in animation once, then cleared so reopening the screen
+        // later doesn't replay it on every tile.
+        let justUnlockedAchievementIds = [];
+        const LOCK_ICON_SVG = '<svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>';
+
         function showAchievements() {
             document.getElementById('ach-unlocked').textContent = unlockedAchievements.length;
             document.getElementById('ach-total').textContent = achievements.length;
+            const fill = document.getElementById('achievements-progress-fill');
+            if (fill) fill.style.width = (achievements.length ? Math.round(unlockedAchievements.length / achievements.length * 100) : 0) + '%';
             const grid = document.getElementById('achievement-grid');
             grid.innerHTML = achievements.map(a => {
                 const isUnlocked = unlockedAchievements.includes(a.id);
+                const isNew = justUnlockedAchievementIds.includes(a.id);
                 const achName = (achievementTranslations[currentLang] && achievementTranslations[currentLang][a.name]) || a.name;
-                return `<div class="achievement-item ${isUnlocked ? 'unlocked' : ''}"><div class="achievement-icon">${a.icon}</div><div class="achievement-name">${achName}</div></div>`;
+                const cls = `achievement-item${isUnlocked ? ' unlocked' : ''}${isNew ? ' achievement-just-unlocked' : ''}`;
+                const lock = isUnlocked ? '' : `<div class="achievement-lock">${LOCK_ICON_SVG}</div>`;
+                return `<div class="${cls}">${lock}<div class="achievement-icon">${a.icon}</div><div class="achievement-name">${achName}</div></div>`;
             }).join('');
+            justUnlockedAchievementIds = [];
             showScreen('screen-achievements');
         }
 
@@ -7680,7 +7787,7 @@
             });
             syncWorkoutToHealthKit(workoutDurationMin, workoutCalories);
             addJourneyEvent(`${t('program_day_completed_toast') || 'Day complete'}: ${getProgramName(def)}`,
-                `${t('program_week_label') || 'Week'} ${userPrograms.currentWeek} · ${t('program_day_label') || 'Day'} ${userPrograms.currentDay}`);
+                `${t('program_week_label') || 'Week'} ${userPrograms.currentWeek} · ${t('program_day_label') || 'Day'} ${userPrograms.currentDay}`, 'program');
 
             const finished = advanceProgramProgress(def);
             checkAchievements();
@@ -8113,7 +8220,7 @@
                 userXP.xp -= nextLevelXP;
                 userXP.level++;
                 showToast(`🎉 ${t('level_up') || 'עלית רמה'}! ${t('level') || 'רמה'} ${userXP.level}`);
-                addJourneyEvent(`${t('level_up') || 'עלית רמה'}!`, `${t('reached_level') || 'הגעת לרמה'} ${userXP.level}`);
+                addJourneyEvent(`${t('level_up') || 'עלית רמה'}!`, `${t('reached_level') || 'הגעת לרמה'} ${userXP.level}`, 'level');
                 nextLevelXP = getXPForNextLevel();
             }
 
@@ -9742,14 +9849,23 @@
             renderRecovery('cooldown');
         }
 
+        // Static holds (cooldown) get a "stretching figure" icon, circular
+        // mobility drills get a "rotate" icon — two shapes, but each carries
+        // real meaning about the kind of movement rather than being decoration.
+        const RECOVERY_ICON_HOLD = '<path d="M13 4.2a1.6 1.6 0 1 1-3.2 0 1.6 1.6 0 0 1 3.2 0z"/><path d="M12 7.5v6"/><path d="m8.5 10 3.5-1 3.5 2.5"/><path d="m9 19.5 3-6 3 6"/>';
+        const RECOVERY_ICON_MOBILITY = '<path d="M4.5 12a7.5 7.5 0 0 1 13.4-4.6"/><path d="M19 4v5h-5"/><path d="M19.5 12a7.5 7.5 0 0 1-13.4 4.6"/><path d="M5 20v-5h5"/>';
+
         function renderRecovery(type) {
             const list = document.getElementById('recovery-list');
             if (!list) return;
+            document.querySelectorAll('#screen-recovery .btn-secondary[onclick^="renderRecovery"]').forEach(btn => {
+                btn.classList.toggle('recovery-tab-active', btn.getAttribute('onclick') === `renderRecovery('${type}')`);
+            });
             const routine = recoveryRoutines[type] || recoveryRoutines.cooldown;
             const total = routine.reduce((s, r) => s + r.seconds, 0);
-            list.innerHTML = `<div class="card"><div style="color: var(--text-secondary); font-size:0.85rem; margin-bottom:14px;">${t('recovery_total') || 'זמן כולל'}: ${Math.round(total / 60)} ${t('minutes') || 'דקות'}</div>` +
-                routine.map(r => `<div style="display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid var(--border);"><div>${t(r.key) || r.key}</div><div style="color: var(--accent); font-weight:700; white-space:nowrap;">${r.seconds}s</div></div>`).join('') +
-                `</div>`;
+            const icon = type === 'mobility' ? RECOVERY_ICON_MOBILITY : RECOVERY_ICON_HOLD;
+            list.innerHTML = `<div class="card"><div style="color: var(--text-secondary); font-size:0.85rem;">${t('recovery_total') || 'זמן כולל'}: ${Math.round(total / 60)} ${t('minutes') || 'דקות'}</div></div>` +
+                routine.map(r => `<div class="recovery-item"><div class="recovery-item-icon"><svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true">${icon}</svg></div><div class="recovery-item-name">${t(r.key) || r.key}</div><div class="recovery-item-time" dir="ltr">${r.seconds}s</div></div>`).join('');
         }
 
         // ==================== SCHEDULE EDITOR (reachable after onboarding) ====================
