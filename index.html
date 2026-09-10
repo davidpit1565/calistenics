@@ -2368,6 +2368,12 @@
                 <h3 style="margin-bottom:12px;" data-i18n="health_status_title">מה אפשרי כרגע</h3>
                 <p style="color: var(--text-secondary); line-height:1.7; font-size:0.9rem;" data-i18n="health_explain">סנכרון ישיר עם Apple Health או Samsung Health עדיין לא זמין. בינתיים אפשר לייצא ולייבא את הנתונים שלך כקובץ, וגם למשוך את מספר הצעדים מהמכשיר אם הוא תומך בכך.</p>
             </div>
+            <div class="card" id="health-native-card" style="display:none;">
+                <h3 style="margin-bottom:12px;" data-i18n="health_native_title">Apple Health</h3>
+                <p style="color: var(--text-secondary); font-size:0.85rem; margin-bottom:14px;" data-i18n="health_native_desc">חבר/י את Apple Health כדי לראות כאן את מספר הצעדים היומי שלך, ולרשום אימונים שהושלמו באפליקציה ישירות ל-Apple Health (משך זמן + קלוריות משוערות).</p>
+                <button class="btn btn-primary btn-sm" id="health-connect-btn" onclick="connectAppleHealth()" data-i18n="health_connect_btn">התחבר/י ל-Apple Health</button>
+                <div id="health-native-steps" style="color: var(--text-secondary); font-size:0.9rem; margin-top:12px;"></div>
+            </div>
             <div class="card">
                 <h3 style="margin-bottom:12px;" data-i18n="health_export_title">ייצוא וייבוא נתונים</h3>
                 <p style="color: var(--text-secondary); font-size:0.85rem; margin-bottom:14px;" data-i18n="health_export_desc">ייצא את כל האימונים, המדדים והתזונה לקובץ JSON — לגיבוי או להעברה למכשיר אחר.</p>
@@ -2951,7 +2957,7 @@
                 health_title: "סנכרון בריאות",
                 health_subtitle: "Apple Health / Samsung Health",
                 health_status_title: "מה אפשרי כרגע",
-                health_explain: "סנכרון ישיר עם Apple Health או Samsung Health עדיין לא זמין. בינתיים אפשר לייצא ולייבא את הנתונים שלך כקובץ, וגם למשוך את מספר הצעדים מהמכשיר אם הוא תומך בכך.",
+                health_explain: "באפליקציית ה-iPhone: מספר הצעדים היומי נקרא ישירות מ-Apple Health, ואימונים שהושלמו נרשמים אליו אוטומטית (משך זמן + קלוריות משוערות) — אחרי שמאשרים הרשאה. באנדרואיד עדיין אין חיבור מקביל ל-Samsung Health או Google Health Connect (זה בתכנון); בינתיים אפשר לייצא ולייבא נתונים כקובץ, וגם לבדוק תמיכה בחיישני תנועה של הדפדפן.",
                 health_export_title: "ייצוא וייבוא נתונים",
                 health_export_desc: "ייצא את כל האימונים, המדדים והתזונה לקובץ JSON — לגיבוי או להעברה למכשיר אחר.",
                 health_export_btn: "ייצא לקובץ",
@@ -2967,6 +2973,11 @@
                 health_steps_unsupported: "הדפדפן הזה לא חושף חיישני תנועה.",
                 health_motion_granted: "ההרשאה אושרה",
                 health_motion_denied: "ההרשאה נדחתה",
+                health_native_title: "Apple Health",
+                health_native_desc: "חבר/י את Apple Health כדי לראות כאן את מספר הצעדים היומי שלך, ולרשום אימונים שהושלמו באפליקציה ישירות ל-Apple Health (משך זמן + קלוריות משוערות).",
+                health_connect_btn: "התחבר/י ל-Apple Health",
+                health_connected: "מחובר ✓",
+                health_steps_today: "צעדים היום",
                 smart_reminder_title: "תזכורת חכמה",
                 workout_reminder: "תזכורת אימון",
                 smart_reminder_none: "עוד אין מספיק אימונים כדי לזהות דפוס.",
@@ -3573,7 +3584,7 @@
                 health_title: "Health Sync",
                 health_subtitle: "Apple Health / Samsung Health",
                 health_status_title: "What's possible right now",
-                health_explain: "Direct syncing with Apple Health or Samsung Health isn't available yet. In the meantime you can export and import your data as a file, and read your step count from the device if it's supported.",
+                health_explain: "On the iPhone app: your daily step count is read directly from Apple Health, and completed workouts are logged there automatically (duration + estimated calories) once you approve permission. Android has no equivalent Samsung Health / Google Health Connect integration yet (planned for later); in the meantime you can export and import your data as a file, and check for browser motion-sensor support.",
                 health_export_title: "Export & Import Data",
                 health_export_desc: "Export all workouts, metrics and nutrition to a JSON file — for backup or moving to another device.",
                 health_export_btn: "Export to file",
@@ -3589,6 +3600,11 @@
                 health_steps_unsupported: "This browser does not expose motion sensors.",
                 health_motion_granted: "Permission granted",
                 health_motion_denied: "Permission denied",
+                health_native_title: "Apple Health",
+                health_native_desc: "Connect Apple Health to see your daily step count here, and to log workouts you complete in the app straight into Apple Health (duration + estimated calories).",
+                health_connect_btn: "Connect Apple Health",
+                health_connected: "Connected ✓",
+                health_steps_today: "Steps today",
                 smart_reminder_title: "Smart Reminder",
                 workout_reminder: "Workout Reminder",
                 smart_reminder_none: "Not enough workouts yet to detect a pattern.",
@@ -4195,7 +4211,7 @@
                 health_title: "Gezondheidssynchronisatie",
                 health_subtitle: "Apple Health / Samsung Health",
                 health_status_title: "Wat nu mogelijk is",
-                health_explain: "Directe synchronisatie met Apple Health of Samsung Health is nog niet beschikbaar. Voorlopig kun je je gegevens exporteren en importeren als bestand, en je stappen uitlezen van het apparaat als dat wordt ondersteund.",
+                health_explain: "In de iPhone-app: je dagelijkse aantal stappen wordt rechtstreeks uit Apple Health gelezen, en voltooide trainingen worden er automatisch in gelogd (duur + geschatte calorieën) zodra je toestemming geeft. Android heeft nog geen vergelijkbare koppeling met Samsung Health of Google Health Connect (gepland voor later); voorlopig kun je je gegevens exporteren en importeren als bestand, en controleren of de browser bewegingssensoren ondersteunt.",
                 health_export_title: "Gegevens Exporteren & Importeren",
                 health_export_desc: "Exporteer alle trainingen, metingen en voeding naar een JSON-bestand — als back-up of om over te zetten.",
                 health_export_btn: "Naar bestand exporteren",
@@ -4211,6 +4227,11 @@
                 health_steps_unsupported: "Deze browser biedt geen bewegingssensoren.",
                 health_motion_granted: "Toestemming gegeven",
                 health_motion_denied: "Toestemming geweigerd",
+                health_native_title: "Apple Health",
+                health_native_desc: "Verbind Apple Health om hier je dagelijkse aantal stappen te zien, en om trainingen die je in de app voltooit rechtstreeks in Apple Health te loggen (duur + geschatte calorieën).",
+                health_connect_btn: "Verbind met Apple Health",
+                health_connected: "Verbonden ✓",
+                health_steps_today: "Stappen vandaag",
                 smart_reminder_title: "Slimme Herinnering",
                 workout_reminder: "Trainingsherinnering",
                 smart_reminder_none: "Nog niet genoeg trainingen om een patroon te vinden.",
@@ -4817,7 +4838,7 @@
                 health_title: "Sincronización de Salud",
                 health_subtitle: "Apple Health / Samsung Health",
                 health_status_title: "Qué es posible ahora",
-                health_explain: "La sincronización directa con Apple Health o Samsung Health todavía no está disponible. Mientras tanto, puedes exportar e importar tus datos como archivo, y leer tus pasos desde el dispositivo si es compatible.",
+                health_explain: "En la app de iPhone: tu número de pasos diario se lee directamente de Apple Health, y los entrenamientos completados se registran allí automáticamente (duración + calorías estimadas) una vez que apruebas el permiso. Android todavía no tiene una integración equivalente con Samsung Health o Google Health Connect (está planeada para más adelante); mientras tanto puedes exportar e importar tus datos como archivo, y comprobar si el navegador admite sensores de movimiento.",
                 health_export_title: "Exportar e Importar Datos",
                 health_export_desc: "Exporta todos los entrenos, medidas y nutrición a un archivo JSON — como copia de seguridad o para pasar a otro dispositivo.",
                 health_export_btn: "Exportar a archivo",
@@ -4833,6 +4854,11 @@
                 health_steps_unsupported: "Este navegador no expone sensores de movimiento.",
                 health_motion_granted: "Permiso concedido",
                 health_motion_denied: "Permiso denegado",
+                health_native_title: "Apple Health",
+                health_native_desc: "Conecta Apple Health para ver aquí tu número de pasos diario, y para registrar en Apple Health los entrenamientos que completes en la app (duración + calorías estimadas).",
+                health_connect_btn: "Conectar con Apple Health",
+                health_connected: "Conectado ✓",
+                health_steps_today: "Pasos hoy",
                 smart_reminder_title: "Recordatorio Inteligente",
                 workout_reminder: "Recordatorio de Entreno",
                 smart_reminder_none: "Aún no hay suficientes entrenos para detectar un patrón.",
@@ -6369,11 +6395,13 @@
                     refreshStreakReminders();
                     userStats.totalHours += 0.5;
                     const workoutDurationMin = 12; // typical time for one logged exercise set/session
+                    const workoutCalories = estimateWorkoutCalories(workoutDurationMin);
                     workoutHistory.unshift({
                         date: new Date(), exercise: getExerciseName(currentExercise), exerciseId: currentExercise.id, score: score, level: userLevel,
                         durationMinutes: workoutDurationMin,
-                        caloriesBurned: estimateWorkoutCalories(workoutDurationMin)
+                        caloriesBurned: workoutCalories
                     });
+                    syncWorkoutToHealthKit(workoutDurationMin, workoutCalories);
                     addJourneyEvent(`${t('workout_completed') || 'השלמת אימון'}: ${getExerciseName(currentExercise)}`,
                         `${t('got_score') || 'קיבלת ציון'} ${score} — ${t('keep_going') || 'המשך כך!'}`);
                     checkAchievements();
@@ -8548,6 +8576,130 @@
                 statusEl.textContent = supported
                     ? (t('health_steps_supported') || 'המכשיר תומך בחיישני תנועה — אפשר לבקש הרשאה.')
                     : (t('health_steps_unsupported') || 'הדפדפן הזה לא חושף חיישני תנועה.');
+            }
+
+            // Native iOS build: show the real Apple Health card (HealthKit via
+            // @capgo/capacitor-health) instead of the browser-motion fallback above.
+            // On the web/PWA build window.Capacitor.Plugins.Health simply doesn't
+            // exist, so this block is skipped entirely and nothing breaks.
+            const nativeCard = document.getElementById('health-native-card');
+            if (nativeCard) {
+                nativeCard.style.display = (isNativeApp() && getHealthPlugin()) ? 'block' : 'none';
+            }
+            if (isNativeApp() && getHealthPlugin() && healthKitAuthorized) {
+                refreshHealthKitSteps();
+            }
+        }
+
+        // ==================== APPLE HEALTH (HealthKit) SYNC — native iOS only ====================
+        // Uses @capgo/capacitor-health, which wraps HealthKit on iOS (and Health
+        // Connect on Android, not wired up here yet — see HEALTHKIT_SETUP.md).
+        // Every function below is a no-op on the web/PWA build: isNativeApp()
+        // is false there, and window.Capacitor.Plugins.Health doesn't exist, so
+        // getHealthPlugin() returns null and callers bail out immediately.
+        let healthKitAuthorized = false;
+
+        function getHealthPlugin() {
+            return (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Health) || null;
+        }
+
+        async function requestHealthKitPermission() {
+            if (!isNativeApp()) return false;
+            const plugin = getHealthPlugin();
+            if (!plugin) return false;
+            try {
+                const avail = await plugin.isAvailable();
+                if (!avail || !avail.available) return false;
+                const status = await plugin.requestAuthorization({
+                    read: ['steps', 'workouts'],
+                    write: ['workouts', 'calories']
+                });
+                healthKitAuthorized = !!(
+                    (status.readAuthorized || []).includes('steps') ||
+                    (status.writeAuthorized || []).includes('workouts')
+                );
+                return healthKitAuthorized;
+            } catch (e) {
+                console.error('HealthKit authorization failed', e);
+                return false;
+            }
+        }
+
+        async function connectAppleHealth() {
+            const granted = await requestHealthKitPermission();
+            const btn = document.getElementById('health-connect-btn');
+            if (granted) {
+                if (btn) btn.textContent = t('health_connected') || 'מחובר ✓';
+                showToast(t('health_motion_granted') || 'ההרשאה אושרה');
+                refreshHealthKitSteps();
+            } else {
+                showToast(t('health_motion_denied') || 'ההרשאה נדחתה');
+            }
+        }
+
+        async function readTodayStepsFromHealthKit() {
+            const plugin = getHealthPlugin();
+            if (!isNativeApp() || !plugin) return null;
+            try {
+                const start = new Date();
+                start.setHours(0, 0, 0, 0);
+                const { samples } = await plugin.readSamples({
+                    dataType: 'steps',
+                    startDate: start.toISOString(),
+                    endDate: new Date().toISOString(),
+                    limit: 1000
+                });
+                return (samples || []).reduce((sum, s) => sum + (s.value || 0), 0);
+            } catch (e) {
+                console.error('Reading HealthKit steps failed', e);
+                return null;
+            }
+        }
+
+        async function refreshHealthKitSteps() {
+            const el = document.getElementById('health-native-steps');
+            if (!el) return;
+            const steps = await readTodayStepsFromHealthKit();
+            el.textContent = steps !== null
+                ? `${t('health_steps_today') || 'צעדים היום'}: ${Math.round(steps)}`
+                : '';
+        }
+
+        // Called when a workout is completed (see the score-reveal flow) to
+        // write a real workout entry into Apple Health: a "calisthenics"
+        // workout of the logged duration, plus its estimated active-calorie
+        // burn. Silently does nothing off native iOS or without permission —
+        // the in-app history (workoutHistory) is always the source of truth,
+        // this is a best-effort mirror into Health.
+        async function syncWorkoutToHealthKit(durationMinutes, calories) {
+            if (!isNativeApp()) return;
+            const plugin = getHealthPlugin();
+            if (!plugin) return;
+            try {
+                if (!healthKitAuthorized) {
+                    const granted = await requestHealthKitPermission();
+                    if (!granted) return;
+                }
+                const end = new Date();
+                const start = new Date(end.getTime() - durationMinutes * 60000);
+                await plugin.saveSample({
+                    dataType: 'workouts',
+                    workoutType: 'calisthenics',
+                    value: durationMinutes,
+                    unit: 'minute',
+                    startDate: start.toISOString(),
+                    endDate: end.toISOString(),
+                    metadata: { caloriesBurned: String(calories) }
+                });
+                await plugin.saveSample({
+                    dataType: 'calories',
+                    value: calories,
+                    unit: 'kilocalorie',
+                    startDate: start.toISOString(),
+                    endDate: end.toISOString()
+                }).catch(() => {});
+            } catch (e) {
+                console.error('Writing workout to HealthKit failed', e);
             }
         }
 
