@@ -512,6 +512,65 @@
             font-size: 0.9rem;
         }
 
+        /* ==================== PREMIUM PAYWALL ==================== */
+        .paywall-close-row { display: flex; justify-content: flex-end; padding: 4px 0 0; }
+        .paywall-close-btn {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+        }
+        .paywall-hero { text-align: center; padding: 8px 0 4px; }
+        .paywall-hero-icon { font-size: 2.6rem; margin-bottom: 8px; }
+        .paywall-hero-title { font-size: 1.5rem; font-weight: 900; margin-bottom: 6px; }
+        .paywall-hero-subtitle { color: var(--text-secondary); font-size: 0.95rem; line-height: 1.5; }
+        .paywall-price-card {
+            background: linear-gradient(135deg, var(--accent), #ff8c5a);
+            border-radius: 20px;
+            padding: 22px 20px;
+            text-align: center;
+            color: #fff;
+            margin: 18px 0 14px;
+        }
+        .paywall-price-annual { font-size: 2.1rem; font-weight: 900; line-height: 1.1; }
+        .paywall-price-monthly-equiv { font-size: 0.85rem; opacity: 0.85; margin-top: 6px; }
+        .paywall-trial-disclosure {
+            text-align: center;
+            font-size: 0.88rem;
+            color: var(--text-secondary);
+            margin-bottom: 18px;
+            line-height: 1.5;
+        }
+        .paywall-features { list-style: none; padding: 0; margin: 0 0 20px; }
+        .paywall-feature-item {
+            display: flex; align-items: flex-start; gap: 10px;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.92rem;
+        }
+        .paywall-feature-item:last-child { border-bottom: none; }
+        .paywall-feature-check { color: var(--accent); flex-shrink: 0; font-weight: 900; }
+        .paywall-restore-btn {
+            background: none; border: none;
+            color: var(--text-secondary);
+            text-decoration: underline;
+            font-size: 0.88rem;
+            cursor: pointer;
+            width: 100%;
+            padding: 12px 0 4px;
+        }
+        .paywall-maybe-later {
+            background: none; border: none;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            cursor: pointer;
+            width: 100%;
+            padding: 8px 0 0;
+        }
+
         /* ==================== TODAY'S WORKOUT ==================== */
         .today-workout-card {
             background: linear-gradient(135deg, var(--accent), #ff8c5a);
@@ -1947,6 +2006,35 @@
             </div>
         </div>
 
+        <!-- PREMIUM PAYWALL -->
+        <div class="screen" id="screen-paywall">
+            <div class="paywall-close-row">
+                <button class="paywall-close-btn" onclick="dismissPaywall()" aria-label="Close">
+                    <svg class="icon-svg" style="width:18px;height:18px;" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <div class="paywall-hero">
+                <div class="paywall-hero-icon">⭐</div>
+                <div class="paywall-hero-title" data-i18n="premium_title">מאסה פרימיום</div>
+                <div class="paywall-hero-subtitle" data-i18n="premium_subtitle">שחרר את מלוא הפוטנציאל שלך עם המאמן AI ותוכניות מתקדמות</div>
+            </div>
+
+            <div class="paywall-price-card">
+                <div class="paywall-price-annual" dir="ltr" data-i18n="premium_price_annual">$39.99 / year</div>
+                <div class="paywall-price-monthly-equiv" dir="ltr" data-i18n="premium_price_monthly_equiv">equal to $3.33/month</div>
+            </div>
+            <div class="paywall-trial-disclosure" data-i18n="premium_trial_disclosure">7 ימים ניסיון חינם, ולאחר מכן $39.99 לשנה. ניתן לבטל בכל עת.</div>
+
+            <ul class="paywall-features">
+                <li class="paywall-feature-item"><span class="paywall-feature-check">✓</span><span data-i18n="premium_feature_coach">גישה לצ'אט המאמן AI — שאל שאלות המשך על הציון שלך</span></li>
+                <li class="paywall-feature-item"><span class="paywall-feature-check">✓</span><span data-i18n="premium_feature_programs">תוכניות מובנות מתקדמות — עמידת ידיים, פלאנש, מאסל-אפ ועוד</span></li>
+                <li class="paywall-feature-item"><span class="paywall-feature-check">✓</span><span data-i18n="premium_feature_support">תומך בפיתוח האפליקציה ובתכנים חדשים</span></li>
+            </ul>
+
+            <button class="btn btn-primary" onclick="purchasePremium()" data-i18n="premium_cta_trial">התחל ניסיון חינם ל-7 ימים</button>
+            <button class="paywall-restore-btn" onclick="restorePurchases()" data-i18n="premium_restore">שחזר רכישות</button>
+            <button class="paywall-maybe-later" onclick="dismissPaywall()" data-i18n="premium_maybe_later">אולי מאוחר יותר</button>
+        </div>
 
         <!-- STATS / CHARTS -->
         <div class="screen" id="screen-stats">
@@ -3214,6 +3302,23 @@
                 browse_all_programs: "עיין בכל התוכניות",
                 continue_active_program: "המשך את התוכנית שלך",
 
+                // Premium / Paywall
+                premium_title: "מאסה פרימיום",
+                premium_subtitle: "שחרר את מלוא הפוטנציאל שלך עם המאמן AI ותוכניות מתקדמות",
+                premium_price_annual: "$39.99 לשנה",
+                premium_price_monthly_equiv: "שווה ל-$3.33 לחודש",
+                premium_trial_disclosure: "7 ימים ניסיון חינם, ולאחר מכן $39.99 לשנה. ניתן לבטל בכל עת.",
+                premium_feature_coach: "גישה לצ'אט המאמן AI — שאל שאלות המשך על הציון שלך",
+                premium_feature_programs: "תוכניות מובנות מתקדמות — עמידת ידיים, פלאנש, מאסל-אפ ועוד",
+                premium_feature_support: "תומך בפיתוח האפליקציה ובתכנים חדשים",
+                premium_cta_trial: "התחל ניסיון חינם ל-7 ימים",
+                premium_restore: "שחזר רכישות",
+                premium_maybe_later: "אולי מאוחר יותר",
+                premium_not_configured: "המנוי עדיין לא הוגדר — ראה PREMIUM_SETUP.md",
+                premium_restored: "המנוי שוחזר בהצלחה!",
+                premium_restore_none: "לא נמצא מנוי פעיל.",
+                program_premium_required: "דורש מנוי פרימיום",
+
                 // Exercise names for race
                 pushups: "שכיבות שמיכה",
                 pullups: "מתח",
@@ -3863,6 +3968,23 @@
                 program_no_active: "No active program right now",
                 browse_all_programs: "Browse all programs",
                 continue_active_program: "Continue your program",
+
+                // Premium / Paywall
+                premium_title: "Massa Premium",
+                premium_subtitle: "Unlock your full potential with the AI Coach and advanced programs",
+                premium_price_annual: "$39.99 / year",
+                premium_price_monthly_equiv: "equal to $3.33/month",
+                premium_trial_disclosure: "7 days free, then $39.99/year. Cancel anytime.",
+                premium_feature_coach: "AI Coach chat access — ask follow-up questions about your score",
+                premium_feature_programs: "Advanced structured programs — handstand, planche, muscle-up & more",
+                premium_feature_support: "Support ongoing app development and new content",
+                premium_cta_trial: "Start Free 7-Day Trial",
+                premium_restore: "Restore Purchases",
+                premium_maybe_later: "Maybe Later",
+                premium_not_configured: "Subscriptions aren't set up yet — see PREMIUM_SETUP.md",
+                premium_restored: "Premium restored!",
+                premium_restore_none: "No active subscription found.",
+                program_premium_required: "Requires Premium",
 
                 // Exercise names for race
                 pushups: "Push-ups",
@@ -4514,6 +4636,23 @@
                 browse_all_programs: "Bekijk alle programma's",
                 continue_active_program: "Ga verder met je programma",
 
+                // Premium / Paywall
+                premium_title: "Massa Premium",
+                premium_subtitle: "Ontgrendel je volledige potentieel met de AI-coach en geavanceerde programma's",
+                premium_price_annual: "$39,99 / jaar",
+                premium_price_monthly_equiv: "gelijk aan $3,33/maand",
+                premium_trial_disclosure: "7 dagen gratis, daarna $39,99/jaar. Op elk moment opzegbaar.",
+                premium_feature_coach: "Toegang tot AI-coach chat — stel vervolgvragen over je score",
+                premium_feature_programs: "Geavanceerde gestructureerde programma's — handstand, planche, muscle-up en meer",
+                premium_feature_support: "Ondersteunt de doorontwikkeling van de app en nieuwe content",
+                premium_cta_trial: "Start Gratis Proefperiode van 7 Dagen",
+                premium_restore: "Aankopen Herstellen",
+                premium_maybe_later: "Misschien Later",
+                premium_not_configured: "Abonnementen zijn nog niet ingesteld — zie PREMIUM_SETUP.md",
+                premium_restored: "Premium hersteld!",
+                premium_restore_none: "Geen actief abonnement gevonden.",
+                program_premium_required: "Vereist Premium",
+
                 // Exercise names for race
                 pushups: "Opdrukken",
                 pullups: "Optrekken",
@@ -5163,6 +5302,23 @@
                 program_no_active: "No hay ningún programa activo ahora mismo",
                 browse_all_programs: "Ver todos los programas",
                 continue_active_program: "Continúa tu programa",
+
+                // Premium / Paywall
+                premium_title: "Massa Premium",
+                premium_subtitle: "Desbloquea todo tu potencial con el Coach IA y programas avanzados",
+                premium_price_annual: "$39.99 / año",
+                premium_price_monthly_equiv: "equivale a $3.33/mes",
+                premium_trial_disclosure: "7 días gratis, luego $39.99/año. Cancela cuando quieras.",
+                premium_feature_coach: "Acceso al chat del Coach IA — haz preguntas de seguimiento sobre tu puntuación",
+                premium_feature_programs: "Programas estructurados avanzados — parada de manos, planche, muscle-up y más",
+                premium_feature_support: "Apoya el desarrollo continuo de la app y nuevo contenido",
+                premium_cta_trial: "Iniciar Prueba Gratis de 7 Días",
+                premium_restore: "Restaurar Compras",
+                premium_maybe_later: "Quizás Más Tarde",
+                premium_not_configured: "Las suscripciones aún no están configuradas — ver PREMIUM_SETUP.md",
+                premium_restored: "¡Premium restaurado!",
+                premium_restore_none: "No se encontró ninguna suscripción activa.",
+                program_premium_required: "Requiere Premium",
 
                 // Exercise names for race
                 pushups: "Flexiones",
@@ -6126,7 +6282,7 @@
             const navMap = {
                 'screen-dashboard': 0, 'screen-videos': 1, 'screen-stats': 2, 'screen-journey': 3
             };
-            const noNavScreens = ['screen-welcome', 'screen-login', 'screen-verify-code', 'screen-onboarding', 'screen-quiz', 'screen-results', 'screen-schedule'];
+            const noNavScreens = ['screen-welcome', 'screen-login', 'screen-verify-code', 'screen-onboarding', 'screen-quiz', 'screen-results', 'screen-schedule', 'screen-paywall'];
             const activeIndex = navMap[id] !== undefined ? navMap[id] : (noNavScreens.includes(id) ? undefined : 4);
             const navItems = document.querySelectorAll('.nav-item');
             navItems.forEach((item, i) => {
@@ -7031,6 +7187,10 @@
                         `${t('got_score') || 'קיבלת ציון'} ${score} — ${t('keep_going') || 'המשך כך!'}`);
                     checkAchievements();
                     saveToStorage();
+                    // Growth-first: never blocks the result itself — shown a
+                    // moment after the user has actually seen their score, and
+                    // only on their first-ever completed workout.
+                    setTimeout(maybeShowFirstWorkoutPaywall, 1400);
                 }
                 value.textContent = current;
                 circle.style.setProperty('--score-deg', (current / 100 * 360) + 'deg');
@@ -7390,7 +7550,12 @@
         function showPrograms() {
             const list = document.getElementById('programs-list');
             list.innerHTML = programs.map(def => {
-                const isLocked = userLevel < def.levelReq;
+                const levelLocked = userLevel < def.levelReq;
+                // Premium-tier programs (levelReq 3-4) stay gated behind a real
+                // subscription even once the user's level is high enough —
+                // level and premium are two independent locks.
+                const premiumLocked = !levelLocked && def.levelReq >= 3 && !isPremiumUser();
+                const isLocked = levelLocked || premiumLocked;
                 const isActive = userPrograms.activeId === def.id;
                 const isDone = userPrograms.completedPrograms.includes(def.id);
                 let badge = '';
@@ -7399,10 +7564,13 @@
                 const progressBar = isActive
                     ? `<div class="program-progress-track"><div class="program-progress-fill" style="width:${getProgramProgressPercent(def)}%;"></div></div>`
                     : '';
-                const lockNote = isLocked
+                const lockNote = levelLocked
                     ? `<div style="color: var(--warning); font-size:0.78rem; margin-top:6px;">🔒 ${t('program_unlock_at_level') || 'Unlocks at level'} ${def.levelReq}</div>`
-                    : '';
-                return `<div class="card program-card ${isLocked ? 'locked' : ''}" style="${isLocked ? 'opacity:0.55; cursor:not-allowed;' : 'cursor:pointer;'}" ${isLocked ? '' : `onclick="openProgramDetail('${def.id}')"`}>
+                    : (premiumLocked
+                        ? `<div style="color: var(--accent); font-size:0.78rem; margin-top:6px;">⭐ ${t('program_premium_required') || 'Requires Premium'}</div>`
+                        : '');
+                const clickHandler = levelLocked ? '' : `onclick="handleProgramCardClick('${def.id}')"`;
+                return `<div class="card program-card ${isLocked ? 'locked' : ''}" style="${levelLocked ? 'opacity:0.55; cursor:not-allowed;' : 'cursor:pointer;'}" ${clickHandler}>
                     <div class="program-card-icon">${def.icon}</div>
                     <div class="program-card-body">
                         <div class="program-card-name">${getProgramName(def)}</div>
@@ -7425,6 +7593,21 @@
         // in place so switching back later resumes where it left off... note:
         // this build tracks a single active program at a time, matching the
         // "which program (if any)" persistence contract).
+        // Card click entry point from showPrograms(): routes to the paywall
+        // for premium-tier programs (levelReq 3-4) the user hasn't unlocked
+        // via subscription, otherwise opens the program normally. Level-locked
+        // cards never get a click handler at all (see showPrograms()).
+        function handleProgramCardClick(id) {
+            const def = programs.find(p => p.id === id);
+            if (!def) return;
+            if (userLevel < def.levelReq) return;
+            if (def.levelReq >= 3 && !isPremiumUser()) {
+                showPaywall('program:' + id, { returnScreen: 'screen-programs' });
+                return;
+            }
+            openProgramDetail(id);
+        }
+
         function openProgramDetail(id) {
             if (userPrograms.activeId !== id) {
                 userPrograms.activeId = id;
@@ -7723,6 +7906,10 @@
         }
 
         function toggleCoachChat() {
+            if (!isPremiumUser()) {
+                showPaywall('coach_chat', { returnScreen: 'screen-score' });
+                return;
+            }
             const body = document.getElementById('coach-chat-body');
             const toggle = document.getElementById('coach-chat-toggle');
             const isOpen = body.style.display !== 'none';
@@ -7770,6 +7957,114 @@
             if (!response.ok) throw new Error('AI coach request failed');
             const data = await response.json();
             return data.answer;
+        }
+
+        // ==================== PREMIUM / PAYWALL ====================
+        // Premium is a subscription entitlement (AI Coach chat + the higher-tier
+        // Structured Programs, levelReq 3-4). There is no server/RevenueCat
+        // wiring yet — see PREMIUM_SETUP.md for exactly what the owner needs to
+        // set up (RevenueCat account, App Store Connect subscription product,
+        // 7-day trial) and where purchasePremium()/restorePurchases()/
+        // getPurchasesPlugin() below need real calls once that exists.
+        //
+        // isPremium is NEVER set to true from a client-side toggle — only a
+        // real purchase/restore result (once RevenueCat is wired in) may do
+        // that. That's the one honesty rule this whole feature exists to protect.
+        let premiumStatus = { isPremium: false, trialActive: false, trialEndsAt: null, source: null };
+        // When and why the paywall was last shown/dismissed, so it can be
+        // re-shown immediately for a genuine contextual trigger (tapping a
+        // locked feature again) but not proactively more than once a week.
+        let lastPaywallDismissedAt = null;
+        // What the user was trying to do when the paywall interrupted them —
+        // used only to decide where to return them (previous screen) after a
+        // dismiss; not persisted, this is a same-session-only convenience.
+        let paywallReturnScreen = null;
+
+        function isPremiumUser() {
+            return !!premiumStatus.isPremium;
+        }
+
+        const PAYWALL_REPROMPT_COOLDOWN_MS = 4 * 24 * 60 * 60 * 1000; // ~4 days: "a few days", never more than weekly
+
+        // Contextual triggers (tapping a locked feature) always show the paywall
+        // regardless of cooldown — the cooldown only throttles OUR OWN proactive
+        // re-prompts (e.g. showing it again unprompted after the first workout).
+        function showPaywall(trigger, opts) {
+            opts = opts || {};
+            if (isPremiumUser()) return;
+            const proactive = !!opts.proactive;
+            if (proactive && lastPaywallDismissedAt) {
+                const elapsed = Date.now() - new Date(lastPaywallDismissedAt).getTime();
+                if (elapsed < PAYWALL_REPROMPT_COOLDOWN_MS) return;
+            }
+            paywallReturnScreen = opts.returnScreen || document.querySelector('.screen.active')?.id || 'screen-dashboard';
+            showScreen('screen-paywall');
+        }
+
+        function dismissPaywall() {
+            lastPaywallDismissedAt = new Date().toISOString();
+            saveToStorage();
+            const target = paywallReturnScreen && paywallReturnScreen !== 'screen-paywall' ? paywallReturnScreen : 'screen-dashboard';
+            paywallReturnScreen = null;
+            showScreen(target);
+        }
+
+        // Same detection pattern as getLocalNotificationsPlugin()/getHealthPlugin():
+        // look for the Capacitor plugin by name and treat its absence as "not
+        // configured yet" rather than faking success. Once RevenueCat is wired
+        // (see PREMIUM_SETUP.md), @revenuecat/purchases-capacitor registers
+        // itself as window.Capacitor.Plugins.Purchases.
+        function getPurchasesPlugin() {
+            return (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Purchases) || null;
+        }
+
+        async function purchasePremium() {
+            const plugin = getPurchasesPlugin();
+            if (!isNativeApp() || !plugin) {
+                showToast(t('premium_not_configured') || "Subscriptions aren't set up yet — see PREMIUM_SETUP.md");
+                return;
+            }
+            // ---- REAL WIRING GOES HERE (see PREMIUM_SETUP.md) ----
+            // Once @revenuecat/purchases-capacitor is installed and RevenueCat
+            // is connected to an App Store Connect subscription product, this
+            // becomes roughly:
+            //   const offerings = await plugin.getOfferings();
+            //   const pkg = offerings.current.annual;
+            //   const { customerInfo } = await plugin.purchasePackage({ aPackage: pkg });
+            //   if (customerInfo.entitlements.active['premium']) {
+            //       premiumStatus = { isPremium: true, trialActive: !!customerInfo.entitlements.active['premium'].periodType === 'TRIAL', trialEndsAt: null, source: 'revenuecat' };
+            //       saveToStorage();
+            //   }
+            // Deliberately NOT implemented until that real product exists —
+            // faking success here would grant free premium access to anyone.
+            showToast(t('premium_not_configured') || "Subscriptions aren't set up yet — see PREMIUM_SETUP.md");
+        }
+
+        async function restorePurchases() {
+            const plugin = getPurchasesPlugin();
+            if (!isNativeApp() || !plugin) {
+                showToast(t('premium_not_configured') || "Subscriptions aren't set up yet — see PREMIUM_SETUP.md");
+                return;
+            }
+            // ---- REAL WIRING GOES HERE (see PREMIUM_SETUP.md) ----
+            //   const { customerInfo } = await plugin.restorePurchases();
+            //   if (customerInfo.entitlements.active['premium']) {
+            //       premiumStatus = { isPremium: true, trialActive: false, trialEndsAt: null, source: 'revenuecat' };
+            //       saveToStorage();
+            //       showToast(t('premium_restored') || 'Premium restored!');
+            //   } else {
+            //       showToast(t('premium_restore_none') || 'No active subscription found.');
+            //   }
+            showToast(t('premium_not_configured') || "Subscriptions aren't set up yet — see PREMIUM_SETUP.md");
+        }
+
+        // Called once, right after the user has seen their first-ever workout
+        // score (never before/blocking the result itself). Respects the same
+        // re-prompt cooldown as any other proactive show.
+        function maybeShowFirstWorkoutPaywall() {
+            if (isPremiumUser()) return;
+            if (userStats.workouts !== 1) return;
+            showPaywall('first_workout', { proactive: true, returnScreen: 'screen-score' });
         }
 
         function afterAuthSuccess(identifier) {
@@ -9159,7 +9454,8 @@
                 nutritionAdjustmentOffset, lastAdaptiveCheckDate,
                 lastWorkoutDate, streakFreezesAvailable, lastFreezeGrantDate, lastDeloadCheckDate,
                 lastExportDate, lastBackupReminderDismissedDate,
-                challengeAccepted, challengeCompletedToday, userPrograms
+                challengeAccepted, challengeCompletedToday, userPrograms,
+                premiumStatus, lastPaywallDismissedAt
             };
             localStorage.setItem('masa_data', JSON.stringify(data));
         }
@@ -9218,6 +9514,11 @@
                     // Merge, not replace: an older save/backup made before this feature
                     // existed won't have `userPrograms` at all.
                     if (data.userPrograms) userPrograms = { activeId: null, currentWeek: 1, currentDay: 1, completedPrograms: [], ...data.userPrograms };
+                    // Merge, not replace: an older save/backup made before this feature
+                    // existed won't have `premiumStatus` at all — must never default
+                    // to isPremium:true from a missing/partial field.
+                    if (data.premiumStatus) premiumStatus = { isPremium: false, trialActive: false, trialEndsAt: null, source: null, ...data.premiumStatus };
+                    if (data.lastPaywallDismissedAt) lastPaywallDismissedAt = data.lastPaywallDismissedAt;
                     return true;
                 }
             } catch (e) {
@@ -9658,7 +9959,8 @@
                     notificationsEnabled, dailyReminderEnabled, streakReminderEnabled,
                     nutritionAdjustmentOffset, lastAdaptiveCheckDate, lastWorkoutDate,
                     streakFreezesAvailable, lastFreezeGrantDate, lastDeloadCheckDate,
-                    challengeAccepted, challengeCompletedToday
+                    challengeAccepted, challengeCompletedToday,
+                    premiumStatus, lastPaywallDismissedAt
                 };
                 const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
                 const url = URL.createObjectURL(blob);
@@ -9727,6 +10029,11 @@
                     if (data.lastDeloadCheckDate) lastDeloadCheckDate = data.lastDeloadCheckDate;
                     if (data.challengeAccepted !== undefined) challengeAccepted = data.challengeAccepted;
                     if (data.challengeCompletedToday !== undefined) challengeCompletedToday = data.challengeCompletedToday;
+                    // Merge, not replace: an older backup made before this feature
+                    // existed won't have `premiumStatus` at all — must never default
+                    // to isPremium:true from a missing/partial field.
+                    if (data.premiumStatus) premiumStatus = { isPremium: false, trialActive: false, trialEndsAt: null, source: null, ...data.premiumStatus };
+                    if (data.lastPaywallDismissedAt) lastPaywallDismissedAt = data.lastPaywallDismissedAt;
                     saveToStorage();
                     showToast(t('health_imported') || 'הנתונים יובאו בהצלחה');
                     showBottomNav(true);
