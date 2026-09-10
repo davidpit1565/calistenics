@@ -94,14 +94,18 @@
         }
 
         /* ==================== APP CONTAINER ==================== */
-        .app-container { 
-            position: relative; 
-            z-index: 1; 
-            max-width: 480px; 
-            margin: 0 auto; 
-            padding: 20px; 
+        .app-container {
+            position: relative;
+            z-index: 1;
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 20px;
+            /* Clears the fixed language selector / theme toggle (top:16px, ~40px tall)
+               so screens whose first row starts at the very top (dashboard, profile)
+               don't render underneath them. */
+            padding-top: 76px;
             padding-bottom: calc(var(--nav-height) + var(--safe-bottom) + 20px);
-            min-height: 100vh; 
+            min-height: 100vh;
         }
 
         /* ==================== HEADER ==================== */
@@ -797,7 +801,7 @@
 
         /* ==================== RESPONSIVE ==================== */
         @media (max-width: 400px) { 
-            .app-container { padding: 12px; padding-bottom: calc(var(--nav-height) + var(--safe-bottom) + 12px); } 
+            .app-container { padding: 12px; padding-top: 68px; padding-bottom: calc(var(--nav-height) + var(--safe-bottom) + 12px); }
             .logo { font-size: 1.8rem; } 
             .achievement-grid { grid-template-columns: repeat(2,1fr); } 
         }
@@ -6087,6 +6091,9 @@
             const percent = Math.min(100, (userXP.xp / nextLevelXP) * 100);
 
             xpEl.textContent = `${t('level') || 'Level'} ${userXP.level}`;
+            // dir="ltr" keeps "120 / 500 XP" in reading order inside an RTL page —
+            // without it the browser's bidi algorithm visually reorders it to "XP 500 / 120".
+            xpText.setAttribute('dir', 'ltr');
             xpText.textContent = `${userXP.xp} / ${nextLevelXP} XP`;
             xpFill.style.width = `${percent}%`;
 
@@ -7089,7 +7096,10 @@
                     const data = JSON.parse(saved);
                     if (data.userProfile) userProfile = data.userProfile;
                     if (data.userSchedule) userSchedule = data.userSchedule;
-                    if (data.userStats) userStats = data.userStats;
+                    // Merge rather than replace: a saved object missing a field (older
+                    // save format, hand-edited backup) must not turn into NaN/undefined
+                    // on screen — every field always keeps a safe numeric default.
+                    if (data.userStats) userStats = { streak: 0, workouts: 0, avgScore: 0, totalHours: 0, ...data.userStats };
                     if (data.workoutHistory) {
                         workoutHistory = data.workoutHistory.map(w => ({...w, date: new Date(w.date)}));
                     }
@@ -7100,7 +7110,7 @@
                     if (data.userLevel) userLevel = data.userLevel;
                     if (data.userScore) userScore = data.userScore;
                     if (data.currentLang) currentLang = data.currentLang;
-                    if (data.userXP) userXP = data.userXP;
+                    if (data.userXP) userXP = { level: 1, xp: 0, totalXP: 0, ...data.userXP };
                     if (data.bodyMetrics) bodyMetrics = data.bodyMetrics.map(m => ({...m, date: new Date(m.date)}));
                     if (data.nutritionLog) nutritionLog = data.nutritionLog.map(f => ({...f, date: new Date(f.date)}));
                     if (data.challengeHistory) challengeHistory = data.challengeHistory.map(c => ({...c, date: new Date(c.date)}));
@@ -7460,10 +7470,10 @@
                     if (!confirm(t('health_import_confirm') || 'הייבוא יחליף את כל הנתונים הקיימים. להמשיך?')) return;
                     if (data.userProfile) userProfile = data.userProfile;
                     if (data.userSchedule) userSchedule = data.userSchedule;
-                    if (data.userStats) userStats = data.userStats;
+                    if (data.userStats) userStats = { streak: 0, workouts: 0, avgScore: 0, totalHours: 0, ...data.userStats };
                     if (data.userLevel) userLevel = data.userLevel;
                     if (data.userScore) userScore = data.userScore;
-                    if (data.userXP) userXP = data.userXP;
+                    if (data.userXP) userXP = { level: 1, xp: 0, totalXP: 0, ...data.userXP };
                     if (data.workoutHistory) workoutHistory = data.workoutHistory.map(w => ({...w, date: new Date(w.date)}));
                     if (data.bodyMetrics) bodyMetrics = data.bodyMetrics.map(m => ({...m, date: new Date(m.date)}));
                     if (data.nutritionLog) nutritionLog = data.nutritionLog.map(f => ({...f, date: new Date(f.date)}));
