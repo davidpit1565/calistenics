@@ -1,6 +1,6 @@
 {
-  "name": "מסע קליסטניקס — Calisthenics Journey",
-  "short_name": "קליסטניקס",
+  "name": "Calisthenics Journey",
+  "short_name": "Calisthenics",
   "description": "Calisthenics training journey — 5 levels, personal plan, nutrition and progress tracking",
   "start_url": "./index.html",
   "scope": "./",
@@ -8,8 +8,8 @@
   "orientation": "portrait",
   "background_color": "#0a0a0f",
   "theme_color": "#0a0a0f",
-  "lang": "he",
-  "dir": "rtl",
+  "lang": "en",
+  "dir": "ltr",
   "icons": [
     { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
     { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },

@@ -1,15 +1,15 @@
 <!DOCTYPE html>
-<html lang="he" dir="rtl">
+<html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>מסע קליסטניקס | Calisthenics Journey</title>
+    <title>Calisthenics Journey</title>
     <meta name="theme-color" content="#0a0a0f">
     <meta name="description" content="Calisthenics training journey — 5 levels, personal plan, nutrition and progress tracking">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="מסע קליסטניקס">
+    <meta name="apple-mobile-web-app-title" content="Calisthenics Journey">
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="icons/icon-32.png" sizes="32x32" type="image/png">
     <link rel="icon" href="icons/icon-16.png" sizes="16x16" type="image/png">
@@ -1139,8 +1139,8 @@
 
     <!-- LANGUAGE SELECTOR -->
     <div class="lang-selector" id="lang-selector">
-        <button class="lang-btn" data-lang="he" onclick="setLanguage('he')">HE</button>
         <button class="lang-btn" data-lang="en" onclick="setLanguage('en')">EN</button>
+        <button class="lang-btn" data-lang="he" onclick="setLanguage('he')">HE</button>
         <button class="lang-btn" data-lang="nl" onclick="setLanguage('nl')">NL</button>
         <button class="lang-btn" data-lang="es" onclick="setLanguage('es')">ES</button>
     </div>
@@ -4399,7 +4399,7 @@
             }
         };
 
-        let currentLang = 'he';
+        let currentLang = 'en';
 
         function setLanguage(lang) {
             currentLang = lang;
@@ -7557,10 +7557,19 @@
         }
 
         // ==================== UPDATED INIT ====================
+        function detectInitialLanguage() {
+            const saved = localStorage.getItem('masa_lang');
+            if (saved && translations[saved]) return saved;
+            const browserLang = (navigator.language || 'en').slice(0, 2).toLowerCase();
+            if (translations[browserLang]) return browserLang;
+            return 'en';
+        }
+
         function init() {
             initTheme();
             initKeyboardDetection();
             createParticles();
+            currentLang = detectInitialLanguage();
 
             const hasData = loadFromStorage();
             if (hasData && userProfile.name) {
