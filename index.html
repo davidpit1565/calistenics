@@ -771,7 +771,8 @@
         .more-group .more-row + .more-row { border-top: 1px solid var(--border); border-radius: 0; }
         .more-row .more-icon { width: 22px; height: 22px; flex-shrink: 0; color: var(--accent); }
         .more-row .more-icon .icon-svg { width: 20px; height: 20px; }
-        .more-row-label { font-size: 0.92rem; }
+        .more-row-label { font-size: 0.92rem; flex: 1; }
+        .more-row-value { font-size: 0.85rem; color: var(--text-secondary); }
         .header-icon {
             width: 46px; height: 46px; border-radius: 14px;
             background: var(--bg-elevated); border: 1px solid var(--border);
@@ -783,11 +784,15 @@
 
         /* ==================== LANGUAGE SELECTOR ==================== */
         .lang-selector {
+            /* Hidden until he/nl/es get the same screen-by-screen audit English
+               has had — the app ships English-only for now (see
+               detectInitialLanguage()). The i18n system stays intact so this
+               can be re-enabled with a single display flip later. */
+            display: none;
             position: fixed;
             top: 16px;
             left: 16px;
             z-index: 200;
-            display: flex;
             gap: 6px;
         }
         .lang-btn {
@@ -1511,12 +1516,70 @@
                 <h3 data-i18n="workout_schedule">⏰ לוח אימונים</h3>
                 <div id="profile-schedule"></div>
             </div>
-            <button class="btn btn-secondary" style="margin-top: 16px;" onclick="showLegal()" data-i18n="legal_link">מדיניות פרטיות ותנאי שימוש</button>
-            <button class="btn btn-danger" onclick="resetProgress()" style="margin-top: 12px;" data-i18n="reset_progress">אפס התקדמות</button>
+        </div>
+
+        <!-- SETTINGS -->
+        <div class="screen" id="screen-settings">
+            <div class="app-header">
+                <div class="header-icon"><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
+                <h1 class="logo" data-i18n="settings_title">הגדרות</h1>
+                <p class="tagline" data-i18n="settings_subtitle">העדפות, נתונים ומידע על האפליקציה</p>
+            </div>
+
+            <div class="more-group-title" data-i18n="section_preferences">העדפות</div>
+            <div class="more-group">
+                <div class="more-row" onclick="toggleTheme(); updateSettingsScreen();">
+                    <div class="more-icon"><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></div>
+                    <div class="more-row-label" data-i18n="theme_label">מראה</div>
+                    <div class="more-row-value" id="settings-theme-value">Dark</div>
+                </div>
+            </div>
+
+            <div class="more-group-title" data-i18n="section_workout">אימונים</div>
+            <div class="more-group">
+                <div class="more-row" onclick="showScheduleEditor()">
+                    <div class="more-icon"><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="2"/><path d="M3 9.5h18"/><path d="M8 2.5v4M16 2.5v4"/></svg></div>
+                    <div class="more-row-label" data-i18n="nav_schedule">לוח אימונים</div>
+                </div>
+                <div class="more-row" onclick="showNotifications()">
+                    <div class="more-icon"><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8.5a6 6 0 0 0-12 0c0 7-3 8-3 8h18s-3-1-3-8z"/><path d="M10 19.5a2 2 0 0 0 4 0"/></svg></div>
+                    <div class="more-row-label" data-i18n="nav_notif">התראות</div>
+                </div>
+            </div>
+
+            <div class="more-group-title" data-i18n="section_data">נתונים ופרטיות</div>
+            <div class="more-group">
+                <div class="more-row" onclick="showHealth()">
+                    <div class="more-icon"><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5 19.5 6v6c0 5-3.2 8.5-7.5 9.5-4.3-1-7.5-4.5-7.5-9.5V6z"/><path d="M12 9.5v5M9.5 12h5"/></svg></div>
+                    <div class="more-row-label" data-i18n="section_data_backup">גיבוי ויצוא נתונים</div>
+                </div>
+                <div class="more-row" onclick="showOffline()">
+                    <div class="more-icon"><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><path d="M17 18a4 4 0 0 0 0-8 5 5 0 0 0-9.6-1.5A4 4 0 0 0 6 18h6"/><path d="M3 3l18 18"/></svg></div>
+                    <div class="more-row-label" data-i18n="nav_offline">Offline</div>
+                </div>
+                <div class="more-row" onclick="showLegal()">
+                    <div class="more-icon"><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13"/><circle cx="3.5" cy="6" r="1.2" fill="currentColor" stroke="none"/><circle cx="3.5" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="3.5" cy="18" r="1.2" fill="currentColor" stroke="none"/></svg></div>
+                    <div class="more-row-label" data-i18n="legal_link">מדיניות פרטיות ותנאי שימוש</div>
+                </div>
+            </div>
+
+            <div class="more-group-title" data-i18n="section_about">מידע</div>
+            <div class="more-group">
+                <div class="more-row" style="cursor: default;">
+                    <div class="more-icon"><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg></div>
+                    <div class="more-row-label" data-i18n="app_version_label">גרסת אפליקציה</div>
+                    <div class="more-row-value">1.0.0</div>
+                </div>
+            </div>
+
+            <button class="btn btn-danger" onclick="resetProgress()" style="margin-top: 20px;" data-i18n="reset_progress">אפס התקדמות</button>
         </div>
 
         <!-- LEGAL: PRIVACY POLICY & TERMS -->
         <div class="screen" id="screen-legal">
+            <div class="exercise-topbar">
+                <button class="btn btn-secondary btn-sm" onclick="showScreen('screen-settings')" data-i18n="back">חזרה</button>
+            </div>
             <div class="app-header">
                 <div class="header-icon"><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5 19.5 6v6c0 5-3.2 8.5-7.5 9.5-4.3-1-7.5-4.5-7.5-9.5V6z"/><path d="M12 9.5v5M9.5 12h5"/></svg></div>
                 <h1 class="logo" data-i18n="legal_link">מדיניות פרטיות ותנאי שימוש</h1>
@@ -2232,10 +2295,6 @@
                 <div class="more-icon"><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 8.5c0 4.5-8.5 11-8.5 11s-8.5-6.5-8.5-11a4.5 4.5 0 0 1 8.5-2 4.5 4.5 0 0 1 8.5 2z"/><path d="M4 12h3l2 3 3-6 2 3h4"/></svg></div>
                 <div class="more-row-label" data-i18n="nav_recovery">מתיחות</div>
             </div>
-            <div class="more-row" onclick="showHealth(); hideMoreMenu();">
-                <div class="more-icon"><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5 19.5 6v6c0 5-3.2 8.5-7.5 9.5-4.3-1-7.5-4.5-7.5-9.5V6z"/><path d="M12 9.5v5M9.5 12h5"/></svg></div>
-                <div class="more-row-label" data-i18n="nav_health">Health Sync</div>
-            </div>
         </div>
 
         <div class="more-group-title" data-i18n="more_group_system">מערכת</div>
@@ -2244,17 +2303,9 @@
                 <div class="more-icon"><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4.5 21c0-4.2 3.5-7 7.5-7s7.5 2.8 7.5 7"/></svg></div>
                 <div class="more-row-label" data-i18n="nav_profile">פרופיל</div>
             </div>
-            <div class="more-row" onclick="showScheduleEditor(); hideMoreMenu();">
-                <div class="more-icon"><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="2"/><path d="M3 9.5h18"/><path d="M8 2.5v4M16 2.5v4"/></svg></div>
-                <div class="more-row-label" data-i18n="nav_schedule">לוח אימונים</div>
-            </div>
-            <div class="more-row" onclick="showNotifications(); hideMoreMenu();">
-                <div class="more-icon"><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8.5a6 6 0 0 0-12 0c0 7-3 8-3 8h18s-3-1-3-8z"/><path d="M10 19.5a2 2 0 0 0 4 0"/></svg></div>
-                <div class="more-row-label" data-i18n="nav_notif">התראות</div>
-            </div>
-            <div class="more-row" onclick="showOffline(); hideMoreMenu();">
-                <div class="more-icon"><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><path d="M17 18a4 4 0 0 0 0-8 5 5 0 0 0-9.6-1.5A4 4 0 0 0 6 18h6"/><path d="M3 3l18 18"/></svg></div>
-                <div class="more-row-label" data-i18n="nav_offline">Offline</div>
+            <div class="more-row" onclick="showSettings(); hideMoreMenu();">
+                <div class="more-icon"><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
+                <div class="more-row-label" data-i18n="nav_settings">הגדרות</div>
             </div>
         </div>
     </div>
@@ -2519,6 +2570,18 @@
                 nav_journey: "המסע",
                 nav_achievements: "הישגים",
                 nav_profile: "פרופיל",
+                nav_settings: "הגדרות",
+                settings_title: "הגדרות",
+                settings_subtitle: "העדפות, נתונים ומידע על האפליקציה",
+                section_preferences: "העדפות",
+                section_workout: "אימונים",
+                section_data: "נתונים ופרטיות",
+                section_data_backup: "גיבוי ויצוא נתונים",
+                section_about: "מידע",
+                theme_label: "מראה",
+                theme_dark: "כהה",
+                theme_light: "בהיר",
+                app_version_label: "גרסת אפליקציה",
                 loading: "טוען...",
                 welcome_back: "ברוך הבא למסע קליסטניקס!",
                 profile_saved: "הפרופיל נשמר בהצלחה!",
@@ -3082,6 +3145,18 @@
                 nav_journey: "Journey",
                 nav_achievements: "Achievements",
                 nav_profile: "Profile",
+                nav_settings: "Settings",
+                settings_title: "Settings",
+                settings_subtitle: "Preferences, data and app info",
+                section_preferences: "Preferences",
+                section_workout: "Workout",
+                section_data: "Data & Privacy",
+                section_data_backup: "Backup & export data",
+                section_about: "About",
+                theme_label: "Appearance",
+                theme_dark: "Dark",
+                theme_light: "Light",
+                app_version_label: "App Version",
                 loading: "Loading...",
                 welcome_back: "Welcome to Calisthenics Journey!",
                 profile_saved: "Profile saved successfully!",
@@ -3645,6 +3720,18 @@
                 nav_journey: "Reis",
                 nav_achievements: "Prestaties",
                 nav_profile: "Profiel",
+                nav_settings: "Instellingen",
+                settings_title: "Instellingen",
+                settings_subtitle: "Voorkeuren, gegevens en app-info",
+                section_preferences: "Voorkeuren",
+                section_workout: "Training",
+                section_data: "Gegevens & Privacy",
+                section_data_backup: "Back-up & gegevens exporteren",
+                section_about: "Over",
+                theme_label: "Weergave",
+                theme_dark: "Donker",
+                theme_light: "Licht",
+                app_version_label: "App-versie",
                 loading: "Laden...",
                 welcome_back: "Welkom bij Calisthenics Reis!",
                 profile_saved: "Profiel succesvol opgeslagen!",
@@ -4208,6 +4295,18 @@
                 nav_journey: "Viaje",
                 nav_achievements: "Logros",
                 nav_profile: "Perfil",
+                nav_settings: "Ajustes",
+                settings_title: "Ajustes",
+                settings_subtitle: "Preferencias, datos e información de la app",
+                section_preferences: "Preferencias",
+                section_workout: "Entrenamiento",
+                section_data: "Datos y Privacidad",
+                section_data_backup: "Copia de seguridad y exportar datos",
+                section_about: "Acerca de",
+                theme_label: "Apariencia",
+                theme_dark: "Oscuro",
+                theme_light: "Claro",
+                app_version_label: "Versión de la app",
                 loading: "Cargando...",
                 welcome_back: "¡Bienvenido al Viaje de Calistenia!",
                 profile_saved: "¡Perfil guardado con éxito!",
@@ -6017,6 +6116,18 @@
             showScreen('screen-profile');
         }
 
+        // ==================== SETTINGS ====================
+        function showSettings() {
+            updateSettingsScreen();
+            showScreen('screen-settings');
+        }
+
+        function updateSettingsScreen() {
+            const isDark = (document.documentElement.getAttribute('data-theme') || 'dark') === 'dark';
+            const valueEl = document.getElementById('settings-theme-value');
+            if (valueEl) valueEl.textContent = isDark ? (t('theme_dark') || 'Dark') : (t('theme_light') || 'Light');
+        }
+
         function saveProfile() {
             userProfile.name = document.getElementById('edit-name').value;
             userProfile.age = document.getElementById('edit-age').value;
@@ -7721,11 +7832,13 @@
         }
 
         // ==================== UPDATED INIT ====================
+        // Only English has been fully audited screen-by-screen so far. The
+        // language switcher UI is hidden (see .lang-selector CSS) and the app
+        // is forced to English for every visitor until he/nl/es get the same
+        // review — re-enable browser-locale detection once they do.
         function detectInitialLanguage() {
             const saved = localStorage.getItem('masa_lang');
             if (saved && translations[saved]) return saved;
-            const browserLang = (navigator.language || 'en').slice(0, 2).toLowerCase();
-            if (translations[browserLang]) return browserLang;
             return 'en';
         }
 
