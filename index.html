@@ -1583,6 +1583,7 @@
                 </div>
             </div>
             <div id="videos-list"></div>
+            <div id="videos-no-results" class="card" style="display:none; text-align:center; color: var(--text-secondary);" data-i18n="no_exercises_found">לא נמצאו תרגילים התואמים לחיפוש</div>
         </div>
 
         <!-- VIDEO PLAYER -->
@@ -2368,6 +2369,7 @@
                 videos_title: "סרטוני הדרכה",
                 videos_subtitle: "למד כל תרגיל צעד אחר צעד",
                 search_exercise: "חפש תרגיל...",
+                no_exercises_found: "לא נמצאו תרגילים התואמים לחיפוש",
                 back_to_videos: "חזרה לסרטונים",
                 video_not_available: "סרטון עדיין לא זמין לתרגיל הזה — עקוב/י אחרי ההנחיות הכתובות למטה",
                 more_group_progress: "התקדמות",
@@ -2612,6 +2614,7 @@
                 validation_age: "גיל צריך להיות בין 10 ל-100",
                 validation_weight: "משקל צריך להיות בין 25 ל-300 ק\"ג",
                 validation_height: "גובה צריך להיות בין 100 ל-230 ס\"מ (בס\"מ, לא במטרים או מ\"מ)",
+                validation_name: "נא להזין שם תקין (עד 60 תווים)",
                 enter_weight: "נא להזין משקל",
                 measurement_saved: "המדידה נשמרה!",
 
@@ -2931,6 +2934,7 @@
                 videos_title: "Tutorial Videos",
                 videos_subtitle: "Learn every exercise step by step",
                 search_exercise: "Search exercise...",
+                no_exercises_found: "No exercises match your search",
                 back_to_videos: "Back to Videos",
                 video_not_available: "Video not yet available for this exercise — follow the written instructions below",
                 more_group_progress: "Progress",
@@ -3175,6 +3179,7 @@
                 validation_age: "Age must be between 10 and 100",
                 validation_weight: "Weight must be between 25 and 300 kg",
                 validation_height: "Height must be between 100 and 230 cm (in cm, not meters or mm)",
+                validation_name: "Please enter a valid name (up to 60 characters)",
                 enter_weight: "Please enter weight",
                 measurement_saved: "Measurement saved!",
 
@@ -3494,6 +3499,7 @@
                 videos_title: "Instructievideo's",
                 videos_subtitle: "Leer elke oefening stap voor stap",
                 search_exercise: "Zoek oefening...",
+                no_exercises_found: "Geen oefeningen komen overeen met je zoekopdracht",
                 back_to_videos: "Terug naar Video's",
                 video_not_available: "Nog geen video beschikbaar voor deze oefening — volg de geschreven instructies hieronder",
                 more_group_progress: "Voortgang",
@@ -3738,6 +3744,7 @@
                 validation_age: "Leeftijd moet tussen 10 en 100 zijn",
                 validation_weight: "Gewicht moet tussen 25 en 300 kg zijn",
                 validation_height: "Lengte moet tussen 100 en 230 cm zijn (in cm, niet meter of mm)",
+                validation_name: "Voer een geldige naam in (max 60 tekens)",
                 enter_weight: "Voer gewicht in",
                 measurement_saved: "Meting opgeslagen!",
 
@@ -4057,6 +4064,7 @@
                 videos_title: "Videos Tutorial",
                 videos_subtitle: "Aprende cada ejercicio paso a paso",
                 search_exercise: "Buscar ejercicio...",
+                no_exercises_found: "No se encontraron ejercicios que coincidan con tu búsqueda",
                 back_to_videos: "Volver a Videos",
                 video_not_available: "Aún no hay video disponible para este ejercicio — sigue las instrucciones escritas abajo",
                 more_group_progress: "Progreso",
@@ -4301,6 +4309,7 @@
                 validation_age: "La edad debe estar entre 10 y 100",
                 validation_weight: "El peso debe estar entre 25 y 300 kg",
                 validation_height: "La altura debe estar entre 100 y 230 cm (en cm, no en metros o mm)",
+                validation_name: "Introduce un nombre válido (hasta 60 caracteres)",
                 enter_weight: "Por favor introduce el peso",
                 measurement_saved: "¡Medida guardada!",
 
@@ -5024,14 +5033,18 @@
             window.scrollTo(0, 0);
 
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            // Matches the actual bottom-nav order: Home, Videos, Stats, Journey, More.
+            // Every other screen (achievements, profile, metrics, nutrition, water,
+            // recovery, health, history, challenge, race, notifications, offline,
+            // schedule editor) is reached exclusively through the "More" overlay,
+            // so it should keep that tab highlighted rather than none/a wrong one.
             const navMap = {
-                'screen-dashboard': 0, 'screen-videos': 1, 'screen-journey': 2,
-                'screen-achievements': 3, 'screen-profile': 4
+                'screen-dashboard': 0, 'screen-videos': 1, 'screen-stats': 2, 'screen-journey': 3
             };
-            if (navMap[id] !== undefined) {
-                const navItems = document.querySelectorAll('.nav-item');
-                if (navItems[navMap[id]]) navItems[navMap[id]].classList.add('active');
-            }
+            const noNavScreens = ['screen-welcome', 'screen-login', 'screen-onboarding', 'screen-quiz', 'screen-results', 'screen-schedule'];
+            const navItems = document.querySelectorAll('.nav-item');
+            const activeIndex = navMap[id] !== undefined ? navMap[id] : (noNavScreens.includes(id) ? undefined : 4);
+            if (activeIndex !== undefined && navItems[activeIndex]) navItems[activeIndex].classList.add('active');
         }
 
         function showBottomNav(show) {
@@ -5053,11 +5066,12 @@
         }
 
         function saveProfileAndStartQuiz() {
-            const name = document.getElementById('onb-name').value;
+            const name = document.getElementById('onb-name').value.trim();
             const age = document.getElementById('onb-age').value;
             const weight = document.getElementById('onb-weight').value;
             const height = document.getElementById('onb-height').value;
             if (!name || !age || !weight || !height) { showToast(t('fill_name_age') || t('fill_required_fields')); return; }
+            if (name.length > 60) { showToast(t('validation_name')); return; }
             const validationError = validateBodyMetrics(age, weight, height);
             if (validationError) { showToast(validationError); return; }
             const consentBox = document.getElementById('onb-consent');
@@ -6018,7 +6032,11 @@
         }
 
         function saveProfile() {
-            userProfile.name = document.getElementById('edit-name').value;
+            const editedName = document.getElementById('edit-name').value.trim();
+            if (editedName) {
+                if (editedName.length > 60) { showToast(t('validation_name')); return; }
+                userProfile.name = editedName;
+            }
             userProfile.age = document.getElementById('edit-age').value;
             userProfile.sports = document.getElementById('edit-sports').value;
             userProfile.goal = document.getElementById('edit-goal').value;
@@ -6192,9 +6210,14 @@
 
         function filterVideos() {
             const query = document.getElementById('video-search').value.toLowerCase();
+            let visibleCount = 0;
             document.querySelectorAll('.video-card').forEach(card => {
-                card.style.display = card.dataset.name.toLowerCase().includes(query) ? 'block' : 'none';
+                const matches = card.dataset.name.toLowerCase().includes(query);
+                card.style.display = matches ? 'block' : 'none';
+                if (matches) visibleCount++;
             });
+            const noResultsEl = document.getElementById('videos-no-results');
+            if (noResultsEl) noResultsEl.style.display = visibleCount === 0 ? 'block' : 'none';
         }
 
         // ==================== LOGIN ====================
