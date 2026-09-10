@@ -42,6 +42,10 @@
             --level-5: #ff6b6b;
             --nav-height: 70px;
             --safe-bottom: env(safe-area-inset-bottom, 0px);
+            /* Translucent material for floating chrome (bottom nav) so its
+               backdrop-filter blur actually has something to blur, instead
+               of sitting behind an opaque color and doing nothing. */
+            --bg-card-translucent: rgba(18,18,26,0.72);
         }
 
         /* Light mode variables */
@@ -53,6 +57,7 @@
             --text-secondary: #6b6b7b;
             --border: #d0d0e0;
             --accent-glow: rgba(255,107,53,0.15);
+            --bg-card-translucent: rgba(255,255,255,0.72);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -110,14 +115,16 @@
 
         /* ==================== HEADER ==================== */
         .app-header { text-align: center; padding: 30px 0 20px; }
-        .logo { 
-            font-size: 2.2rem; 
-            font-weight: 900; 
-            background: linear-gradient(135deg,var(--accent),#ff8c5a); 
-            -webkit-background-clip: text; 
-            -webkit-text-fill-color: transparent; 
-            background-clip: text; 
-            margin-bottom: 8px; 
+        .logo {
+            font-size: 2.2rem;
+            font-weight: 900;
+            letter-spacing: -0.02em;
+            line-height: 1.1;
+            background: linear-gradient(135deg,var(--accent),#ff8c5a);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
         }
         .tagline { color: var(--text-secondary); font-size: 0.95rem; font-weight: 300; }
 
@@ -164,9 +171,17 @@
             color: white; 
             box-shadow: 0 4px 20px var(--accent-glow); 
         }
-        .btn-primary:hover { 
-            transform: translateY(-2px); 
-            box-shadow: 0 8px 30px var(--accent-glow); 
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px var(--accent-glow);
+        }
+        /* Instant tactile feedback on press, not just on hover/release —
+           feels responsive on touch devices where :hover never fires. */
+        .btn:active { transform: scale(0.97); transition: transform 0.1s ease-out; }
+        .nav-item:active, .more-row:active, .day-chip:active { transform: scale(0.96); transition: transform 0.1s ease-out; }
+        @media (prefers-reduced-motion: reduce) {
+            .btn:active, .nav-item:active, .more-row:active, .day-chip:active { transform: none; }
+            .screen { animation: none; }
         }
         .btn-secondary { 
             background: var(--bg-elevated); 
@@ -728,18 +743,19 @@
         }
 
         /* ==================== BOTTOM NAV - FIXED ==================== */
-        .bottom-nav { 
-            position: fixed; 
-            bottom: 0; 
-            left: 0; 
-            right: 0; 
-            background: var(--bg-card); 
-            border-top: 1px solid var(--border); 
-            display: flex; 
-            justify-content: space-around; 
-            padding: 8px 0 calc(8px + var(--safe-bottom)); 
-            z-index: 100; 
-            backdrop-filter: blur(20px); 
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--bg-card-translucent);
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0 calc(8px + var(--safe-bottom));
+            z-index: 100;
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
             height: var(--nav-height);
             transition: transform 0.3s ease, background 0.3s ease;
         }
@@ -5214,15 +5230,23 @@
             if (target) target.classList.add('active');
             window.scrollTo(0, 0);
 
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            // Matches the actual bottom-nav order: Home, Videos, Stats, Journey, More.
+            // Screens reached only through "More" (achievements, profile, settings, etc.)
+            // correctly highlight the More tab, not a mismatched earlier index.
             const navMap = {
-                'screen-dashboard': 0, 'screen-videos': 1, 'screen-journey': 2,
-                'screen-achievements': 3, 'screen-profile': 4
+                'screen-dashboard': 0, 'screen-videos': 1, 'screen-stats': 2, 'screen-journey': 3,
+                'screen-achievements': 4, 'screen-profile': 4, 'screen-settings': 4,
+                'screen-history': 4, 'screen-challenge': 4, 'screen-race': 4,
+                'screen-nutrition': 4, 'screen-water': 4, 'screen-metrics': 4, 'screen-recovery': 4,
+                'screen-schedule': 4, 'screen-notifications': 4, 'screen-offline': 4,
+                'screen-health': 4, 'screen-legal': 4
             };
-            if (navMap[id] !== undefined) {
-                const navItems = document.querySelectorAll('.nav-item');
-                if (navItems[navMap[id]]) navItems[navMap[id]].classList.add('active');
-            }
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach((item, i) => {
+                const isActive = navMap[id] === i;
+                item.classList.toggle('active', isActive);
+                item.setAttribute('aria-selected', isActive ? 'true' : 'false');
+            });
         }
 
         function showBottomNav(show) {
