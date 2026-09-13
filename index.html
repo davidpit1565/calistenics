@@ -1168,6 +1168,7 @@
             max-width: calc(100vw - 32px);
             width: max-content;
             text-align: center;
+            pointer-events: none; /* purely informational — must never block taps on the CTA underneath it */
         }
         @media (prefers-reduced-transparency: reduce) {
             .toast { background: var(--bg-elevated); backdrop-filter: none; -webkit-backdrop-filter: none; }
