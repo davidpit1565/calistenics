@@ -134,9 +134,33 @@
             animation: fadeIn 0.4s ease; 
         }
         .screen.active { display: block; }
-        @keyframes fadeIn { 
-            from { opacity: 0; transform: translateY(15px); } 
-            to { opacity: 1; transform: translateY(0); } 
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        /* Modal-like drill-down screens (paywall, program detail) get a real
+           directional transition instead of the generic vertical fade: they
+           enter from the right (as if pushed on top of what triggered them)
+           and — on spatial-consistency grounds — exit back the same way they
+           came, rather than just vanishing. Bottom-nav tab switches keep the
+           plain fade above; they aren't a "push" in any direction. */
+        .screen-modal.active { animation: none; }
+        /* Both classes (.screen-modal.active + .screen-modal-enter/-exit) are
+           present on the element at once, so these need to out-specificity
+           the ".screen-modal.active { animation: none }" rule above it. */
+        .screen-modal.active.screen-modal-enter { animation: screenModalEnter 0.32s cubic-bezier(0.32,0.72,0,1) both; }
+        .screen-modal.active.screen-modal-exit { animation: screenModalExit 0.24s cubic-bezier(0.32,0.72,0,1) both; }
+        @keyframes screenModalEnter {
+            from { opacity: 0; transform: translateX(28px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes screenModalExit {
+            from { opacity: 1; transform: translateX(0); }
+            to { opacity: 0; transform: translateX(28px); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .screen-modal.active.screen-modal-enter,
+            .screen-modal.active.screen-modal-exit { animation: toastFadeReduced 0.2s ease both; }
         }
 
         /* ==================== CARDS ==================== */
@@ -179,10 +203,38 @@
            feels responsive on touch devices where :hover never fires. */
         .btn:active { transform: scale(0.97); transition: transform 0.1s ease-out; }
         .nav-item:active, .more-row:active, .day-chip:active { transform: scale(0.96); transition: transform 0.1s ease-out; }
-        @media (prefers-reduced-motion: reduce) {
-            .btn:active, .nav-item:active, .more-row:active, .day-chip:active { transform: none; }
-            .screen { animation: none; }
+        /* Same instant-press treatment for every other tappable surface that
+           previously only had a :hover (dead on touch) — quiz answers, exercise/
+           video/program cards, small icon toggles. Locked/disabled cards are
+           excluded so a dead tap doesn't look interactive. */
+        .quiz-option:active,
+        .exercise-card:not(.locked):active,
+        .video-card:not([style*="cursor: not-allowed"]):active,
+        .workout-exercise:active,
+        .program-card:active,
+        .export-btn:active,
+        .lang-btn:active,
+        .theme-toggle:active,
+        .exercise-info-btn:active,
+        .toggle-switch:active,
+        .coach-chat-toggle:active {
+            transform: scale(0.97);
+            transition: transform 0.1s ease-out;
         }
+        @media (prefers-reduced-motion: reduce) {
+            .btn:active, .nav-item:active, .more-row:active, .day-chip:active,
+            .quiz-option:active, .exercise-card:not(.locked):active,
+            .video-card:not([style*="cursor: not-allowed"]):active, .workout-exercise:active,
+            .program-card:active, .export-btn:active, .lang-btn:active, .theme-toggle:active,
+            .exercise-info-btn:active, .toggle-switch:active, .coach-chat-toggle:active {
+                transform: none;
+                /* still give *some* instant feedback without motion */
+                filter: brightness(0.92);
+            }
+            .screen { animation: none; }
+            .toast { animation: toastFadeReduced 0.2s ease; }
+        }
+        @keyframes toastFadeReduced { from { opacity: 0; } to { opacity: 1; } }
         .btn-secondary { 
             background: var(--bg-elevated); 
             color: var(--text-primary); 
@@ -1097,7 +1149,13 @@
             bottom: calc(var(--nav-height) + 20px);
             left: 50%;
             transform: translateX(-50%);
-            background: var(--bg-elevated);
+            /* Translucent material rather than a flat opaque box — this is
+               transient chrome floating over content, so it should read as
+               glass, not a solid panel. Falls back to a near-solid background
+               (below) when the OS disables transparency. */
+            background: color-mix(in srgb, var(--bg-elevated) 78%, transparent);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            backdrop-filter: blur(20px) saturate(180%);
             border: 1px solid var(--accent);
             color: var(--text-primary);
             padding: 16px 24px;
@@ -1110,6 +1168,12 @@
             max-width: calc(100vw - 32px);
             width: max-content;
             text-align: center;
+        }
+        @media (prefers-reduced-transparency: reduce) {
+            .toast { background: var(--bg-elevated); backdrop-filter: none; -webkit-backdrop-filter: none; }
+        }
+        @media (prefers-contrast: more) {
+            .toast { background: var(--bg-elevated); backdrop-filter: none; -webkit-backdrop-filter: none; border-width: 2px; }
         }
 
         /* ==================== LOADING OVERLAY ==================== */
@@ -1953,7 +2017,7 @@
         </div>
 
         <!-- PROGRAM DETAIL / PROGRESS -->
-        <div class="screen" id="screen-program-detail">
+        <div class="screen screen-modal" id="screen-program-detail">
             <button class="btn btn-secondary btn-sm" style="margin-bottom: 16px;" onclick="showPrograms()" data-i18n="back">חזרה</button>
             <div class="card">
                 <div style="display:flex; align-items:center; gap:12px; margin-bottom:6px;">
@@ -2082,7 +2146,7 @@
         </div>
 
         <!-- PREMIUM PAYWALL -->
-        <div class="screen" id="screen-paywall">
+        <div class="screen screen-modal" id="screen-paywall">
             <div class="paywall-close-row">
                 <button class="paywall-close-btn" onclick="dismissPaywall()" aria-label="Close">
                     <svg class="icon-svg" style="width:18px;height:18px;" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
@@ -6389,29 +6453,70 @@
         }
 
         // ==================== SCREEN MANAGEMENT ====================
+        // Bottom-nav tab switches (dashboard/videos/stats/journey) stay a plain,
+        // undirected fade (see .screen's fadeIn) — they're lateral, not a
+        // "push". Drill-down/modal-like screens (.screen-modal — paywall,
+        // program detail) instead get a real directional transition: they
+        // enter from the right, and — so dismissal retraces the same path —
+        // exit back to the right rather than just disappearing. The actual
+        // animation each plays (slide vs. plain opacity crossfade) is decided
+        // in CSS via prefers-reduced-motion, so this logic doesn't need to
+        // know or care which one is active.
         function showScreen(id) {
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             const target = document.getElementById(id);
-            if (target) target.classList.add('active');
-            window.scrollTo(0, 0);
+            if (!target) return;
+            const current = document.querySelector('.screen.active');
+            const isModal = el => !!(el && el.classList.contains('screen-modal'));
+            const enteringModal = isModal(target) && current !== target;
+            const exitingModal = !!(current && current !== target && isModal(current) && !isModal(target));
 
-            // Matches the actual bottom-nav order: Home, Videos, Stats, Journey, More.
-            // Every other screen (achievements, profile, metrics, nutrition, water,
-            // recovery, health, history, challenge, race, notifications, offline,
-            // schedule editor, settings) is reached exclusively through the "More"
-            // overlay, so it defaults to that tab rather than none/a wrong one —
-            // except the pre-login/onboarding screens, which show no bottom nav at all.
-            const navMap = {
-                'screen-dashboard': 0, 'screen-videos': 1, 'screen-stats': 2, 'screen-journey': 3
+            const finishSwitch = () => {
+                document.querySelectorAll('.screen').forEach(s => s.classList.remove('active', 'screen-modal-exit', 'screen-modal-enter'));
+                target.classList.add('active');
+                if (enteringModal) {
+                    target.classList.add('screen-modal-enter');
+                    target.addEventListener('animationend', () => target.classList.remove('screen-modal-enter'), { once: true });
+                }
+                window.scrollTo(0, 0);
+
+                // Matches the actual bottom-nav order: Home, Videos, Stats, Journey, More.
+                // Every other screen (achievements, profile, metrics, nutrition, water,
+                // recovery, health, history, challenge, race, notifications, offline,
+                // schedule editor, settings) is reached exclusively through the "More"
+                // overlay, so it defaults to that tab rather than none/a wrong one —
+                // except the pre-login/onboarding screens, which show no bottom nav at all.
+                const navMap = {
+                    'screen-dashboard': 0, 'screen-videos': 1, 'screen-stats': 2, 'screen-journey': 3
+                };
+                const noNavScreens = ['screen-welcome', 'screen-login', 'screen-verify-code', 'screen-onboarding', 'screen-quiz', 'screen-results', 'screen-schedule', 'screen-paywall'];
+                const activeIndex = navMap[id] !== undefined ? navMap[id] : (noNavScreens.includes(id) ? undefined : 4);
+                const navItems = document.querySelectorAll('.nav-item');
+                navItems.forEach((item, i) => {
+                    const isActive = activeIndex === i;
+                    item.classList.toggle('active', isActive);
+                    item.setAttribute('aria-selected', isActive ? 'true' : 'false');
+                });
             };
-            const noNavScreens = ['screen-welcome', 'screen-login', 'screen-verify-code', 'screen-onboarding', 'screen-quiz', 'screen-results', 'screen-schedule', 'screen-paywall'];
-            const activeIndex = navMap[id] !== undefined ? navMap[id] : (noNavScreens.includes(id) ? undefined : 4);
-            const navItems = document.querySelectorAll('.nav-item');
-            navItems.forEach((item, i) => {
-                const isActive = activeIndex === i;
-                item.classList.toggle('active', isActive);
-                item.setAttribute('aria-selected', isActive ? 'true' : 'false');
-            });
+
+            if (exitingModal) {
+                // Play the outgoing modal screen's exit animation to completion
+                // before swapping — the incoming screen (returning to where it
+                // was) doesn't need its own entrance. A timeout backstops
+                // animationend in case it never fires, so navigation can't get
+                // stuck mid-transition.
+                let done = false;
+                const proceed = () => {
+                    if (done) return;
+                    done = true;
+                    current.classList.remove('active', 'screen-modal-exit');
+                    finishSwitch();
+                };
+                current.classList.add('screen-modal-exit');
+                current.addEventListener('animationend', proceed, { once: true });
+                setTimeout(proceed, 400);
+            } else {
+                finishSwitch();
+            }
         }
 
         function showBottomNav(show) {
