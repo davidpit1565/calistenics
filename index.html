@@ -35,6 +35,24 @@
             --text-primary: #f0f0f5;
             --text-secondary: #8a8a9a;
             --border: #2a2a3e;
+            /* Text/icon color for content placed on top of solid accent/success/danger/info
+               fills (buttons, badges, selected chips): a near-black that keeps >=4.5:1 contrast
+               against all of those saturated colors, unlike plain white which measures as low
+               as ~2:1-2.8:1 against them and fails WCAG AA. Intentionally NOT theme-overridden —
+               the accent/success/danger/info fills themselves stay equally vivid in both themes. */
+            --on-accent: #0a0a0f;
+            /* Accent color specifically for plain TEXT on the page's normal (card/elevated/
+               page) background — same vivid orange as --accent in dark mode (already >=4.5:1
+               there), overridden to a deeper shade in light mode; see the light-theme block. */
+            --accent-text: var(--accent);
+            /* Same idea as --accent-text for the status colors: --success/--warning/--danger/
+               --info read fine as text on dark surfaces already (>=5.9:1) but --warning and
+               --info especially fail badly as light-mode text (as low as ~1.2:1-2.3:1) since
+               they're unchanged between themes and light surfaces are so much brighter. */
+            --success-text: var(--success);
+            --warning-text: var(--warning);
+            --danger-text: var(--danger);
+            --info-text: var(--info);
             --level-1: #4ecdc4;
             --level-2: #45b7d1;
             --level-3: #96ceb4;
@@ -54,13 +72,43 @@
             --bg-card: #ffffff;
             --bg-elevated: #e8e8f0;
             --text-primary: #1a1a2e;
-            --text-secondary: #6b6b7b;
+            --text-secondary: #5b5b69;
             --border: #d0d0e0;
+            /* A deeper, AA-compliant shade of the brand orange for use wherever the accent
+               color is the TEXT color on the page's regular (card/elevated/page) background:
+               the vivid --accent (#ff6b35) measures only ~2.8:1 against white/light card
+               surfaces, well under the 4.5:1 WCAG AA minimum for normal text. --accent itself
+               is left vivid in light mode too, since it is also used for solid button/badge
+               fills, where content on top uses --on-accent (dark) rather than relying on this. */
+            --accent-text: #b93100;
+            --success-text: #00773c;
+            --warning-text: #896000;
+            --danger-text: #d10012;
+            --info-text: #207083;
             --accent-glow: rgba(255,107,53,0.15);
             --bg-card-translucent: rgba(255,255,255,0.72);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        /* ==================== FOCUS VISIBILITY ====================
+           A single, consistent keyboard-focus ring for every focusable element,
+           including custom-built controls (div[role=button/tab/switch], etc.) that
+           don't get a useful default outline from the browser. Scoped to
+           :focus-visible so it only appears for keyboard/AT users, not on every
+           mouse click. */
+        a:focus-visible,
+        button:focus-visible,
+        input:focus-visible,
+        select:focus-visible,
+        textarea:focus-visible,
+        [tabindex]:focus-visible,
+        [role="button"]:focus-visible,
+        [role="tab"]:focus-visible,
+        [role="switch"]:focus-visible {
+            outline: 3px solid var(--accent);
+            outline-offset: 2px;
+        }
 
         body { 
             font-family: 'Heebo',sans-serif; 
@@ -134,33 +182,9 @@
             animation: fadeIn 0.4s ease; 
         }
         .screen.active { display: block; }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(15px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        /* Modal-like drill-down screens (paywall, program detail) get a real
-           directional transition instead of the generic vertical fade: they
-           enter from the right (as if pushed on top of what triggered them)
-           and — on spatial-consistency grounds — exit back the same way they
-           came, rather than just vanishing. Bottom-nav tab switches keep the
-           plain fade above; they aren't a "push" in any direction. */
-        .screen-modal.active { animation: none; }
-        /* Both classes (.screen-modal.active + .screen-modal-enter/-exit) are
-           present on the element at once, so these need to out-specificity
-           the ".screen-modal.active { animation: none }" rule above it. */
-        .screen-modal.active.screen-modal-enter { animation: screenModalEnter 0.32s cubic-bezier(0.32,0.72,0,1) both; }
-        .screen-modal.active.screen-modal-exit { animation: screenModalExit 0.24s cubic-bezier(0.32,0.72,0,1) both; }
-        @keyframes screenModalEnter {
-            from { opacity: 0; transform: translateX(28px); }
-            to { opacity: 1; transform: translateX(0); }
-        }
-        @keyframes screenModalExit {
-            from { opacity: 1; transform: translateX(0); }
-            to { opacity: 0; transform: translateX(28px); }
-        }
-        @media (prefers-reduced-motion: reduce) {
-            .screen-modal.active.screen-modal-enter,
-            .screen-modal.active.screen-modal-exit { animation: toastFadeReduced 0.2s ease both; }
+        @keyframes fadeIn { 
+            from { opacity: 0; transform: translateY(15px); } 
+            to { opacity: 1; transform: translateY(0); } 
         }
 
         /* ==================== CARDS ==================== */
@@ -190,10 +214,11 @@
             transition: all 0.3s ease; 
             margin-top: 12px; 
         }
-        .btn-primary { 
-            background: linear-gradient(135deg,var(--accent),#ff8c5a); 
-            color: white; 
-            box-shadow: 0 4px 20px var(--accent-glow); 
+        .btn-primary {
+            background: linear-gradient(135deg,var(--accent),#ff8c5a);
+            /* Dark text, not white: white-on-#ff6b35 measures ~2.8:1, well under WCAG AA. */
+            color: var(--on-accent);
+            box-shadow: 0 4px 20px var(--accent-glow);
         }
         .btn-primary:hover {
             transform: translateY(-2px);
@@ -203,47 +228,21 @@
            feels responsive on touch devices where :hover never fires. */
         .btn:active { transform: scale(0.97); transition: transform 0.1s ease-out; }
         .nav-item:active, .more-row:active, .day-chip:active { transform: scale(0.96); transition: transform 0.1s ease-out; }
-        /* Same instant-press treatment for every other tappable surface that
-           previously only had a :hover (dead on touch) — quiz answers, exercise/
-           video/program cards, small icon toggles. Locked/disabled cards are
-           excluded so a dead tap doesn't look interactive. */
-        .quiz-option:active,
-        .exercise-card:not(.locked):active,
-        .video-card:not([style*="cursor: not-allowed"]):active,
-        .workout-exercise:active,
-        .program-card:active,
-        .export-btn:active,
-        .lang-btn:active,
-        .theme-toggle:active,
-        .exercise-info-btn:active,
-        .toggle-switch:active,
-        .coach-chat-toggle:active {
-            transform: scale(0.97);
-            transition: transform 0.1s ease-out;
-        }
         @media (prefers-reduced-motion: reduce) {
-            .btn:active, .nav-item:active, .more-row:active, .day-chip:active,
-            .quiz-option:active, .exercise-card:not(.locked):active,
-            .video-card:not([style*="cursor: not-allowed"]):active, .workout-exercise:active,
-            .program-card:active, .export-btn:active, .lang-btn:active, .theme-toggle:active,
-            .exercise-info-btn:active, .toggle-switch:active, .coach-chat-toggle:active {
-                transform: none;
-                /* still give *some* instant feedback without motion */
-                filter: brightness(0.92);
-            }
+            .btn:active, .nav-item:active, .more-row:active, .day-chip:active { transform: none; }
             .screen { animation: none; }
-            .toast { animation: toastFadeReduced 0.2s ease; }
         }
-        @keyframes toastFadeReduced { from { opacity: 0; } to { opacity: 1; } }
         .btn-secondary { 
             background: var(--bg-elevated); 
             color: var(--text-primary); 
             border: 1px solid var(--border); 
         }
         .btn-secondary:hover { border-color: var(--accent); }
-        .btn-success { background: linear-gradient(135deg,var(--success),#00b894); color: white; }
-        .btn-danger { background: linear-gradient(135deg,var(--danger),#ee5a5a); color: white; }
-        .btn-info { background: linear-gradient(135deg,var(--info),#3a9bc4); color: white; }
+        /* Dark text on all three, same reasoning as .btn-primary: white text against these
+           saturated fills measures well under the WCAG AA 4.5:1 minimum (as low as ~2:1). */
+        .btn-success { background: linear-gradient(135deg,var(--success),#00b894); color: var(--on-accent); }
+        .btn-danger { background: linear-gradient(135deg,var(--danger),#ee5a5a); color: var(--on-accent); }
+        .btn-info { background: linear-gradient(135deg,var(--info),#3a9bc4); color: var(--on-accent); }
         .btn-sm { padding: 10px 16px; font-size: 0.9rem; width: auto; margin-top: 0; }
 
         /* ==================== PROGRESS ==================== */
@@ -355,8 +354,8 @@
             display: inline-block; padding: 3px 9px; border-radius: 8px;
             font-size: 0.72rem; font-weight: 700;
         }
-        .program-badge.badge-active { background: rgba(255,140,90,0.18); color: var(--accent); }
-        .program-badge.badge-done { background: rgba(78,205,196,0.18); color: var(--success); }
+        .program-badge.badge-active { background: rgba(255,140,90,0.18); color: var(--accent-text); }
+        .program-badge.badge-done { background: rgba(78,205,196,0.18); color: var(--success-text); }
         .program-progress-track {
             width: 100%; height: 8px; border-radius: 6px; background: var(--bg-elevated);
             overflow: hidden; margin: 10px 0;
@@ -367,7 +366,7 @@
             padding: 12px 14px; border-radius: 12px; background: var(--bg-elevated); margin-bottom: 8px; cursor: pointer;
         }
         .program-day-exercise-name { font-weight: 600; }
-        .program-day-exercise-vol { color: var(--accent); font-weight: 700; font-size: 0.85rem; }
+        .program-day-exercise-vol { color: var(--accent-text); font-weight: 700; font-size: 0.85rem; }
 
         /* ==================== CAMERA ==================== */
         .camera-container {
@@ -434,7 +433,7 @@
             transition: border-color 0.2s ease;
             padding: 0;
         }
-        .exercise-info-btn:hover, .exercise-info-btn[aria-expanded="true"] { border-color: var(--accent); color: var(--accent); }
+        .exercise-info-btn:hover, .exercise-info-btn[aria-expanded="true"] { border-color: var(--accent); color: var(--accent-text); }
         .exercise-info-btn svg { width: 20px; height: 20px; }
         .exercise-title {
             font-size: 1.4rem;
@@ -513,7 +512,7 @@
             z-index: 1; 
             font-size: 3rem; 
             font-weight: 900; 
-            color: var(--accent); 
+            color: var(--accent-text); 
         }
         .ai-feedback {
             font-size: 1.1rem;
@@ -545,12 +544,12 @@
             font-weight: 700;
             cursor: pointer;
         }
-        .coach-chat-icon { color: var(--accent); flex-shrink: 0; display: flex; }
+        .coach-chat-icon { color: var(--accent-text); flex-shrink: 0; display: flex; }
         .coach-chat-icon .icon-svg { width: 20px; height: 20px; }
         .coach-chat-body { padding: 0 16px 16px; }
         .coach-chat-messages { display: flex; flex-direction: column; gap: 10px; max-height: 280px; overflow-y: auto; margin-bottom: 12px; }
         .coach-chat-msg { padding: 10px 14px; border-radius: 14px; font-size: 0.9rem; line-height: 1.5; max-width: 85%; }
-        .coach-chat-msg.user { background: var(--accent); color: #fff; align-self: flex-end; border-end-end-radius: 4px; }
+        .coach-chat-msg.user { background: var(--accent); color: var(--on-accent); align-self: flex-end; border-end-end-radius: 4px; }
         .coach-chat-msg.assistant { background: var(--bg-card); border: 1px solid var(--border); align-self: flex-start; border-start-start-radius: 4px; }
         .coach-chat-input-row { display: flex; gap: 8px; }
         .coach-chat-input-row input {
@@ -584,7 +583,7 @@
             border-radius: 20px;
             padding: 22px 20px;
             text-align: center;
-            color: #fff;
+            color: var(--on-accent);
             margin: 18px 0 14px;
         }
         .paywall-price-annual { font-size: 2.1rem; font-weight: 900; line-height: 1.1; }
@@ -604,7 +603,7 @@
             font-size: 0.92rem;
         }
         .paywall-feature-item:last-child { border-bottom: none; }
-        .paywall-feature-check { color: var(--accent); flex-shrink: 0; font-weight: 900; }
+        .paywall-feature-check { color: var(--accent-text); flex-shrink: 0; font-weight: 900; }
         .paywall-restore-btn {
             background: none; border: none;
             color: var(--text-secondary);
@@ -627,12 +626,12 @@
         .today-workout-card {
             background: linear-gradient(135deg, var(--accent), #ff8c5a);
             border: none;
-            color: #fff;
+            color: var(--on-accent);
         }
         .today-workout-label { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; opacity: 0.85; margin-bottom: 4px; }
         .today-workout-title { font-size: 1.3rem; font-weight: 900; margin-bottom: 6px; }
-        .today-workout-card #today-workout-exercise-name { color: rgba(255,255,255,0.85) !important; }
-        .today-workout-card .btn-primary { background: #fff; color: var(--accent); box-shadow: none; }
+        .today-workout-card #today-workout-exercise-name { color: rgba(10,10,15,0.75) !important; }
+        .today-workout-card .btn-primary { background: #fff; color: var(--on-accent); box-shadow: none; }
         .today-workout-card.rest-day { background: var(--bg-elevated); color: var(--text-primary); }
         .today-workout-card.rest-day .today-workout-label { color: var(--text-secondary); opacity: 1; }
         .today-workout-card.rest-day #today-workout-exercise-name { color: var(--text-secondary) !important; }
@@ -650,7 +649,7 @@
             padding: 20px; 
             text-align: center; 
         }
-        .stat-value { font-size: 1.8rem; font-weight: 900; color: var(--accent); }
+        .stat-value { font-size: 1.8rem; font-weight: 900; color: var(--accent-text); }
         .stat-label { font-size: 0.85rem; color: var(--text-secondary); margin-top: 4px; }
 
         /* ==================== WORKOUT DAY ==================== */
@@ -682,8 +681,8 @@
             font-size: 0.8rem; 
             font-weight: 700; 
         }
-        .status-pending { background: rgba(255,209,102,0.2); color: var(--warning); }
-        .status-done { background: rgba(0,210,106,0.2); color: var(--success); }
+        .status-pending { background: rgba(255,209,102,0.2); color: var(--warning-text); }
+        .status-done { background: rgba(0,210,106,0.2); color: var(--success-text); }
         .status-rest { background: rgba(138,138,154,0.2); color: var(--text-secondary); }
         .workout-exercises { 
             display: flex; 
@@ -710,10 +709,10 @@
             font-size: 0.8rem; 
             flex-shrink: 0; 
         }
-        .workout-exercise-check.done { 
-            background: var(--success); 
-            border-color: var(--success); 
-            color: white; 
+        .workout-exercise-check.done {
+            background: var(--success);
+            border-color: var(--success);
+            color: var(--on-accent);
         }
         .workout-exercise:hover { border-color: var(--accent); }
 
@@ -794,10 +793,10 @@
             font-weight: 500; 
         }
         .day-chip:hover { border-color: var(--accent); }
-        .day-chip.selected { 
-            background: var(--accent); 
-            border-color: var(--accent); 
-            color: white; 
+        .day-chip.selected {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: var(--on-accent);
         }
         .day-chip.rest { 
             border-color: var(--text-secondary); 
@@ -830,16 +829,16 @@
             border-right: 3px solid var(--accent); 
         }
         .history-date { text-align: center; min-width: 60px; }
-        .history-date .day { font-size: 1.5rem; font-weight: 900; color: var(--accent); }
+        .history-date .day { font-size: 1.5rem; font-weight: 900; color: var(--accent-text); }
         .history-date .month { font-size: 0.75rem; color: var(--text-secondary); }
         .history-details { flex: 1; }
         .history-title { font-weight: 700; margin-bottom: 4px; }
         .history-meta { font-size: 0.85rem; color: var(--text-secondary); }
-        .history-score { font-size: 1.5rem; font-weight: 900; color: var(--success); }
+        .history-score { font-size: 1.5rem; font-weight: 900; color: var(--success-text); }
 
         /* ==================== ACHIEVEMENTS ==================== */
         .achievements-progress-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; }
-        .achievements-progress-count { font-size: 1.7rem; font-weight: 900; color: var(--accent); }
+        .achievements-progress-count { font-size: 1.7rem; font-weight: 900; color: var(--accent-text); }
         .achievements-progress-count span { color: var(--text-secondary); font-weight: 700; font-size: 1.1rem; }
         .achievements-progress-label { font-size: 0.85rem; color: var(--text-secondary); }
         .achievements-progress-track { height: 10px; border-radius: 6px; background: var(--bg-elevated); overflow: hidden; }
@@ -927,34 +926,30 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            color: var(--accent);
+            color: var(--accent-text);
             box-shadow: 0 0 0 4px var(--bg-dark);
         }
         .journey-marker .icon-svg { width: 16px; height: 16px; }
-        .journey-marker.marker-achievement { border-color: var(--warning); color: var(--warning); }
-        .journey-marker.marker-streak { border-color: var(--danger); color: var(--danger); }
+        .journey-marker.marker-achievement { border-color: var(--warning); color: var(--warning-text); }
+        .journey-marker.marker-streak { border-color: var(--danger); color: var(--danger-text); }
         .journey-marker.marker-level { border-color: #ffd700; color: #ffd700; }
-        .journey-marker.marker-start { border-color: var(--info); color: var(--info); }
+        .journey-marker.marker-start { border-color: var(--info); color: var(--info-text); }
         .journey-date { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 4px; }
         .journey-title { font-weight: 700; margin-bottom: 4px; }
         .journey-desc { font-size: 0.9rem; color: var(--text-secondary); }
-        /* Shared "nothing here yet" visual language — first used for the Journey
-           timeline, now reused anywhere a list/history is empty (nutrition log,
-           progress photos, body metrics, race history, ...) so every first-time
-           state in the app reads as intentional rather than as a blank/broken box. */
-        .journey-empty-state, .empty-state-block { text-align: center; padding: 36px 20px; }
-        .journey-empty-icon, .empty-state-icon {
+        .journey-empty-state { text-align: center; padding: 36px 20px; }
+        .journey-empty-icon {
             width: 84px; height: 84px; border-radius: 24px;
             background: var(--bg-elevated); border: 1px solid var(--border);
             display: flex; align-items: center; justify-content: center;
-            margin: 0 auto 18px; color: var(--accent);
+            margin: 0 auto 18px; color: var(--accent-text);
         }
-        .journey-empty-icon .icon-svg, .empty-state-icon .icon-svg { width: 34px; height: 34px; }
-        .journey-empty-title, .empty-state-title { font-weight: 700; font-size: 1.15rem; margin-bottom: 8px; }
-        .journey-empty-desc, .empty-state-desc { color: var(--text-secondary); font-size: 0.9rem; line-height: 1.6; max-width: 320px; margin: 0 auto; }
+        .journey-empty-icon .icon-svg { width: 34px; height: 34px; }
+        .journey-empty-title { font-weight: 700; font-size: 1.15rem; margin-bottom: 8px; }
+        .journey-empty-desc { color: var(--text-secondary); font-size: 0.9rem; line-height: 1.6; max-width: 320px; margin: 0 auto; }
 
         /* ==================== RECOVERY / STRETCHING ==================== */
-        .recovery-tab-active { border-color: var(--accent) !important; color: var(--accent) !important; background: var(--accent-glow) !important; }
+        .recovery-tab-active { border-color: var(--accent) !important; color: var(--accent-text) !important; background: var(--accent-glow) !important; }
         .recovery-item {
             display: flex;
             align-items: center;
@@ -970,13 +965,13 @@
             width: 42px; height: 42px; border-radius: 12px;
             background: var(--bg-card); border: 1px solid var(--border);
             display: flex; align-items: center; justify-content: center;
-            color: var(--accent);
+            color: var(--accent-text);
         }
         .recovery-item-icon .icon-svg { width: 21px; height: 21px; }
         .recovery-item-name { font-weight: 700; font-size: 0.92rem; flex: 1; }
         .recovery-item-time {
             flex-shrink: 0;
-            font-size: 0.8rem; font-weight: 800; color: var(--accent);
+            font-size: 0.8rem; font-weight: 800; color: var(--accent-text);
             background: var(--accent-glow);
             border-radius: 20px;
             padding: 5px 12px;
@@ -1008,13 +1003,13 @@
             width: 60px; 
             height: 60px; 
             border-radius: 50%; 
-            background: rgba(255,107,53,0.9); 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            font-size: 1.5rem; 
-            color: white; 
-            position: absolute; 
+            background: rgba(255,107,53,0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: var(--on-accent);
+            position: absolute;
         }
         .video-info { padding: 16px; }
         .video-title { font-weight: 700; margin-bottom: 4px; }
@@ -1062,7 +1057,7 @@
             padding: 4px 12px; 
             flex: 1;
         }
-        .nav-item.active { color: var(--accent); }
+        .nav-item.active { color: var(--accent-text); }
         .nav-item span { font-size: 1.3rem; }
         .nav-item .icon-svg, .more-icon .icon-svg { width: 22px; height: 22px; stroke: currentColor; }
         .more-icon { display: flex; align-items: center; justify-content: center; color: var(--text-primary); }
@@ -1072,7 +1067,7 @@
         .more-row { display: flex; align-items: center; gap: 14px; padding: 13px 6px; cursor: pointer; border-radius: 10px; }
         .more-row:hover, .more-row:active { background: var(--bg-elevated); }
         .more-group .more-row + .more-row { border-top: 1px solid var(--border); border-radius: 0; }
-        .more-row .more-icon { width: 22px; height: 22px; flex-shrink: 0; color: var(--accent); }
+        .more-row .more-icon { width: 22px; height: 22px; flex-shrink: 0; color: var(--accent-text); }
         .more-row .more-icon .icon-svg { width: 20px; height: 20px; }
         .more-row-label { font-size: 0.92rem; flex: 1; }
         .more-row-value { font-size: 0.85rem; color: var(--text-secondary); }
@@ -1080,7 +1075,7 @@
             width: 46px; height: 46px; border-radius: 14px;
             background: var(--bg-elevated); border: 1px solid var(--border);
             display: flex; align-items: center; justify-content: center;
-            margin: 0 auto 12px; color: var(--accent);
+            margin: 0 auto 12px; color: var(--accent-text);
         }
         .header-icon .icon-svg { width: 24px; height: 24px; stroke: var(--accent); }
         .icon-svg { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
@@ -1113,11 +1108,11 @@
             align-items: center;
             justify-content: center;
         }
-        .lang-btn:hover { border-color: var(--accent); color: var(--accent); }
-        .lang-btn.active { 
-            background: var(--accent); 
-            border-color: var(--accent); 
-            color: white; 
+        .lang-btn:hover { border-color: var(--accent); color: var(--accent-text); }
+        .lang-btn.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: var(--on-accent);
         }
 
         /* ==================== THEME TOGGLE ==================== */
@@ -1153,13 +1148,7 @@
             bottom: calc(var(--nav-height) + 20px);
             left: 50%;
             transform: translateX(-50%);
-            /* Translucent material rather than a flat opaque box — this is
-               transient chrome floating over content, so it should read as
-               glass, not a solid panel. Falls back to a near-solid background
-               (below) when the OS disables transparency. */
-            background: color-mix(in srgb, var(--bg-elevated) 78%, transparent);
-            -webkit-backdrop-filter: blur(20px) saturate(180%);
-            backdrop-filter: blur(20px) saturate(180%);
+            background: var(--bg-elevated);
             border: 1px solid var(--accent);
             color: var(--text-primary);
             padding: 16px 24px;
@@ -1172,13 +1161,6 @@
             max-width: calc(100vw - 32px);
             width: max-content;
             text-align: center;
-            pointer-events: none; /* purely informational — must never block taps on the CTA underneath it */
-        }
-        @media (prefers-reduced-transparency: reduce) {
-            .toast { background: var(--bg-elevated); backdrop-filter: none; -webkit-backdrop-filter: none; }
-        }
-        @media (prefers-contrast: more) {
-            .toast { background: var(--bg-elevated); backdrop-filter: none; -webkit-backdrop-filter: none; border-width: 2px; }
         }
 
         /* ==================== LOADING OVERLAY ==================== */
@@ -1204,7 +1186,7 @@
             width: 60px;
             height: 60px;
             border: 4px solid var(--border);
-            border-top-color: var(--accent);
+            border-top-color: var(--accent-text);
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
@@ -1242,7 +1224,7 @@
         .xp-level {
             font-size: 1.3rem;
             font-weight: 900;
-            color: var(--accent);
+            color: var(--accent-text);
         }
         .xp-text {
             font-size: 0.85rem;
@@ -1287,7 +1269,7 @@
             border-radius: 50px;
             padding: 6px 14px;
             font-size: 0.8rem;
-            color: var(--accent);
+            color: var(--accent-text);
             font-weight: 700;
         }
 
@@ -1315,12 +1297,6 @@
             color: var(--text-secondary);
             font-size: 0.85rem;
             padding: 40px 12px;
-        }
-        .food-search-error, .network-error-msg {
-            display: flex; flex-direction: column; align-items: center; gap: 10px;
-            text-align: center; color: var(--text-secondary); font-size: 0.85rem;
-            padding: 14px 12px; background: var(--bg-elevated); border: 1px solid var(--border);
-            border-radius: 12px; margin-bottom: 6px;
         }
 
         /* ==================== BODY METRICS ==================== */
@@ -1384,7 +1360,7 @@
         .nutrition-total-value {
             font-size: 1.4rem;
             font-weight: 900;
-            color: var(--accent);
+            color: var(--accent-text);
         }
         .nutrition-total-label {
             font-size: 0.75rem;
@@ -1433,7 +1409,7 @@
         .challenge-timer {
             font-size: 2rem;
             font-weight: 900;
-            color: var(--accent);
+            color: var(--accent-text);
             text-align: center;
             margin: 16px 0;
             font-family: monospace;
@@ -1443,13 +1419,13 @@
         .race-timer {
             font-size: 3rem;
             font-weight: 900;
-            color: var(--accent);
+            color: var(--accent-text);
             text-align: center;
             font-family: monospace;
             margin: 20px 0;
         }
         .race-timer.running {
-            color: var(--success);
+            color: var(--success-text);
             animation: pulse 0.5s infinite;
         }
         .race-controls {
@@ -1467,7 +1443,7 @@
         .race-time-display {
             font-size: 2.5rem;
             font-weight: 900;
-            color: var(--success);
+            color: var(--success-text);
         }
 
         /* ==================== NOTIFICATIONS ==================== */
@@ -1543,9 +1519,11 @@
         }
     </style>
     <script src="vendor/chart.umd.min.js"></script>
-    <!-- On-device pose detection (TensorFlow.js + MoveNet) used for real exercise-performance analysis -->
-    <script src="vendor/tf.min.js"></script>
-    <script src="vendor/pose-detection.min.js"></script>
+    <!-- On-device pose detection (TensorFlow.js + MoveNet) used for real exercise-performance
+         analysis. These are large (TF.js + MoveNet together are well over half a megabyte)
+         and only needed once the user actually opens the camera/AI form-check screen, so they
+         are NOT loaded here — see loadPoseVendorScripts()/ensurePoseDetector() below, which
+         inject them on demand the first time that screen is reached. -->
     <!-- Firebase Authentication (phone/email verification only — no cloud data
          sync, all workout data stays on-device as before). Requires a real
          firebaseConfig below before sign-in will work; see FIREBASE_SETUP.md. -->
@@ -1587,7 +1565,7 @@
         <!-- WELCOME -->
         <div class="screen active" id="screen-welcome">
             <header class="app-header">
-                <div style="width:90px;height:90px;border-radius:20px;background:var(--bg-elevated);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;color:var(--accent);"><svg class="icon-svg" style="width:37.400000000000006px;height:37.400000000000006px;" viewBox="0 0 24 24" aria-hidden="true"><rect x="1.5" y="9" width="4" height="6" rx="1"/><rect x="18.5" y="9" width="4" height="6" rx="1"/><rect x="4.5" y="7" width="2" height="10" rx="0.5"/><rect x="17.5" y="7" width="2" height="10" rx="0.5"/><path d="M7 12h10"/></svg></div>
+                <div style="width:90px;height:90px;border-radius:20px;background:var(--bg-elevated);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;color:var(--accent-text);"><svg class="icon-svg" style="width:37.400000000000006px;height:37.400000000000006px;" viewBox="0 0 24 24" aria-hidden="true"><rect x="1.5" y="9" width="4" height="6" rx="1"/><rect x="18.5" y="9" width="4" height="6" rx="1"/><rect x="4.5" y="7" width="2" height="10" rx="0.5"/><rect x="17.5" y="7" width="2" height="10" rx="0.5"/><path d="M7 12h10"/></svg></div>
                 <h1 class="logo" data-i18n="app_title">Massa Calisthenics</h1>
                 <p class="tagline" data-i18n="tagline">הדרך שלך — המשחק שלך</p>
             </header>
@@ -1610,15 +1588,15 @@
                 <h3 style="margin-bottom: 16px; font-size: 1.1rem;" data-i18n="whats_special">מה מיוחד כאן?</h3>
                 <div style="display: flex; flex-direction: column; gap: 12px;">
                     <div style="display: flex; align-items: center; gap: 12px;">
-                        <span style="color:var(--accent);display:inline-flex;"><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M10 8.5v7l6-3.5z"/></svg></span>
+                        <span style="color:var(--accent-text);display:inline-flex;"><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M10 8.5v7l6-3.5z"/></svg></span>
                         <div><div style="font-weight: 700;" data-i18n="feature_record">צלם וקבל ציון</div><div style="font-size: 0.85rem; color: var(--text-secondary);" data-i18n="feature_record_desc">AI מנתח את הטכניקה שלך בזמן אמת</div></div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 12px;">
-                        <span style="color:var(--accent);display:inline-flex;"><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="2"/><path d="M3 9.5h18"/><path d="M8 2.5v4M16 2.5v4"/></svg></span>
+                        <span style="color:var(--accent-text);display:inline-flex;"><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="2"/><path d="M3 9.5h18"/><path d="M8 2.5v4M16 2.5v4"/></svg></span>
                         <div><div style="font-weight: 700;" data-i18n="feature_plan">תוכנית אישית</div><div style="font-size: 0.85rem; color: var(--text-secondary);" data-i18n="feature_plan_desc">מותאמת לרמה שלך, מתעדכנת כל שבוע</div></div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 12px;">
-                        <span style="color:var(--accent);display:inline-flex;"><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="5.5"/><path d="M9 13 7 21l5-2.5L17 21l-2-8"/></svg></span>
+                        <span style="color:var(--accent-text);display:inline-flex;"><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="5.5"/><path d="M9 13 7 21l5-2.5L17 21l-2-8"/></svg></span>
                         <div><div style="font-weight: 700;" data-i18n="feature_game">משחק התקדמות</div><div style="font-size: 0.85rem; color: var(--text-secondary);" data-i18n="feature_game_desc">שלבים, הישגים, ולוחות תוצאות</div></div>
                     </div>
                 </div>
@@ -1644,7 +1622,7 @@
                 <div id="login-recaptcha-container"></div>
                 <button class="btn btn-primary" id="login-send-code-btn" onclick="sendLoginCode()" data-i18n="send_code">שלח קוד אימות</button>
                 <button class="btn btn-secondary" onclick="showScreen('screen-welcome')" style="margin-top: 8px;" data-i18n="back">חזרה</button>
-                <p id="login-error" style="color: var(--danger); font-size: 0.85rem; margin-top: 12px; display:none;"></p>
+                <p id="login-error" style="color: var(--danger-text); font-size: 0.85rem; margin-top: 12px; display:none;"></p>
             </div>
         </div>
 
@@ -1659,7 +1637,7 @@
                 <button class="btn btn-primary" onclick="verifyLoginCode()" data-i18n="verify_btn">אמת קוד</button>
                 <button class="btn btn-secondary" style="margin-top: 8px;" onclick="sendLoginCode()" data-i18n="resend_code">שלח קוד שוב</button>
                 <button class="btn btn-secondary" style="margin-top: 8px;" onclick="showScreen('screen-login')" data-i18n="back">חזרה</button>
-                <p id="verify-code-error" style="color: var(--danger); font-size: 0.85rem; margin-top: 12px; display:none;"></p>
+                <p id="verify-code-error" style="color: var(--danger-text); font-size: 0.85rem; margin-top: 12px; display:none;"></p>
             </div>
         </div>
 
@@ -1670,7 +1648,6 @@
                 <p class="tagline" data-i18n="onboarding_subtitle">פרטים בסיסיים לפני הקוויז</p>
             </div>
             <div class="card">
-                <div class="more-group-title" style="margin-top:0;" data-i18n="onb_section_about">עליך</div>
                 <div class="form-group"><label data-i18n="full_name">שם מלא *</label><input type="text" id="onb-name" placeholder="השם שלך" data-i18n-placeholder="name_placeholder"></div>
                 <div class="form-group"><label data-i18n="age">גיל *</label><input type="number" id="onb-age" placeholder="25" min="10" max="100"></div>
                 <div class="form-group"><label data-i18n="gender">מין</label>
@@ -1681,8 +1658,6 @@
                         <option value="other" data-i18n="other">אחר</option>
                     </select>
                 </div>
-
-                <div class="more-group-title" style="border-top:1px solid var(--border); padding-top:16px;" data-i18n="onb_section_body">הגוף שלך</div>
                 <div class="metric-input-group">
                     <div class="metric-card">
                         <div class="metric-label-small" data-i18n="weight_kg">משקל (ק"ג) *</div>
@@ -1693,8 +1668,6 @@
                         <input type="number" class="metric-value-input" id="onb-height" placeholder="175" step="0.5" min="100" max="230">
                     </div>
                 </div>
-
-                <div class="more-group-title" style="border-top:1px solid var(--border); padding-top:16px;" data-i18n="onb_section_training">האימונים שלך</div>
                 <div class="form-group"><label data-i18n="activity_level">רמת פעילות יומית</label>
                     <select id="onb-activity">
                         <option value="sedentary" data-i18n="activity_sedentary">יושבני (עבודת משרד, ללא ספורט)</option>
@@ -1714,10 +1687,9 @@
                         <option value="health" data-i18n="goal_health">בריאות כללית</option>
                     </select>
                 </div>
-
-                <label style="display:flex; align-items:flex-start; gap:8px; margin:14px 0; font-size:0.82rem; color: var(--text-secondary); line-height:1.5; border-top:1px solid var(--border); padding-top:16px;">
+                <label style="display:flex; align-items:flex-start; gap:8px; margin:14px 0; font-size:0.82rem; color: var(--text-secondary); line-height:1.5;">
                     <input type="checkbox" id="onb-consent" style="margin-top:3px; flex-shrink:0;">
-                    <span data-i18n="consent_text">קראתי ואני מסכים/ה ל<a href="#" onclick="event.preventDefault(); showLegal();" style="color:var(--accent);">תנאי השימוש ומדיניות הפרטיות</a></span>
+                    <span data-i18n="consent_text">קראתי ואני מסכים/ה ל<a href="#" onclick="event.preventDefault(); showLegal();" style="color:var(--accent-text);">תנאי השימוש ומדיניות הפרטיות</a></span>
                 </label>
                 <button class="btn btn-primary" onclick="saveProfileAndStartQuiz()" data-i18n="continue_quiz">המשך לקוויז</button>
             </div>
@@ -1737,7 +1709,7 @@
         <!-- RESULTS -->
         <div class="screen" id="screen-results">
             <div class="card" style="text-align: center; padding: 40px 24px;">
-                <div style="width:76px;height:76px;border-radius:20px;background:var(--bg-elevated);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;color:var(--accent);"><svg class="icon-svg" style="width:29.700000000000003px;height:29.700000000000003px;" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/></svg></div>
+                <div style="width:76px;height:76px;border-radius:20px;background:var(--bg-elevated);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;color:var(--accent-text);"><svg class="icon-svg" style="width:29.700000000000003px;height:29.700000000000003px;" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/></svg></div>
                 <h2 style="font-size: 1.4rem; margin-bottom: 8px;" data-i18n="level_set">הרמה שלך נקבעה!</h2>
                 <div id="result-level" class="level-badge" style="margin: 16px 0; font-size: 1.2rem; padding: 12px 24px;"></div>
                 <p id="result-desc" style="color: var(--text-secondary); line-height: 1.6; margin-bottom: 24px;"></p>
@@ -1781,7 +1753,7 @@
         <!-- DASHBOARD -->
         <div class="screen" id="screen-dashboard">
             <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px;">
-                <div style="width: 50px; height: 50px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), #ff8c5a); display: flex; align-items: center; justify-content: center; color:#fff;"><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4.5 21c0-4.2 3.5-7 7.5-7s7.5 2.8 7.5 7"/></svg></div>
+                <div style="width: 50px; height: 50px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), #ff8c5a); display: flex; align-items: center; justify-content: center; color:var(--on-accent);"><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4.5 21c0-4.2 3.5-7 7.5-7s7.5 2.8 7.5 7"/></svg></div>
                 <div>
                     <div style="font-weight: 700;" id="dash-name">שלום!</div>
                     <div id="user-level-display" class="level-badge" style="margin-top: 4px;"></div>
@@ -1798,7 +1770,7 @@
             </div>
             <div class="card" id="smart-suggestion-card" style="display:none; border-color: var(--info);">
                 <div style="display:flex; align-items:flex-start; gap:12px;">
-                    <div style="color: var(--info); flex-shrink:0; margin-top:2px;"><svg class="icon-svg" viewBox="0 0 24 24" style="width:22px;height:22px;" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg></div>
+                    <div style="color: var(--info-text); flex-shrink:0; margin-top:2px;"><svg class="icon-svg" viewBox="0 0 24 24" style="width:22px;height:22px;" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg></div>
                     <div>
                         <div style="font-weight:700; margin-bottom:4px;" data-i18n="smart_suggestion_title">המלצה חכמה</div>
                         <div id="smart-suggestion-text" style="color: var(--text-secondary); font-size:0.9rem;"></div>
@@ -1808,15 +1780,15 @@
             </div>
             <div class="card" style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
                 <div style="display:flex; align-items:center; gap:10px;">
-                    <div style="color: var(--warning);"><svg class="icon-svg" viewBox="0 0 24 24" style="width:22px;height:22px;" aria-hidden="true"><path d="M12 2.5 19.5 6v6c0 5-3.2 8.5-7.5 9.5-4.3-1-7.5-4.5-7.5-9.5V6z"/><path d="M12 9.5v5M9.5 12h5"/></svg></div>
+                    <div style="color: var(--warning-text);"><svg class="icon-svg" viewBox="0 0 24 24" style="width:22px;height:22px;" aria-hidden="true"><path d="M12 2.5 19.5 6v6c0 5-3.2 8.5-7.5 9.5-4.3-1-7.5-4.5-7.5-9.5V6z"/><path d="M12 9.5v5M9.5 12h5"/></svg></div>
                     <div>
                         <div style="font-weight:700; font-size:0.9rem;" data-i18n="injury_mode_title">מצב פציעה</div>
                         <div style="font-size:0.78rem; color: var(--text-secondary);" data-i18n="injury_mode_desc">אימון קל יותר להיום</div>
                     </div>
                 </div>
-                <div class="toggle-switch" id="injury-toggle" onclick="toggleInjuryMode()"></div>
+                <div class="toggle-switch" id="injury-toggle" role="switch" tabindex="0" aria-checked="false" data-i18n-aria="injury_mode_title" aria-label="מצב פציעה" onclick="toggleInjuryMode()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleInjuryMode();}"></div>
             </div>
-            <div class="card program-card" id="program-cta-card" style="display:none; cursor:pointer;" onclick="showPrograms()">
+            <div class="card program-card" id="program-cta-card" style="display:none; cursor:pointer;" role="button" tabindex="0" onclick="showPrograms()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showPrograms();}">
                 <div class="program-card-icon" id="program-cta-icon"></div>
                 <div class="program-card-body">
                     <div class="program-card-name" data-i18n="continue_active_program">המשך את התוכנית שלך</div>
@@ -1825,7 +1797,7 @@
                 </div>
             </div>
             <div class="stats-grid" style="margin-bottom: 20px;">
-                <div class="stat-box"><div class="stat-value" id="dash-streak">0</div><div class="stat-label" data-i18n="streak_days">ימי רצף</div><div id="dash-streak-freeze" style="font-size:0.68rem; color: var(--info); margin-top:2px;"></div></div>
+                <div class="stat-box"><div class="stat-value" id="dash-streak">0</div><div class="stat-label" data-i18n="streak_days">ימי רצף</div><div id="dash-streak-freeze" style="font-size:0.68rem; color: var(--info-text); margin-top:2px;"></div></div>
                 <div class="stat-box"><div class="stat-value" id="dash-workouts">0</div><div class="stat-label" data-i18n="workouts">אימונים</div></div>
                 <div class="stat-box"><div class="stat-value" id="dash-score">0</div><div class="stat-label" data-i18n="avg_score">ציון ממוצע</div></div>
                 <div class="stat-box"><div class="stat-value" id="dash-next">1</div><div class="stat-label" data-i18n="next_workout">אימון הבא</div></div>
@@ -1906,7 +1878,7 @@
 
             <div class="more-group-title" data-i18n="section_preferences">העדפות</div>
             <div class="more-group">
-                <div class="more-row" onclick="toggleTheme(); updateSettingsScreen();">
+                <div class="more-row" role="button" tabindex="0" onclick="toggleTheme(); updateSettingsScreen();" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleTheme(); updateSettingsScreen();}">
                     <div class="more-icon"><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></div>
                     <div class="more-row-label" data-i18n="theme_label">מראה</div>
                     <div class="more-row-value" id="settings-theme-value">Dark</div>
@@ -1915,11 +1887,11 @@
 
             <div class="more-group-title" data-i18n="section_workout">אימונים</div>
             <div class="more-group">
-                <div class="more-row" onclick="showScheduleEditor()">
+                <div class="more-row" role="button" tabindex="0" onclick="showScheduleEditor()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showScheduleEditor()}">
                     <div class="more-icon"><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="2"/><path d="M3 9.5h18"/><path d="M8 2.5v4M16 2.5v4"/></svg></div>
                     <div class="more-row-label" data-i18n="nav_schedule">לוח אימונים</div>
                 </div>
-                <div class="more-row" onclick="showNotifications()">
+                <div class="more-row" role="button" tabindex="0" onclick="showNotifications()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showNotifications()}">
                     <div class="more-icon"><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8.5a6 6 0 0 0-12 0c0 7-3 8-3 8h18s-3-1-3-8z"/><path d="M10 19.5a2 2 0 0 0 4 0"/></svg></div>
                     <div class="more-row-label" data-i18n="nav_notif">התראות</div>
                 </div>
@@ -1927,16 +1899,16 @@
 
             <div class="more-group-title" data-i18n="section_data">נתונים ופרטיות</div>
             <div class="more-group">
-                <div class="more-row" onclick="showHealth()">
+                <div class="more-row" role="button" tabindex="0" onclick="showHealth()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showHealth()}">
                     <div class="more-icon"><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5 19.5 6v6c0 5-3.2 8.5-7.5 9.5-4.3-1-7.5-4.5-7.5-9.5V6z"/><path d="M12 9.5v5M9.5 12h5"/></svg></div>
                     <div class="more-row-label" data-i18n="section_data_backup">גיבוי ויצוא נתונים</div>
                     <div class="more-row-value" id="settings-backup-status"></div>
                 </div>
-                <div class="more-row" onclick="showOffline()">
+                <div class="more-row" role="button" tabindex="0" onclick="showOffline()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showOffline()}">
                     <div class="more-icon"><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><path d="M17 18a4 4 0 0 0 0-8 5 5 0 0 0-9.6-1.5A4 4 0 0 0 6 18h6"/><path d="M3 3l18 18"/></svg></div>
                     <div class="more-row-label" data-i18n="nav_offline">Offline</div>
                 </div>
-                <div class="more-row" onclick="showLegal()">
+                <div class="more-row" role="button" tabindex="0" onclick="showLegal()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showLegal()}">
                     <div class="more-icon"><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13"/><circle cx="3.5" cy="6" r="1.2" fill="currentColor" stroke="none"/><circle cx="3.5" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="3.5" cy="18" r="1.2" fill="currentColor" stroke="none"/></svg></div>
                     <div class="more-row-label" data-i18n="legal_link">מדיניות פרטיות ותנאי שימוש</div>
                 </div>
@@ -2034,7 +2006,7 @@
         </div>
 
         <!-- PROGRAM DETAIL / PROGRESS -->
-        <div class="screen screen-modal" id="screen-program-detail">
+        <div class="screen" id="screen-program-detail">
             <button class="btn btn-secondary btn-sm" style="margin-bottom: 16px;" onclick="showPrograms()" data-i18n="back">חזרה</button>
             <div class="card">
                 <div style="display:flex; align-items:center; gap:12px; margin-bottom:6px;">
@@ -2066,21 +2038,16 @@
                         <div style="color: var(--text-secondary); margin-bottom:8px;"><svg class="icon-svg" viewBox="0 0 24 24" style="width:36px;height:36px;" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M10 8.5v7l6-3.5z"/></svg></div>
                         <div style="font-size:0.9rem; color: var(--text-secondary);" data-i18n="video_not_available">סרטון עדיין לא זמין לתרגיל הזה — עקוב/י אחרי ההנחיות הכתובות למטה</div>
                     </div>
-                    <div id="video-network-error" style="display:none; text-align:center; padding:20px;">
-                        <div style="color: var(--text-secondary); margin-bottom:8px;"><svg class="icon-svg" viewBox="0 0 24 24" style="width:36px;height:36px;" aria-hidden="true"><path d="M2 8.5a15 15 0 0 1 20 0"/><path d="M5.5 12.5a10 10 0 0 1 13 0"/><path d="M9 16.5a5 5 0 0 1 6 0"/><line x1="3" y1="3" x2="21" y2="21"/></svg></div>
-                        <div style="font-size:0.9rem; color: var(--text-secondary); margin-bottom:12px;" data-i18n="video_network_error">הסרטון דורש חיבור לאינטרנט וזה לא הצליח להיטען — בדוק/י את החיבור ונסה/י שוב. ההנחיות הכתובות למטה עובדות גם בלי אינטרנט.</div>
-                        <button type="button" class="btn btn-secondary btn-sm" onclick="retryVideoLoad()" data-i18n="retry_search">נסה שוב</button>
-                    </div>
                 </div>
                 <div style="padding: 20px;">
                     <h2 id="video-player-title" style="margin-bottom: 8px;"></h2>
                     <p id="video-player-desc" style="color: var(--text-secondary); margin-bottom: 16px;"></p>
                     <div style="background: var(--bg-elevated); border-radius: 12px; padding: 16px; margin-bottom: 16px;">
-                        <div style="font-weight: 700; margin-bottom: 8px;"><span style="display:inline-flex;vertical-align:-3px;margin-inline-end:6px;color:var(--accent);"><svg class="icon-svg" style="width:17px;height:17px;" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/></svg></span><span data-i18n="goal">מטרה</span></div>
+                        <div style="font-weight: 700; margin-bottom: 8px;"><span style="display:inline-flex;vertical-align:-3px;margin-inline-end:6px;color:var(--accent-text);"><svg class="icon-svg" style="width:17px;height:17px;" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/></svg></span><span data-i18n="goal">מטרה</span></div>
                         <div id="video-player-goal" style="color: var(--text-secondary);"></div>
                     </div>
                     <div style="background: var(--bg-elevated); border-radius: 12px; padding: 16px;">
-                        <div style="font-weight: 700; margin-bottom: 8px;"><span style="display:inline-flex;vertical-align:-3px;margin-inline-end:6px;color:var(--warning);"><svg class="icon-svg" style="width:17px;height:17px;" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/></svg></span><span data-i18n="tips">טיפים</span></div>
+                        <div style="font-weight: 700; margin-bottom: 8px;"><span style="display:inline-flex;vertical-align:-3px;margin-inline-end:6px;color:var(--warning-text);"><svg class="icon-svg" style="width:17px;height:17px;" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/></svg></span><span data-i18n="tips">טיפים</span></div>
                         <div id="video-player-tips" style="color: var(--text-secondary);"></div>
                     </div>
                     <button class="btn btn-primary" style="margin-top: 16px;" onclick="goToExerciseFromVideo()" data-i18n="start_this_exercise">התחל תרגיל זה</button>
@@ -2120,11 +2087,11 @@
                 <div class="exercise-info-sheet-handle"></div>
                 <p id="ex-desc" class="exercise-info-desc"></p>
                 <div class="exercise-info-block">
-                    <div class="exercise-info-block-title"><span style="display:inline-flex;vertical-align:-3px;color:var(--accent);"><svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/></svg></span><span data-i18n="goal">מטרה</span></div>
+                    <div class="exercise-info-block-title"><span style="display:inline-flex;vertical-align:-3px;color:var(--accent-text);"><svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/></svg></span><span data-i18n="goal">מטרה</span></div>
                     <div id="ex-goal"></div>
                 </div>
                 <div class="exercise-info-block">
-                    <div class="exercise-info-block-title"><span style="display:inline-flex;vertical-align:-3px;color:var(--warning);"><svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/></svg></span><span data-i18n="tips">טיפים</span></div>
+                    <div class="exercise-info-block-title"><span style="display:inline-flex;vertical-align:-3px;color:var(--warning-text);"><svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/></svg></span><span data-i18n="tips">טיפים</span></div>
                     <div id="ex-tips"></div>
                 </div>
                 <button class="btn btn-secondary btn-sm" style="width:100%; margin-top: 16px;" onclick="toggleExerciseInfo(false)" data-i18n="close">סגור</button>
@@ -2168,7 +2135,7 @@
         </div>
 
         <!-- PREMIUM PAYWALL -->
-        <div class="screen screen-modal" id="screen-paywall">
+        <div class="screen" id="screen-paywall">
             <div class="paywall-close-row">
                 <button class="paywall-close-btn" onclick="dismissPaywall()" aria-label="Close">
                     <svg class="icon-svg" style="width:18px;height:18px;" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
@@ -2218,21 +2185,21 @@
 
             <!-- CHART: Workouts Over Time -->
             <div class="chart-container">
-                <div class="chart-title"><span style="display:inline-flex;vertical-align:-3px;margin-inline-end:6px;color:var(--accent);"><svg class="icon-svg" style="width:17px;height:17px;" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M4 20h16"/></svg></span><span data-i18n="chart_workouts">אימונים לאורך זמן</span></div>
+                <div class="chart-title"><span style="display:inline-flex;vertical-align:-3px;margin-inline-end:6px;color:var(--accent-text);"><svg class="icon-svg" style="width:17px;height:17px;" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M4 20h16"/></svg></span><span data-i18n="chart_workouts">אימונים לאורך זמן</span></div>
                 <canvas id="chart-workouts" class="chart-canvas"></canvas>
                 <div id="chart-workouts-empty" class="chart-empty-msg" style="display:none;" data-i18n="chart_no_data">אין עדיין נתונים — סיימו אימון כדי לראות כאן התקדמות</div>
             </div>
 
             <!-- CHART: Scores Over Time -->
             <div class="chart-container">
-                <div class="chart-title"><span style="display:inline-flex;vertical-align:-3px;margin-inline-end:6px;color:var(--accent);"><svg class="icon-svg" style="width:17px;height:17px;" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/></svg></span><span data-i18n="chart_scores">ציונים לאורך זמן</span></div>
+                <div class="chart-title"><span style="display:inline-flex;vertical-align:-3px;margin-inline-end:6px;color:var(--accent-text);"><svg class="icon-svg" style="width:17px;height:17px;" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/></svg></span><span data-i18n="chart_scores">ציונים לאורך זמן</span></div>
                 <canvas id="chart-scores" class="chart-canvas"></canvas>
                 <div id="chart-scores-empty" class="chart-empty-msg" style="display:none;" data-i18n="chart_no_data">אין עדיין נתונים — סיימו אימון כדי לראות כאן התקדמות</div>
             </div>
 
             <!-- CHART: Weekly Breakdown -->
             <div class="chart-container">
-                <div class="chart-title"><span style="display:inline-flex;vertical-align:-3px;margin-inline-end:6px;color:var(--accent);"><svg class="icon-svg" style="width:17px;height:17px;" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="2"/><path d="M3 9.5h18"/><path d="M8 2.5v4M16 2.5v4"/></svg></span><span data-i18n="chart_weekly">פילוח שבועי</span></div>
+                <div class="chart-title"><span style="display:inline-flex;vertical-align:-3px;margin-inline-end:6px;color:var(--accent-text);"><svg class="icon-svg" style="width:17px;height:17px;" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="2"/><path d="M3 9.5h18"/><path d="M8 2.5v4M16 2.5v4"/></svg></span><span data-i18n="chart_weekly">פילוח שבועי</span></div>
                 <canvas id="chart-weekly" class="chart-canvas"></canvas>
                 <div id="chart-weekly-empty" class="chart-empty-msg" style="display:none;" data-i18n="chart_no_data">אין עדיין נתונים — סיימו אימון כדי לראות כאן התקדמות</div>
             </div>
@@ -2277,15 +2244,13 @@
             </div>
 
             <div class="chart-container">
-                <div class="chart-title"><span style="display:inline-flex;vertical-align:-3px;margin-inline-end:6px;color:var(--accent);"><svg class="icon-svg" style="width:17px;height:17px;" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M4 20h16"/></svg></span><span data-i18n="chart_weight">משקל לאורך זמן</span></div>
+                <div class="chart-title"><span style="display:inline-flex;vertical-align:-3px;margin-inline-end:6px;color:var(--accent-text);"><svg class="icon-svg" style="width:17px;height:17px;" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M4 20h16"/></svg></span><span data-i18n="chart_weight">משקל לאורך זמן</span></div>
                 <canvas id="chart-weight" class="chart-canvas"></canvas>
-                <div id="chart-weight-empty" class="chart-empty-msg" style="display:none;" data-i18n="chart_metrics_no_data">אין עדיין נתונים — הוסף/י מדידה כדי לראות כאן התקדמות</div>
             </div>
 
             <div class="chart-container">
-                <div class="chart-title"><span style="display:inline-flex;vertical-align:-3px;margin-inline-end:6px;color:var(--accent);"><svg class="icon-svg" style="width:17px;height:17px;" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M4 20h16"/></svg></span><span data-i18n="chart_bodyfat">אחוז שומן לאורך זמן</span></div>
+                <div class="chart-title"><span style="display:inline-flex;vertical-align:-3px;margin-inline-end:6px;color:var(--accent-text);"><svg class="icon-svg" style="width:17px;height:17px;" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M4 20h16"/></svg></span><span data-i18n="chart_bodyfat">אחוז שומן לאורך זמן</span></div>
                 <canvas id="chart-bodyfat" class="chart-canvas"></canvas>
-                <div id="chart-bodyfat-empty" class="chart-empty-msg" style="display:none;" data-i18n="chart_metrics_no_data">אין עדיין נתונים — הוסף/י מדידה כדי לראות כאן התקדמות</div>
             </div>
 
             <div class="card">
@@ -2308,7 +2273,7 @@
 
             <div class="card" id="adaptive-tdee-card" style="display:none; border-color: var(--info);">
                 <div style="display:flex; align-items:flex-start; gap:12px;">
-                    <div style="color: var(--info); flex-shrink:0; margin-top:2px;"><svg class="icon-svg" viewBox="0 0 24 24" style="width:22px;height:22px;" aria-hidden="true"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M4 20h16"/></svg></div>
+                    <div style="color: var(--info-text); flex-shrink:0; margin-top:2px;"><svg class="icon-svg" viewBox="0 0 24 24" style="width:22px;height:22px;" aria-hidden="true"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M4 20h16"/></svg></div>
                     <div style="flex:1;">
                         <div style="font-weight:700; margin-bottom:4px;" data-i18n="adaptive_tdee_title">התאמת יעד לפי התקדמות בפועל</div>
                         <div id="adaptive-tdee-text" style="color: var(--text-secondary); font-size:0.88rem; margin-bottom:12px;"></div>
@@ -2321,7 +2286,7 @@
             </div>
             <div class="card" id="nutrition-plan-card" style="display:none; text-align:center;">
                 <h3 style="margin-bottom: 4px;" data-i18n="daily_target">היעד היומי שלך</h3>
-                <div style="font-size:2.4rem; font-weight:900; color: var(--accent); margin:10px 0 2px;"><span id="nutrition-remaining">0</span></div>
+                <div style="font-size:2.4rem; font-weight:900; color: var(--accent-text); margin:10px 0 2px;"><span id="nutrition-remaining">0</span></div>
                 <div id="nutrition-remaining-label" style="color: var(--text-secondary); font-size:0.9rem; margin-bottom:16px;"></div>
 
                 <div style="text-align:start;">
@@ -2352,9 +2317,9 @@
                     <span data-i18n="daily_target">היעד היומי שלך</span>: <span id="plan-calories">0</span> <span data-i18n="calories">קלוריות</span>
                 </div>
                 <div id="plan-inputs-used" style="color: var(--text-secondary); font-size: 0.78rem; margin-top: 6px;"></div>
-                <p id="plan-implausible-warning" style="display:none; color: var(--danger); font-size: 0.8rem; margin-top: 8px;" data-i18n="plan_implausible_warning">⚠️ התוצאה נראית לא סבירה. בדוק/בדקי שהמשקל בק"ג והגובה בס"מ (לא באינצ'ים, מטרים או מ"מ), ושהגיל נכון.</p>
+                <p id="plan-implausible-warning" style="display:none; color: var(--danger-text); font-size: 0.8rem; margin-top: 8px;" data-i18n="plan_implausible_warning">⚠️ התוצאה נראית לא סבירה. בדוק/בדקי שהמשקל בק"ג והגובה בס"מ (לא באינצ'ים, מטרים או מ"מ), ושהגיל נכון.</p>
                 <p style="color: var(--text-secondary); font-size: 0.8rem; margin-top: 12px;" data-i18n="plan_based_on">מחושב לפי המשקל, הגובה, הגיל ורמת הפעילות שלך</p>
-                <p id="plan-safety-note" style="display:none; color: var(--warning); font-size: 0.8rem; margin-top: 8px;" data-i18n="plan_safety_note">היעד הועלה למינימום בטוח. גירעון קלורי גדול מדי עלול להזיק — כדאי להתייעץ עם דיאטן/ית או רופא/ה.</p>
+                <p id="plan-safety-note" style="display:none; color: var(--warning-text); font-size: 0.8rem; margin-top: 8px;" data-i18n="plan_safety_note">היעד הועלה למינימום בטוח. גירעון קלורי גדול מדי עלול להזיק — כדאי להתייעץ עם דיאטן/ית או רופא/ה.</p>
                 <p style="color: var(--text-secondary); font-size: 0.75rem; margin-top: 8px; opacity: 0.85;" data-i18n="plan_disclaimer">האומדן מבוסס על נוסחה כללית (Mifflin-St Jeor) ואינו ייעוץ רפואי. לתוכנית תזונה אישית פנה/י לדיאטן/ית מוסמך/ת.</p>
             </div>
             <div class="card" id="nutrition-plan-missing" style="display:none; text-align:center;">
@@ -2432,7 +2397,6 @@
             <div class="card">
                 <h3 style="margin-bottom: 12px;" data-i18n="nutrition_trend">מגמת השבוע האחרון</h3>
                 <canvas id="nutrition-trend-chart" height="160"></canvas>
-                <div id="nutrition-trend-empty" class="chart-empty-msg" style="display:none;" data-i18n="chart_nutrition_no_data">אין עדיין נתונים — הוסף/י ארוחה כדי לראות כאן מגמה</div>
             </div>
 
             <div class="nutrition-totals" id="nutrition-totals">
@@ -2552,7 +2516,7 @@
                         <div style="font-weight: 700;" data-i18n="enable_notif">הפעל תזכורות</div>
                         <div style="font-size: 0.85rem; color: var(--text-secondary);" data-i18n="notif_desc">קבל התראה לפני כל אימון</div>
                     </div>
-                    <div class="toggle-switch" id="notif-toggle" onclick="toggleNotifications()"></div>
+                    <div class="toggle-switch" id="notif-toggle" role="switch" tabindex="0" aria-checked="false" data-i18n-aria="enable_notif" aria-label="הפעל תזכורות" onclick="toggleNotifications()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleNotifications();}"></div>
                 </div>
 
                 <div class="form-group" style="margin-top: 16px;">
@@ -2573,7 +2537,7 @@
                         <div style="font-weight: 700;" data-i18n="enable_daily">תזכורת אתגר יומי</div>
                         <div style="font-size: 0.85rem; color: var(--text-secondary);" data-i18n="daily_desc">קבל תזכורת בבוקר על האתגר של היום</div>
                     </div>
-                    <div class="toggle-switch" id="daily-toggle" onclick="toggleDailyReminder()"></div>
+                    <div class="toggle-switch" id="daily-toggle" role="switch" tabindex="0" aria-checked="false" data-i18n-aria="enable_daily" aria-label="תזכורת אתגר יומי" onclick="toggleDailyReminder()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleDailyReminder();}"></div>
                 </div>
             </div>
 
@@ -2584,7 +2548,7 @@
                         <div style="font-weight: 700;" data-i18n="enable_streak">תזכורת לא לשבור רצף</div>
                         <div style="font-size: 0.85rem; color: var(--text-secondary);" data-i18n="streak_desc">קבל תזכורת אם לא התאמנת היום</div>
                     </div>
-                    <div class="toggle-switch" id="streak-toggle" onclick="toggleStreakReminder()"></div>
+                    <div class="toggle-switch" id="streak-toggle" role="switch" tabindex="0" aria-checked="false" data-i18n-aria="enable_streak" aria-label="תזכורת לא לשבור רצף" onclick="toggleStreakReminder()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleStreakReminder();}"></div>
                 </div>
             </div>
         </div>
@@ -2599,7 +2563,7 @@
             <div class="card" style="text-align: center;">
                 <div style="width:82px;height:82px;border-radius:20px;background:var(--bg-elevated);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;color:var(--text-secondary);"><svg class="icon-svg" style="width:33.0px;height:33.0px;" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 18a4 4 0 0 0 0-8 5 5 0 0 0-9.6-1.5A4 4 0 0 0 6 18h6"/><path d="M3 3l18 18"/></svg></div>
                 <h2 style="margin-bottom: 12px;" data-i18n="offline_status">סטטוס חיבור</h2>
-                <div id="connection-status" style="font-size: 1.2rem; font-weight: 700; color: var(--success); margin-bottom: 16px;">מחובר</div>
+                <div id="connection-status" style="font-size: 1.2rem; font-weight: 700; color: var(--success-text); margin-bottom: 16px;">מחובר</div>
                 <p style="color: var(--text-secondary); line-height: 1.6;" data-i18n="offline_desc">
                     האפליקציה שומרת את כל הנתונים במכשיר שלך.<br>
                     גם כשאין אינטרנט — האימונים, ההיסטוריה וההתקדמות נשמרים.<br>
@@ -2629,7 +2593,7 @@
                 <p class="tagline" data-i18n="water_subtitle">שתייה מסודרת לאורך היום</p>
             </div>
             <div class="card" style="text-align:center;">
-                <div style="font-size:2.6rem; font-weight:900; color: var(--info); direction:ltr; unicode-bidi:isolate;"><span id="water-current">0</span><span style="font-size:1.1rem; color: var(--text-secondary);"> / <span id="water-target">0</span> ml</span></div>
+                <div style="font-size:2.6rem; font-weight:900; color: var(--info-text); direction:ltr; unicode-bidi:isolate;"><span id="water-current">0</span><span style="font-size:1.1rem; color: var(--text-secondary);"> / <span id="water-target">0</span> ml</span></div>
                 <div class="progress-container" style="margin:16px 0;"><div class="progress-bar" id="water-progress" style="width:0%; background: var(--info);"></div></div>
                 <div id="water-hint" style="color: var(--text-secondary); font-size:0.85rem;"></div>
             </div>
@@ -2738,23 +2702,23 @@
     <div id="more-menu" style="display: none; position: fixed; bottom: calc(var(--nav-height) + var(--safe-bottom)); left: 0; right: 0; background: var(--bg-card); border-top: 1px solid var(--border); z-index: 99; padding: 16px; border-radius: 20px 20px 0 0; box-shadow: 0 -8px 32px rgba(0,0,0,0.4); max-height: 70vh; overflow-y: auto;">
         <div class="more-group-title" data-i18n="more_group_progress">התקדמות</div>
         <div class="more-group">
-            <div class="more-row" onclick="showPrograms(); hideMoreMenu();">
+            <div class="more-row" role="button" tabindex="0" onclick="showPrograms(); hideMoreMenu();" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showPrograms(); hideMoreMenu();}">
                 <div class="more-icon"><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4z"/><path d="M8 2v4M16 2v4M4 10h16"/></svg></div>
                 <div class="more-row-label" data-i18n="nav_programs">תוכניות</div>
             </div>
-            <div class="more-row" onclick="showAchievements(); hideMoreMenu();">
+            <div class="more-row" role="button" tabindex="0" onclick="showAchievements(); hideMoreMenu();" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showAchievements(); hideMoreMenu();}">
                 <div class="more-icon"><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="5.5"/><path d="M9 13 7 21l5-2.5L17 21l-2-8"/></svg></div>
                 <div class="more-row-label" data-i18n="nav_achievements">הישגים</div>
             </div>
-            <div class="more-row" onclick="showHistory(); hideMoreMenu();">
+            <div class="more-row" role="button" tabindex="0" onclick="showHistory(); hideMoreMenu();" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showHistory(); hideMoreMenu();}">
                 <div class="more-icon"><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13"/><circle cx="3.5" cy="6" r="1.2" fill="currentColor" stroke="none"/><circle cx="3.5" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="3.5" cy="18" r="1.2" fill="currentColor" stroke="none"/></svg></div>
                 <div class="more-row-label" data-i18n="nav_history">היסטוריה</div>
             </div>
-            <div class="more-row" onclick="showChallenge(); hideMoreMenu();">
+            <div class="more-row" role="button" tabindex="0" onclick="showChallenge(); hideMoreMenu();" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showChallenge(); hideMoreMenu();}">
                 <div class="more-icon"><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3c-1 3-4.5 5-4.5 9.5a4.5 4.5 0 0 0 9 0c0-1.2-.7-2.2-1-3.2.8 1 1.5 2.6 1.5 4.2a5 5 0 0 1-10 0C6.5 8.5 10 6.5 12 3z"/></svg></div>
                 <div class="more-row-label" data-i18n="nav_challenge">אתגר</div>
             </div>
-            <div class="more-row" onclick="showRace(); hideMoreMenu();">
+            <div class="more-row" role="button" tabindex="0" onclick="showRace(); hideMoreMenu();" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showRace(); hideMoreMenu();}">
                 <div class="more-icon"><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13.5" r="8"/><path d="M12 13.5V9"/><path d="M10 2h4"/><path d="M12 2v2.5"/></svg></div>
                 <div class="more-row-label" data-i18n="nav_race">מירוץ</div>
             </div>
@@ -2762,19 +2726,19 @@
 
         <div class="more-group-title" data-i18n="more_group_health">בריאות</div>
         <div class="more-group">
-            <div class="more-row" onclick="showNutrition(); hideMoreMenu();">
+            <div class="more-row" role="button" tabindex="0" onclick="showNutrition(); hideMoreMenu();" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showNutrition(); hideMoreMenu();}">
                 <div class="more-icon"><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2v6a2 2 0 0 0 4 0V2"/><path d="M9 10v12"/><path d="M17 2c-1.5 0-3 2-3 5s1.2 4.5 3 4.5V22"/></svg></div>
                 <div class="more-row-label" data-i18n="nav_nutrition">תזונה</div>
             </div>
-            <div class="more-row" onclick="showWater(); hideMoreMenu();">
+            <div class="more-row" role="button" tabindex="0" onclick="showWater(); hideMoreMenu();" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showWater(); hideMoreMenu();}">
                 <div class="more-icon"><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2s6.5 7.5 6.5 12A6.5 6.5 0 0 1 5.5 14C5.5 9.5 12 2 12 2z"/></svg></div>
                 <div class="more-row-label" data-i18n="nav_water">מים</div>
             </div>
-            <div class="more-row" onclick="showMetrics(); hideMoreMenu();">
+            <div class="more-row" role="button" tabindex="0" onclick="showMetrics(); hideMoreMenu();" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showMetrics(); hideMoreMenu();}">
                 <div class="more-icon"><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="18" height="10" rx="2"/><path d="M7 7v3M11 7v5M15 7v3M19 7v5"/></svg></div>
                 <div class="more-row-label" data-i18n="nav_metrics">מדדים</div>
             </div>
-            <div class="more-row" onclick="showRecovery(); hideMoreMenu();">
+            <div class="more-row" role="button" tabindex="0" onclick="showRecovery(); hideMoreMenu();" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showRecovery(); hideMoreMenu();}">
                 <div class="more-icon"><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 8.5c0 4.5-8.5 11-8.5 11s-8.5-6.5-8.5-11a4.5 4.5 0 0 1 8.5-2 4.5 4.5 0 0 1 8.5 2z"/><path d="M4 12h3l2 3 3-6 2 3h4"/></svg></div>
                 <div class="more-row-label" data-i18n="nav_recovery">מתיחות</div>
             </div>
@@ -2782,11 +2746,11 @@
 
         <div class="more-group-title" data-i18n="more_group_system">מערכת</div>
         <div class="more-group">
-            <div class="more-row" onclick="showProfile(); hideMoreMenu();">
+            <div class="more-row" role="button" tabindex="0" onclick="showProfile(); hideMoreMenu();" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showProfile(); hideMoreMenu();}">
                 <div class="more-icon"><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4.5 21c0-4.2 3.5-7 7.5-7s7.5 2.8 7.5 7"/></svg></div>
                 <div class="more-row-label" data-i18n="nav_profile">פרופיל</div>
             </div>
-            <div class="more-row" onclick="showSettings(); hideMoreMenu();">
+            <div class="more-row" role="button" tabindex="0" onclick="showSettings(); hideMoreMenu();" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showSettings(); hideMoreMenu();}">
                 <div class="more-icon"><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
                 <div class="more-row-label" data-i18n="nav_settings">הגדרות</div>
             </div>
@@ -2863,9 +2827,6 @@
                 back: "חזרה",
                 onboarding_title: "בוא נכיר אותך",
                 onboarding_subtitle: "פרטים בסיסיים לפני הקוויז",
-                onb_section_about: "עליך",
-                onb_section_body: "הגוף שלך",
-                onb_section_training: "האימונים שלך",
                 full_name: "שם מלא *",
                 age: "גיל *",
                 gender: "מין",
@@ -2917,6 +2878,7 @@
                 achievements_title: "הישגים",
                 achievements_subtitle: "אסוף את כל המדליות",
                 unlocked: "נפתחו",
+                achievement_locked: "נעול",
                 total: "סה\"כ",
                 videos_title: "סרטוני הדרכה",
                 videos_subtitle: "למד כל תרגיל צעד אחר צעד",
@@ -2924,7 +2886,6 @@
                 no_exercises_found: "לא נמצאו תרגילים התואמים לחיפוש",
                 back_to_videos: "חזרה לסרטונים",
                 video_not_available: "סרטון עדיין לא זמין לתרגיל הזה — עקוב/י אחרי ההנחיות הכתובות למטה",
-                video_network_error: "הסרטון דורש חיבור לאינטרנט וזה לא הצליח להיטען — בדוק/י את החיבור ונסה/י שוב. ההנחיות הכתובות למטה עובדות גם בלי אינטרנט.",
                 more_group_progress: "התקדמות",
                 more_group_health: "בריאות",
                 more_group_system: "מערכת",
@@ -2940,7 +2901,7 @@
                 legal_link: "מדיניות פרטיות ותנאי שימוש",
                 privacy_policy_title: "מדיניות פרטיות",
                 terms_title: "תנאי שימוש",
-                consent_text: "קראתי ואני מסכים/ה ל<a href=\"#\" onclick=\"event.preventDefault(); showLegal();\" style=\"color:var(--accent);\">תנאי השימוש ומדיניות הפרטיות</a>",
+                consent_text: "קראתי ואני מסכים/ה ל<a href=\"#\" onclick=\"event.preventDefault(); showLegal();\" style=\"color:var(--accent-text);\">תנאי השימוש ומדיניות הפרטיות</a>",
                 consent_required: "יש לאשר את תנאי השימוש כדי להמשיך",
                 backup_reminder_title: "גיבוי הנתונים שלך",
                 backup_never: "מעולם לא",
@@ -3140,8 +3101,6 @@
                 chart_scores: "ציונים לאורך זמן",
                 chart_weekly: "פילוח שבועי",
                 chart_no_data: "אין עדיין נתונים — סיימו אימון כדי לראות כאן התקדמות",
-                chart_metrics_no_data: "אין עדיין נתונים — הוסף/י מדידה כדי לראות כאן התקדמות",
-                chart_nutrition_no_data: "אין עדיין נתונים — הוסף/י ארוחה כדי לראות כאן מגמה",
                 level: "רמה",
                 beginner: "מתחיל",
                 advanced: "מתקדם",
@@ -3169,7 +3128,6 @@
                 chart_weight: "משקל לאורך זמן",
                 chart_bodyfat: "אחוז שומן לאורך זמן",
                 no_metrics: "עדיין אין מדידות",
-                no_metrics_desc: "הוסף/י מדידה למעלה כדי לראות את ההתקדמות שלך לאורך זמן",
                 kg: "ק\"ג",
                 cm: "ס\"מ",
                 plan_based_on_values: "מבוסס על",
@@ -3179,7 +3137,6 @@
                 no_results: "לא נמצאו תוצאות — ניתן להזין ידנית",
                 per_100g_note: "הערכים ל-100 גרם — ניתן לערוך לאחר הבחירה",
                 search_failed: "החיפוש נכשל (בדוק חיבור לאינטרנט) — ניתן להזין ידנית",
-                retry_search: "נסה שוב",
                 adjust_for_portion: "ערכים ל-100 גרם — התאם/י לפי הכמות שאכלת בפועל",
                 food_advanced_toggle: "+ פירוט נוסף (סוכר, סיבים, תמונה)",
                 sugar: "סוכר (ג)",
@@ -3267,7 +3224,6 @@
                 photos_desc: "צלם את עצמך מדי פעם כדי לראות את השינוי. התמונות נשמרות רק במכשיר שלך.",
                 photos_add: "הוסף תמונה",
                 photos_empty: "עדיין אין תמונות",
-                photos_empty_desc: "צלם/י תמונה ראשונה כדי להתחיל לראות את השינוי",
                 photos_limit: "הגעת למספר התמונות המקסימלי",
                 photo_saved: "התמונה נשמרה",
                 photo_error: "לא ניתן לקרוא את התמונה",
@@ -3321,7 +3277,6 @@
                 smart_reminder_found: "לפי ההיסטוריה שלך, אתה מתאמן בעיקר בסביבות",
                 add_food_btn: "הוסף לארוחה",
                 no_food_today: "עדיין לא הוספת מאכלים היום",
-                no_food_today_desc: "הוסף/י ארוחה למעלה כדי להתחיל לעקוב אחרי קלוריות וחלבון",
                 enter_food: "נא להזין שם וקלוריות",
                 food_added: "המאכל נוסף!",
                 kcal: "קל",
@@ -3374,7 +3329,6 @@
                 save_race: "שמור תוצאה",
                 race_history: "היסטוריית מירוצים",
                 no_races: "עדיין לא עשית מירוצים",
-                no_races_desc: "התחל/י מירוץ למעלה כדי לראות כאן את התוצאות שלך",
                 race_score: "ציון",
                 race_saved: "תוצאת המירוץ נשמרה!",
                 squats: "סקוואטים",
@@ -3546,9 +3500,6 @@
                 back: "Back",
                 onboarding_title: "Let's Get to Know You",
                 onboarding_subtitle: "Basic details before the quiz",
-                onb_section_about: "About you",
-                onb_section_body: "Your body",
-                onb_section_training: "Your training",
                 full_name: "Full Name *",
                 age: "Age *",
                 gender: "Gender",
@@ -3600,6 +3551,7 @@
                 achievements_title: "Achievements",
                 achievements_subtitle: "Collect all the medals",
                 unlocked: "Unlocked",
+                achievement_locked: "Locked",
                 total: "Total",
                 videos_title: "Tutorial Videos",
                 videos_subtitle: "Learn every exercise step by step",
@@ -3607,7 +3559,6 @@
                 no_exercises_found: "No exercises match your search",
                 back_to_videos: "Back to Videos",
                 video_not_available: "Video not yet available for this exercise — follow the written instructions below",
-                video_network_error: "This video needs an internet connection and couldn't load — check your connection and try again. The written instructions below still work without internet.",
                 more_group_progress: "Progress",
                 more_group_health: "Health",
                 more_group_system: "System",
@@ -3623,7 +3574,7 @@
                 legal_link: "Privacy Policy & Terms of Service",
                 privacy_policy_title: "Privacy Policy",
                 terms_title: "Terms of Service",
-                consent_text: "I have read and agree to the <a href=\"#\" onclick=\"event.preventDefault(); showLegal();\" style=\"color:var(--accent);\">Terms of Service and Privacy Policy</a>",
+                consent_text: "I have read and agree to the <a href=\"#\" onclick=\"event.preventDefault(); showLegal();\" style=\"color:var(--accent-text);\">Terms of Service and Privacy Policy</a>",
                 consent_required: "You must accept the Terms to continue",
                 backup_reminder_title: "Back Up Your Data",
                 backup_never: "Never",
@@ -3823,8 +3774,6 @@
                 chart_scores: "Scores Over Time",
                 chart_weekly: "Weekly Breakdown",
                 chart_no_data: "No data yet — finish a workout to see your progress here",
-                chart_metrics_no_data: "No data yet — add a measurement to see your progress here",
-                chart_nutrition_no_data: "No data yet — add a meal to see a trend here",
                 level: "Level",
                 beginner: "Beginner",
                 advanced: "Advanced",
@@ -3852,7 +3801,6 @@
                 chart_weight: "Weight Over Time",
                 chart_bodyfat: "Body Fat Over Time",
                 no_metrics: "No measurements yet",
-                no_metrics_desc: "Add a measurement above to see your progress over time",
                 kg: "kg",
                 cm: "cm",
                 plan_based_on_values: "Based on",
@@ -3862,7 +3810,6 @@
                 no_results: "No results found — you can enter manually",
                 per_100g_note: "Values per 100g — editable after selecting",
                 search_failed: "Search failed (check internet connection) — you can enter manually",
-                retry_search: "Try again",
                 adjust_for_portion: "Values per 100g — adjust to match the amount you actually ate",
                 food_advanced_toggle: "+ More detail (sugar, fiber, photo)",
                 sugar: "Sugar (g)",
@@ -3950,7 +3897,6 @@
                 photos_desc: "Take a photo now and then to see the change. Photos stay only on your device.",
                 photos_add: "Add photo",
                 photos_empty: "No photos yet",
-                photos_empty_desc: "Take your first photo to start seeing the change",
                 photos_limit: "You reached the maximum number of photos",
                 photo_saved: "Photo saved",
                 photo_error: "Could not read the image",
@@ -4004,7 +3950,6 @@
                 smart_reminder_found: "Based on your history, you mostly train around",
                 add_food_btn: "Add to Meal",
                 no_food_today: "No food added today",
-                no_food_today_desc: "Add a meal above to start tracking calories and protein",
                 enter_food: "Please enter name and calories",
                 food_added: "Food added!",
                 kcal: "kcal",
@@ -4057,7 +4002,6 @@
                 save_race: "Save Result",
                 race_history: "Race History",
                 no_races: "No races yet",
-                no_races_desc: "Start a race above to see your results here",
                 race_score: "Score",
                 race_saved: "Race result saved!",
                 squats: "Squats",
@@ -4229,9 +4173,6 @@
                 back: "Terug",
                 onboarding_title: "Laten we elkaar Leren Kennen",
                 onboarding_subtitle: "Basisgegevens voor de quiz",
-                onb_section_about: "Over jou",
-                onb_section_body: "Jouw lichaam",
-                onb_section_training: "Jouw training",
                 full_name: "Volledige Naam *",
                 age: "Leeftijd *",
                 gender: "Geslacht",
@@ -4283,6 +4224,7 @@
                 achievements_title: "Prestaties",
                 achievements_subtitle: "Verzamel alle medailles",
                 unlocked: "Ontgrendeld",
+                achievement_locked: "Vergrendeld",
                 total: "Totaal",
                 videos_title: "Instructievideo's",
                 videos_subtitle: "Leer elke oefening stap voor stap",
@@ -4290,7 +4232,6 @@
                 no_exercises_found: "Geen oefeningen komen overeen met je zoekopdracht",
                 back_to_videos: "Terug naar Video's",
                 video_not_available: "Nog geen video beschikbaar voor deze oefening — volg de geschreven instructies hieronder",
-                video_network_error: "Deze video heeft een internetverbinding nodig en kon niet laden — controleer je verbinding en probeer opnieuw. De geschreven instructies hieronder werken ook zonder internet.",
                 more_group_progress: "Voortgang",
                 more_group_health: "Gezondheid",
                 more_group_system: "Systeem",
@@ -4306,7 +4247,7 @@
                 legal_link: "Privacybeleid & Gebruiksvoorwaarden",
                 privacy_policy_title: "Privacybeleid",
                 terms_title: "Gebruiksvoorwaarden",
-                consent_text: "Ik heb de <a href=\"#\" onclick=\"event.preventDefault(); showLegal();\" style=\"color:var(--accent);\">Gebruiksvoorwaarden en het Privacybeleid</a> gelezen en ga ermee akkoord",
+                consent_text: "Ik heb de <a href=\"#\" onclick=\"event.preventDefault(); showLegal();\" style=\"color:var(--accent-text);\">Gebruiksvoorwaarden en het Privacybeleid</a> gelezen en ga ermee akkoord",
                 consent_required: "Je moet de voorwaarden accepteren om door te gaan",
                 backup_reminder_title: "Back-up van je Gegevens",
                 backup_never: "Nooit",
@@ -4506,8 +4447,6 @@
                 chart_scores: "Scores in de Tijd",
                 chart_weekly: "Wekelijkse Verdeling",
                 chart_no_data: "Nog geen gegevens — voltooi een training om hier je voortgang te zien",
-                chart_metrics_no_data: "Nog geen gegevens — voeg een meting toe om hier je voortgang te zien",
-                chart_nutrition_no_data: "Nog geen gegevens — voeg een maaltijd toe om hier een trend te zien",
                 level: "Niveau",
                 beginner: "Beginner",
                 advanced: "Gevorderd",
@@ -4535,7 +4474,6 @@
                 chart_weight: "Gewicht in de Tijd",
                 chart_bodyfat: "Lichaamsvet in de Tijd",
                 no_metrics: "Nog geen metingen",
-                no_metrics_desc: "Voeg hierboven een meting toe om je voortgang in de tijd te zien",
                 kg: "kg",
                 cm: "cm",
                 plan_based_on_values: "Gebaseerd op",
@@ -4545,7 +4483,6 @@
                 no_results: "Geen resultaten — handmatig invoeren mogelijk",
                 per_100g_note: "Waarden per 100g — te bewerken na selectie",
                 search_failed: "Zoeken mislukt (controleer internetverbinding) — handmatig invoeren mogelijk",
-                retry_search: "Probeer opnieuw",
                 adjust_for_portion: "Waarden per 100g — pas aan naar de werkelijk gegeten hoeveelheid",
                 food_advanced_toggle: "+ Meer details (suiker, vezels, foto)",
                 sugar: "Suiker (g)",
@@ -4633,7 +4570,6 @@
                 photos_desc: "Maak af en toe een foto om de verandering te zien. Foto's blijven alleen op je apparaat.",
                 photos_add: "Foto toevoegen",
                 photos_empty: "Nog geen foto's",
-                photos_empty_desc: "Maak je eerste foto om de verandering te gaan zien",
                 photos_limit: "Je hebt het maximum aantal foto's bereikt",
                 photo_saved: "Foto opgeslagen",
                 photo_error: "Kon de afbeelding niet lezen",
@@ -4687,7 +4623,6 @@
                 smart_reminder_found: "Op basis van je geschiedenis train je meestal rond",
                 add_food_btn: "Toevoegen aan Maaltijd",
                 no_food_today: "Vandaag nog geen voedsel toegevoegd",
-                no_food_today_desc: "Voeg hierboven een maaltijd toe om calorieën en eiwitten bij te houden",
                 enter_food: "Voer naam en calorieën in",
                 food_added: "Voedsel toegevoegd!",
                 kcal: "kcal",
@@ -4740,7 +4675,6 @@
                 save_race: "Resultaat Opslaan",
                 race_history: "Race Geschiedenis",
                 no_races: "Nog geen races",
-                no_races_desc: "Start hierboven een race om hier je resultaten te zien",
                 race_score: "Score",
                 race_saved: "Race resultaat opgeslagen!",
                 squats: "Squats",
@@ -4912,9 +4846,6 @@
                 back: "Atrás",
                 onboarding_title: "Conozcámonos",
                 onboarding_subtitle: "Detalles básicos antes del cuestionario",
-                onb_section_about: "Sobre ti",
-                onb_section_body: "Tu cuerpo",
-                onb_section_training: "Tu entrenamiento",
                 full_name: "Nombre Completo *",
                 age: "Edad *",
                 gender: "Género",
@@ -4966,6 +4897,7 @@
                 achievements_title: "Logros",
                 achievements_subtitle: "Recoge todas las medallas",
                 unlocked: "Desbloqueados",
+                achievement_locked: "Bloqueado",
                 total: "Total",
                 videos_title: "Videos Tutorial",
                 videos_subtitle: "Aprende cada ejercicio paso a paso",
@@ -4973,7 +4905,6 @@
                 no_exercises_found: "No se encontraron ejercicios que coincidan con tu búsqueda",
                 back_to_videos: "Volver a Videos",
                 video_not_available: "Aún no hay video disponible para este ejercicio — sigue las instrucciones escritas abajo",
-                video_network_error: "Este video necesita conexión a internet y no pudo cargar — verifica tu conexión e inténtalo de nuevo. Las instrucciones escritas abajo funcionan igualmente sin internet.",
                 more_group_progress: "Progreso",
                 more_group_health: "Salud",
                 more_group_system: "Sistema",
@@ -4989,7 +4920,7 @@
                 legal_link: "Política de Privacidad y Términos",
                 privacy_policy_title: "Política de Privacidad",
                 terms_title: "Términos de Servicio",
-                consent_text: "He leído y acepto los <a href=\"#\" onclick=\"event.preventDefault(); showLegal();\" style=\"color:var(--accent);\">Términos de Servicio y la Política de Privacidad</a>",
+                consent_text: "He leído y acepto los <a href=\"#\" onclick=\"event.preventDefault(); showLegal();\" style=\"color:var(--accent-text);\">Términos de Servicio y la Política de Privacidad</a>",
                 consent_required: "Debes aceptar los términos para continuar",
                 backup_reminder_title: "Respalda tus Datos",
                 backup_never: "Nunca",
@@ -5189,8 +5120,6 @@
                 chart_scores: "Puntuaciones en el Tiempo",
                 chart_weekly: "Desglose Semanal",
                 chart_no_data: "Todavía no hay datos — termina un entrenamiento para ver tu progreso aquí",
-                chart_metrics_no_data: "Todavía no hay datos — añade una medida para ver tu progreso aquí",
-                chart_nutrition_no_data: "Todavía no hay datos — añade una comida para ver una tendencia aquí",
                 level: "Nivel",
                 beginner: "Principiante",
                 advanced: "Avanzado",
@@ -5218,7 +5147,6 @@
                 chart_weight: "Peso en el Tiempo",
                 chart_bodyfat: "Grasa Corporal en el Tiempo",
                 no_metrics: "Aún no hay medidas",
-                no_metrics_desc: "Añade una medida arriba para ver tu progreso a lo largo del tiempo",
                 kg: "kg",
                 cm: "cm",
                 plan_based_on_values: "Basado en",
@@ -5228,7 +5156,6 @@
                 no_results: "No se encontraron resultados — puedes ingresar manualmente",
                 per_100g_note: "Valores por 100g — editable tras seleccionar",
                 search_failed: "Búsqueda fallida (verifica tu conexión a internet) — puedes ingresar manualmente",
-                retry_search: "Reintentar",
                 adjust_for_portion: "Valores por 100g — ajusta según la cantidad que realmente comiste",
                 food_advanced_toggle: "+ Más detalles (azúcar, fibra, foto)",
                 sugar: "Azúcar (g)",
@@ -5316,7 +5243,6 @@
                 photos_desc: "Tómate una foto de vez en cuando para ver el cambio. Las fotos quedan solo en tu dispositivo.",
                 photos_add: "Añadir foto",
                 photos_empty: "Aún no hay fotos",
-                photos_empty_desc: "Toma tu primera foto para empezar a ver el cambio",
                 photos_limit: "Alcanzaste el número máximo de fotos",
                 photo_saved: "Foto guardada",
                 photo_error: "No se pudo leer la imagen",
@@ -5370,7 +5296,6 @@
                 smart_reminder_found: "Según tu historial, entrenas sobre todo alrededor de",
                 add_food_btn: "Añadir a la Comida",
                 no_food_today: "No has añadido alimentos hoy",
-                no_food_today_desc: "Añade una comida arriba para empezar a seguir calorías y proteínas",
                 enter_food: "Por favor introduce nombre y calorías",
                 food_added: "¡Alimento añadido!",
                 kcal: "kcal",
@@ -5423,7 +5348,6 @@
                 save_race: "Guardar Resultado",
                 race_history: "Historial de Carreras",
                 no_races: "Aún no has hecho carreras",
-                no_races_desc: "Empieza una carrera arriba para ver tus resultados aquí",
                 race_score: "Puntuación",
                 race_saved: "¡Resultado de carrera guardado!",
                 squats: "Sentadillas",
@@ -6479,6 +6403,44 @@
         let poseSamples = []; // { t: msSinceStart, keypoints: [{x,y,score,name}] }
         let recordingStartTs = 0;
 
+        // Injects a <script> tag and resolves once it has loaded (or rejects on error).
+        function loadScriptOnce(src) {
+            return new Promise((resolve, reject) => {
+                const existing = document.querySelector(`script[src="${src}"]`);
+                if (existing) {
+                    if (existing.dataset.loaded === 'true') return resolve();
+                    existing.addEventListener('load', () => resolve());
+                    existing.addEventListener('error', () => reject(new Error('Failed to load ' + src)));
+                    return;
+                }
+                const s = document.createElement('script');
+                s.src = src;
+                s.async = true;
+                s.onload = () => { s.dataset.loaded = 'true'; resolve(); };
+                s.onerror = () => reject(new Error('Failed to load ' + src));
+                document.head.appendChild(s);
+            });
+        }
+
+        let poseVendorScriptsPromise = null;
+        // Lazily loads TensorFlow.js + the MoveNet pose-detection bundle (several hundred KB)
+        // the first time the camera/AI form-check screen is reached, instead of on every page
+        // load — most users never open that screen, so this keeps initial page weight small.
+        function loadPoseVendorScripts() {
+            if (typeof tf !== 'undefined' && typeof poseDetection !== 'undefined') {
+                return Promise.resolve();
+            }
+            if (!poseVendorScriptsPromise) {
+                poseVendorScriptsPromise = loadScriptOnce('vendor/tf.min.js')
+                    .then(() => loadScriptOnce('vendor/pose-detection.min.js'))
+                    .catch(err => {
+                        poseVendorScriptsPromise = null; // allow retry on next attempt
+                        throw err;
+                    });
+            }
+            return poseVendorScriptsPromise;
+        }
+
         // Lazily creates (once) and caches the MoveNet detector. Model weights are fetched
         // from Google's TF-Hub CDN on first use and cached by the service worker afterward;
         // if the fetch fails (e.g. offline first run) we degrade gracefully instead of crashing.
@@ -6488,6 +6450,7 @@
             if (poseDetectorLoadingPromise) return poseDetectorLoadingPromise;
             poseDetectorLoadingPromise = (async () => {
                 try {
+                    await loadPoseVendorScripts();
                     if (typeof tf === 'undefined' || typeof poseDetection === 'undefined') {
                         throw new Error('pose-detection libraries not loaded');
                     }
@@ -6522,70 +6485,29 @@
         }
 
         // ==================== SCREEN MANAGEMENT ====================
-        // Bottom-nav tab switches (dashboard/videos/stats/journey) stay a plain,
-        // undirected fade (see .screen's fadeIn) — they're lateral, not a
-        // "push". Drill-down/modal-like screens (.screen-modal — paywall,
-        // program detail) instead get a real directional transition: they
-        // enter from the right, and — so dismissal retraces the same path —
-        // exit back to the right rather than just disappearing. The actual
-        // animation each plays (slide vs. plain opacity crossfade) is decided
-        // in CSS via prefers-reduced-motion, so this logic doesn't need to
-        // know or care which one is active.
         function showScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             const target = document.getElementById(id);
-            if (!target) return;
-            const current = document.querySelector('.screen.active');
-            const isModal = el => !!(el && el.classList.contains('screen-modal'));
-            const enteringModal = isModal(target) && current !== target;
-            const exitingModal = !!(current && current !== target && isModal(current) && !isModal(target));
+            if (target) target.classList.add('active');
+            window.scrollTo(0, 0);
 
-            const finishSwitch = () => {
-                document.querySelectorAll('.screen').forEach(s => s.classList.remove('active', 'screen-modal-exit', 'screen-modal-enter'));
-                target.classList.add('active');
-                if (enteringModal) {
-                    target.classList.add('screen-modal-enter');
-                    target.addEventListener('animationend', () => target.classList.remove('screen-modal-enter'), { once: true });
-                }
-                window.scrollTo(0, 0);
-
-                // Matches the actual bottom-nav order: Home, Videos, Stats, Journey, More.
-                // Every other screen (achievements, profile, metrics, nutrition, water,
-                // recovery, health, history, challenge, race, notifications, offline,
-                // schedule editor, settings) is reached exclusively through the "More"
-                // overlay, so it defaults to that tab rather than none/a wrong one —
-                // except the pre-login/onboarding screens, which show no bottom nav at all.
-                const navMap = {
-                    'screen-dashboard': 0, 'screen-videos': 1, 'screen-stats': 2, 'screen-journey': 3
-                };
-                const noNavScreens = ['screen-welcome', 'screen-login', 'screen-verify-code', 'screen-onboarding', 'screen-quiz', 'screen-results', 'screen-schedule', 'screen-paywall'];
-                const activeIndex = navMap[id] !== undefined ? navMap[id] : (noNavScreens.includes(id) ? undefined : 4);
-                const navItems = document.querySelectorAll('.nav-item');
-                navItems.forEach((item, i) => {
-                    const isActive = activeIndex === i;
-                    item.classList.toggle('active', isActive);
-                    item.setAttribute('aria-selected', isActive ? 'true' : 'false');
-                });
+            // Matches the actual bottom-nav order: Home, Videos, Stats, Journey, More.
+            // Every other screen (achievements, profile, metrics, nutrition, water,
+            // recovery, health, history, challenge, race, notifications, offline,
+            // schedule editor, settings) is reached exclusively through the "More"
+            // overlay, so it defaults to that tab rather than none/a wrong one —
+            // except the pre-login/onboarding screens, which show no bottom nav at all.
+            const navMap = {
+                'screen-dashboard': 0, 'screen-videos': 1, 'screen-stats': 2, 'screen-journey': 3
             };
-
-            if (exitingModal) {
-                // Play the outgoing modal screen's exit animation to completion
-                // before swapping — the incoming screen (returning to where it
-                // was) doesn't need its own entrance. A timeout backstops
-                // animationend in case it never fires, so navigation can't get
-                // stuck mid-transition.
-                let done = false;
-                const proceed = () => {
-                    if (done) return;
-                    done = true;
-                    current.classList.remove('active', 'screen-modal-exit');
-                    finishSwitch();
-                };
-                current.classList.add('screen-modal-exit');
-                current.addEventListener('animationend', proceed, { once: true });
-                setTimeout(proceed, 400);
-            } else {
-                finishSwitch();
-            }
+            const noNavScreens = ['screen-welcome', 'screen-login', 'screen-verify-code', 'screen-onboarding', 'screen-quiz', 'screen-results', 'screen-schedule', 'screen-paywall'];
+            const activeIndex = navMap[id] !== undefined ? navMap[id] : (noNavScreens.includes(id) ? undefined : 4);
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach((item, i) => {
+                const isActive = activeIndex === i;
+                item.classList.toggle('active', isActive);
+                item.setAttribute('aria-selected', isActive ? 'true' : 'false');
+            });
         }
 
         function showBottomNav(show) {
@@ -6947,7 +6869,7 @@
             document.getElementById('dash-score').textContent = userStats.avgScore || '-';
             document.getElementById('dash-next').textContent = userStats.workouts + 1;
 
-            document.getElementById('injury-toggle').classList.toggle('active', isInjuryModeActiveToday());
+            setToggleSwitch('injury-toggle', isInjuryModeActiveToday());
             renderSmartSuggestion();
 
             renderTodayWorkoutCard();
@@ -6980,9 +6902,9 @@
                     // exercise pool — a deload is a real periodized rest phase,
                     // not just injury-avoidance, so it gets the same treatment.
                     const dayExercises = (injuryToday || deloadActive) ? easyExercises.slice(0, 3) : exercises.slice(0, 4);
-                    const injuryNote = injuryToday ? `<div style="color: var(--warning); font-size:0.78rem; margin-top:6px;">${t('injury_mode_note') || 'מצב פציעה פעיל — תרגילים קלים יותר להיום'}</div>` : '';
-                    const deloadNote = (!injuryToday && deloadActive) ? `<div style="color: var(--warning); font-size:0.78rem; margin-top:6px;">${t('deload_active_note') || '🔄 שבוע הפגה פעיל — תרגילים קלים יותר ויעדים מופחתים עד שהביצועים יתאוששו'}</div>` : '';
-                    dayDiv.innerHTML = `<div class="workout-day-header"><div class="workout-day-title">${dayNames[i]} — ${time}</div><div class="workout-day-status status-pending">${t('pending') || 'ממתין'}</div></div><div class="workout-exercises">${dayExercises.map(ex => { const tgt = computeExerciseTarget(ex); return `<div class="workout-exercise" onclick="openExerciseById('${ex.id}')"><div class="workout-exercise-check">○</div><div>${getExerciseName(ex)}</div><span style="margin-left:6px; color: var(--text-secondary); font-size:0.78rem;" dir="ltr">${tgt.value}${tgt.unit === 's' ? 's' : ''}</span><span style="margin-right: auto; color: var(--accent); display:inline-flex;"><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M10 8.5v7l6-3.5z"/></svg></span></div>`; }).join('')}</div>${injuryNote}${deloadNote}`;
+                    const injuryNote = injuryToday ? `<div style="color: var(--warning-text); font-size:0.78rem; margin-top:6px;">${t('injury_mode_note') || 'מצב פציעה פעיל — תרגילים קלים יותר להיום'}</div>` : '';
+                    const deloadNote = (!injuryToday && deloadActive) ? `<div style="color: var(--warning-text); font-size:0.78rem; margin-top:6px;">${t('deload_active_note') || '🔄 שבוע הפגה פעיל — תרגילים קלים יותר ויעדים מופחתים עד שהביצועים יתאוששו'}</div>` : '';
+                    dayDiv.innerHTML = `<div class="workout-day-header"><div class="workout-day-title">${dayNames[i]} — ${time}</div><div class="workout-day-status status-pending">${t('pending') || 'ממתין'}</div></div><div class="workout-exercises">${dayExercises.map(ex => { const tgt = computeExerciseTarget(ex); return `<div class="workout-exercise" role="button" tabindex="0" aria-label="${getExerciseName(ex)}" onclick="openExerciseById('${ex.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openExerciseById('${ex.id}');}"><div class="workout-exercise-check">○</div><div>${getExerciseName(ex)}</div><span style="margin-left:6px; color: var(--text-secondary); font-size:0.78rem;" dir="ltr">${tgt.value}${tgt.unit === 's' ? 's' : ''}</span><span style="margin-right: auto; color: var(--accent-text); display:inline-flex;"><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M10 8.5v7l6-3.5z"/></svg></span></div>`; }).join('')}</div>${injuryNote}${deloadNote}`;
                 }
                 planDiv.appendChild(dayDiv);
             }
@@ -6996,8 +6918,12 @@
             exercisesByLevel[userLevel].forEach(ex => {
                 const card = document.createElement('div');
                 card.className = 'exercise-card';
-                card.innerHTML = `<div class="exercise-name">${getExerciseName(ex)}</div><div class="exercise-desc">${getExerciseDesc(ex)}</div><span class="exercise-difficulty" style="background: ${getDifficultyColor(ex.difficulty)}20; color: ${getDifficultyColor(ex.difficulty)};">${t('difficulty_' + ex.difficulty) || ex.difficulty}</span>`;
+                card.setAttribute('role', 'button');
+                card.tabIndex = 0;
+                card.setAttribute('aria-label', getExerciseName(ex));
+                card.innerHTML = `<div class="exercise-name">${getExerciseName(ex)}</div><div class="exercise-desc">${getExerciseDesc(ex)}</div><span class="exercise-difficulty" style="background: ${getDifficultyColor(ex.difficulty)}20; color: ${getDifficultyTextColor(ex.difficulty)};">${t('difficulty_' + ex.difficulty) || ex.difficulty}</span>`;
                 card.onclick = () => openExercise(ex);
+                card.onkeydown = (event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); openExercise(ex); } };
                 exList.appendChild(card);
             });
             showScreen('screen-dashboard');
@@ -7057,6 +6983,16 @@
         function isInjuryModeActiveToday() {
             return localStorage.getItem('masa_injury_date') === new Date().toDateString();
         }
+        // Keeps a toggle-switch's visual state and its accessible (role="switch") state in
+        // sync in one place, instead of updating classList and aria-checked separately at
+        // every call site.
+        function setToggleSwitch(id, active) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.classList.toggle('active', !!active);
+            el.setAttribute('aria-checked', String(!!active));
+        }
+
         function toggleInjuryMode() {
             const today = new Date().toDateString();
             if (isInjuryModeActiveToday()) {
@@ -7268,6 +7204,23 @@
                 default: return '#8a8a9a';
             }
         }
+        // The vivid getDifficultyColor() shades read fine as *text* on dark surfaces (used
+        // in dark mode) but several of them (the light teal/blue/yellow ones especially)
+        // fall well under WCAG AA (~2:1-3:1) as text on the light theme's near-white cards.
+        // Same badges, same translucent background wash either way — only the label's own
+        // text color needs to be darker in light mode.
+        function getDifficultyTextColor(diff) {
+            const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+            if (!isLight) return getDifficultyColor(diff);
+            switch (diff) {
+                case 'easy': return '#21736e';
+                case 'medium': return '#207083';
+                case 'hard': return '#8a5f01';
+                case 'very_hard': return '#d20000';
+                case 'pro': return '#c13300';
+                default: return '#666677';
+            }
+        }
 
         // Returns the level (1-5) an exercise id belongs to, or null if not found —
         // used by achievement checks that need "which level was this exercise from",
@@ -7299,6 +7252,10 @@
             document.getElementById('btn-record').disabled = true;
             toggleExerciseInfo(false);
             showScreen('screen-exercise');
+            // Start fetching the pose-detection vendor scripts in the background as soon as
+            // the camera screen is reached, so they're likely ready by the time the user taps
+            // "enable camera" — this is a non-blocking prefetch, not the initial page load.
+            loadPoseVendorScripts().catch(() => {});
         }
 
         function goToVideoFromExercise() {
@@ -7796,9 +7753,9 @@
                     const feedbackText = t(pickFeedbackKey(result)) || (t('feedback_good') || 'טוב מאוד! המשך להתאמן על הטכניקה.');
                     feedback.textContent = feedbackText.replace('{exercise}', getExerciseName(currentExercise));
                     const repsLine = (!result.isHold && result.reps > 0)
-                        ? `<div style="display: flex; justify-content: space-between; margin-bottom: 8px;"><span>${t('reps_detected') || 'חזרות שזוהו'}</span><span style="color: var(--accent);">${result.reps}</span></div>`
+                        ? `<div style="display: flex; justify-content: space-between; margin-bottom: 8px;"><span>${t('reps_detected') || 'חזרות שזוהו'}</span><span style="color: var(--accent-text);">${result.reps}</span></div>`
                         : '';
-                    breakdown.innerHTML = repsLine + `<div style="display: flex; justify-content: space-between; margin-bottom: 8px;"><span>${t('technique') || 'טכניקה'}</span><span style="color: var(--accent);">${result.technique}%</span></div><div style="display: flex; justify-content: space-between; margin-bottom: 8px;"><span>${t('range_of_motion') || 'טווח תנועה'}</span><span style="color: var(--accent);">${result.range}%</span></div><div style="display: flex; justify-content: space-between; margin-bottom: 8px;"><span>${t('control') || 'שליטה'}</span><span style="color: var(--accent);">${result.control}%</span></div><div style="display: flex; justify-content: space-between;"><span>${t('tempo') || 'קצב'}</span><span style="color: var(--accent);">${result.tempo}%</span></div>`;
+                    breakdown.innerHTML = repsLine + `<div style="display: flex; justify-content: space-between; margin-bottom: 8px;"><span>${t('technique') || 'טכניקה'}</span><span style="color: var(--accent-text);">${result.technique}%</span></div><div style="display: flex; justify-content: space-between; margin-bottom: 8px;"><span>${t('range_of_motion') || 'טווח תנועה'}</span><span style="color: var(--accent-text);">${result.range}%</span></div><div style="display: flex; justify-content: space-between; margin-bottom: 8px;"><span>${t('control') || 'שליטה'}</span><span style="color: var(--accent-text);">${result.control}%</span></div><div style="display: flex; justify-content: space-between;"><span>${t('tempo') || 'קצב'}</span><span style="color: var(--accent-text);">${result.tempo}%</span></div>`;
 
                     // Context the AI coach chat below hands to the LLM so
                     // follow-up questions ("explain the range of motion
@@ -7845,34 +7802,11 @@
         }
 
         // ==================== VIDEO PLAYER ====================
-        // Real network-failure handling for the embedded YouTube player. The
-        // iframe itself can't tell us "blocked/offline" — it's cross-origin, and
-        // its 'load' event fires even when the navigation lands on a browser
-        // network-error page (a blocked/aborted request still "finishes loading"
-        // as far as the iframe is concerned, leaving a broken-image-shaped hole
-        // with no error ever surfacing). A plain <img> probe against a YouTube
-        // thumbnail CDN does NOT have that problem — its onerror reliably fires
-        // for a genuine network failure — so it's used as the real signal before
-        // ever committing to the iframe, backed by a timeout as a second line of
-        // defense (fires if neither onload nor onerror show up at all).
-        let currentVideoYtId = null;
-        let videoLoadTimeout = null;
-        const VIDEO_LOAD_TIMEOUT_MS = 6000;
-
-        function showVideoNetworkError() {
-            const iframe = document.getElementById('youtube-iframe');
-            const networkError = document.getElementById('video-network-error');
-            clearTimeout(videoLoadTimeout);
-            iframe.style.display = 'none';
-            iframe.src = '';
-            if (networkError) networkError.style.display = 'block';
-        }
-
         function openVideoPlayer(videoId) {
             let ex = null;
-            for (let lvl = 1; lvl <= 5; lvl++) {
-                ex = exercisesByLevel[lvl].find(e => e.videoId === videoId);
-                if (ex) break;
+            for (let lvl = 1; lvl <= 5; lvl++) { 
+                ex = exercisesByLevel[lvl].find(e => e.videoId === videoId); 
+                if (ex) break; 
             }
             if (!ex) return;
             currentExercise = ex;
@@ -7881,60 +7815,21 @@
             document.getElementById('video-player-goal').textContent = getExerciseGoal(ex);
             document.getElementById('video-player-tips').textContent = getExerciseTips(ex);
 
+            // Set YouTube iframe
             const ytId = youtubeVideos[videoId];
+            const iframe = document.getElementById('youtube-iframe');
             const placeholder = document.getElementById('video-unavailable-placeholder');
-            const networkError = document.getElementById('video-network-error');
             if (ytId) {
-                loadYoutubeVideo(ytId);
+                iframe.src = `https://www.youtube.com/embed/${ytId}?rel=0&modestbranding=1`;
+                iframe.style.display = 'block';
+                if (placeholder) placeholder.style.display = 'none';
             } else {
-                clearTimeout(videoLoadTimeout);
-                const iframe = document.getElementById('youtube-iframe');
                 iframe.style.display = 'none';
                 iframe.src = '';
-                if (networkError) networkError.style.display = 'none';
                 if (placeholder) placeholder.style.display = 'block';
             }
 
             showScreen('screen-video-player');
-        }
-
-        function loadYoutubeVideo(ytId) {
-            const iframe = document.getElementById('youtube-iframe');
-            const placeholder = document.getElementById('video-unavailable-placeholder');
-            const networkError = document.getElementById('video-network-error');
-            currentVideoYtId = ytId;
-            clearTimeout(videoLoadTimeout);
-            if (placeholder) placeholder.style.display = 'none';
-            if (networkError) networkError.style.display = 'none';
-
-            // No connection at all — don't even attempt the embed, show the honest
-            // "needs network" message immediately instead of a doomed blank iframe.
-            if (typeof navigator !== 'undefined' && navigator.onLine === false) {
-                showVideoNetworkError();
-                return;
-            }
-
-            let settled = false;
-            const commit = (reachable) => {
-                if (settled) return;
-                settled = true;
-                clearTimeout(videoLoadTimeout);
-                if (reachable) {
-                    iframe.style.display = 'block';
-                    iframe.src = `https://www.youtube.com/embed/${ytId}?rel=0&modestbranding=1`;
-                } else {
-                    showVideoNetworkError();
-                }
-            };
-            const probe = new Image();
-            probe.onload = () => commit(true);
-            probe.onerror = () => commit(false);
-            probe.src = `https://i.ytimg.com/vi/${ytId}/default.jpg?_=${Date.now()}`;
-            videoLoadTimeout = setTimeout(() => commit(false), VIDEO_LOAD_TIMEOUT_MS);
-        }
-
-        function retryVideoLoad() {
-            if (currentVideoYtId) loadYoutubeVideo(currentVideoYtId);
         }
 
         function goToExerciseFromVideo() { 
@@ -8036,7 +7931,7 @@
             if (userSchedule.days.length === 0) {
                 schedDiv.innerHTML = `<div style="color: var(--text-secondary);">${t('no_schedule')}</div>`;
             } else {
-                schedDiv.innerHTML = userSchedule.days.map(d => `<div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border);"><span>${dayNames[d]}</span><span style="color: var(--accent);">${userSchedule.times[d] || '18:00'}</span></div>`).join('');
+                schedDiv.innerHTML = userSchedule.days.map(d => `<div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border);"><span>${dayNames[d]}</span><span style="color: var(--accent-text);">${userSchedule.times[d] || '18:00'}</span></div>`).join('');
             }
             showScreen('screen-profile');
         }
@@ -8265,7 +8160,8 @@
                 const achName = (achievementTranslations[currentLang] && achievementTranslations[currentLang][a.name]) || a.name;
                 const cls = `achievement-item${isUnlocked ? ' unlocked' : ''}${isNew ? ' achievement-just-unlocked' : ''}`;
                 const lock = isUnlocked ? '' : `<div class="achievement-lock">${LOCK_ICON_SVG}</div>`;
-                return `<div class="${cls}">${lock}<div class="achievement-icon">${a.icon}</div><div class="achievement-name">${achName}</div></div>`;
+                const statusLabel = isUnlocked ? (t('unlocked') || 'נפתחו') : (t('achievement_locked') || 'נעול');
+                return `<div class="${cls}" role="group" aria-label="${achName} — ${statusLabel}">${lock}<div class="achievement-icon" aria-hidden="true">${a.icon}</div><div class="achievement-name">${achName}</div></div>`;
             }).join('');
             justUnlockedAchievementIds = [];
             showScreen('screen-achievements');
@@ -8306,12 +8202,13 @@
                     ? `<div class="program-progress-track"><div class="program-progress-fill" style="width:${getProgramProgressPercent(def)}%;"></div></div>`
                     : '';
                 const lockNote = levelLocked
-                    ? `<div style="color: var(--warning); font-size:0.78rem; margin-top:6px;">🔒 ${t('program_unlock_at_level') || 'Unlocks at level'} ${def.levelReq}</div>`
+                    ? `<div style="color: var(--warning-text); font-size:0.78rem; margin-top:6px;">🔒 ${t('program_unlock_at_level') || 'Unlocks at level'} ${def.levelReq}</div>`
                     : (premiumLocked
-                        ? `<div style="color: var(--accent); font-size:0.78rem; margin-top:6px;">⭐ ${t('program_premium_required') || 'Requires Premium'}</div>`
+                        ? `<div style="color: var(--accent-text); font-size:0.78rem; margin-top:6px;">⭐ ${t('program_premium_required') || 'Requires Premium'}</div>`
                         : '');
-                const clickHandler = levelLocked ? '' : `onclick="handleProgramCardClick('${def.id}')"`;
-                return `<div class="card program-card ${isLocked ? 'locked' : ''}" style="${levelLocked ? 'opacity:0.55; cursor:not-allowed;' : 'cursor:pointer;'}" ${clickHandler}>
+                const clickHandler = levelLocked ? '' : `onclick="handleProgramCardClick('${def.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();handleProgramCardClick('${def.id}');}"`;
+                const interactiveAttrs = levelLocked ? 'aria-disabled="true"' : `role="button" tabindex="0" aria-label="${getProgramName(def)}"`;
+                return `<div class="card program-card ${isLocked ? 'locked' : ''}" style="${levelLocked ? 'opacity:0.55; cursor:not-allowed;' : 'cursor:pointer;'}" ${interactiveAttrs} ${clickHandler}>
                     <div class="program-card-icon">${def.icon}</div>
                     <div class="program-card-body">
                         <div class="program-card-name">${getProgramName(def)}</div>
@@ -8377,7 +8274,7 @@
             list.innerHTML = weekPlan.map(item => {
                 const ex = openExerciseByIdLookup(item.id);
                 const name = ex ? getExerciseName(ex) : item.id;
-                return `<div class="program-day-exercise" onclick="openExerciseById('${item.id}')">
+                return `<div class="program-day-exercise" role="button" tabindex="0" aria-label="${name}" onclick="openExerciseById('${item.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openExerciseById('${item.id}');}">
                     <div class="program-day-exercise-name">${name}</div>
                     <div class="program-day-exercise-vol" dir="ltr">${item.sets} × ${item.reps}</div>
                 </div>`;
@@ -8488,12 +8385,17 @@
                     const ytId = youtubeVideos[ex.videoId];
                     card.innerHTML = `<div class="video-thumbnail"><div class="play-btn"><svg class="icon-svg " viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M10 8.5v7l6-3.5z"/></svg></div><div style="position: absolute; bottom: 10px; left: 10px; background: rgba(0,0,0,0.7); padding: 4px 10px; border-radius: 8px; font-size: 0.8rem;">${t('level') || 'רמה'} ${lvl} ${!isUnlocked ? '🔒' : ''}</div></div><div class="video-info"><div class="video-title">${getExerciseName(ex)}</div><div class="video-meta">${getExerciseDesc(ex)} • ${t('difficulty_' + ex.difficulty) || ex.difficulty}</div></div>`;
                     if (isUnlocked) {
+                        card.setAttribute('role', 'button');
+                        card.tabIndex = 0;
+                        card.setAttribute('aria-label', getExerciseName(ex));
                         card.onclick = () => openVideoPlayer(ex.videoId);
+                        card.onkeydown = (event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); openVideoPlayer(ex.videoId); } };
                         if (!ytId) card.style.opacity = '0.75'; // signal: written guide available, video not yet
                     }
-                    else { 
-                        card.style.opacity = '0.5'; 
-                        card.style.cursor = 'not-allowed'; 
+                    else {
+                        card.style.opacity = '0.5';
+                        card.style.cursor = 'not-allowed';
+                        card.setAttribute('aria-disabled', 'true');
                     }
                     list.appendChild(card);
                 });
@@ -8993,17 +8895,6 @@
                 });
             }
 
-            // Weight / body fat charts — same "no data yet" swap as the workouts/
-            // scores/weekly charts above: an empty Chart.js grid with axis lines
-            // but no line reads as broken, so show a plain message instead.
-            const hasMetrics = bodyMetrics.length > 0;
-            ['weight', 'bodyfat'].forEach(key => {
-                const canvas = document.getElementById(`chart-${key}`);
-                const empty = document.getElementById(`chart-${key}-empty`);
-                if (canvas) canvas.style.display = hasMetrics ? '' : 'none';
-                if (empty) empty.style.display = hasMetrics ? 'none' : '';
-            });
-
             // Weight chart
             const weightCtx = document.getElementById('chart-weight');
             if (weightCtx && bodyMetrics.length > 0) {
@@ -9129,11 +9020,7 @@
             if (!container) return;
 
             if (bodyMetrics.length === 0) {
-                container.innerHTML = `<div class="card empty-state-block">
-                    <div class="empty-state-icon"><svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="18" height="10" rx="2"/><path d="M7 7v3M11 7v5M15 7v3M19 7v5"/></svg></div>
-                    <div class="empty-state-title">${t('no_metrics') || 'עדיין אין מדידות'}</div>
-                    <div class="empty-state-desc">${t('no_metrics_desc') || 'הוסף/י מדידה למעלה כדי לראות את ההתקדמות שלך לאורך זמן'}</div>
-                </div>`;
+                container.innerHTML = `<div class="card" style="text-align: center; color: var(--text-secondary);">${t('no_metrics') || 'עדיין אין מדידות'}</div>`;
                 return;
             }
 
@@ -9311,21 +9198,14 @@
                 }
                 statusEl.textContent = t('per_100g_note') || 'הערכים ל-100 גרם — ניתן לערוך לאחר הבחירה';
                 resultsEl.innerHTML = products.map((p, i) => `
-                    <div style="padding:10px 12px; background: var(--bg-elevated); border:1px solid var(--border); border-radius:10px; margin-bottom:6px; cursor:pointer;" onclick='selectFoodResult(${i})'>
+                    <div style="padding:10px 12px; background: var(--bg-elevated); border:1px solid var(--border); border-radius:10px; margin-bottom:6px; cursor:pointer;" role="button" tabindex="0" aria-label="${p.product_name}" onclick='selectFoodResult(${i})' onkeydown='if(event.key==="Enter"||event.key===" "){event.preventDefault();selectFoodResult(${i});}'>
                         <div style="font-weight:600; font-size:0.9rem;">${p.product_name}</div>
                         <div style="font-size:0.78rem; color: var(--text-secondary);">${Math.round(p.nutriments['energy-kcal_100g'])} ${t('kcal') || 'קל'} / 100g</div>
                     </div>
                 `).join('');
                 window._lastFoodSearchResults = products;
             } catch (err) {
-                // Honest, actionable failure — no silent no-op and no raw fetch
-                // error surfaced to the user — with a one-tap retry that re-runs
-                // the exact same search (manual entry below still works either way).
-                statusEl.textContent = '';
-                resultsEl.innerHTML = `<div class="food-search-error">
-                    <span>${t('search_failed') || 'החיפוש נכשל (בדוק חיבור לאינטרנט) — ניתן להזין ידנית'}</span>
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="searchFoodDatabase()">${t('retry_search') || 'Try again'}</button>
-                </div>`;
+                statusEl.textContent = t('search_failed') || 'החיפוש נכשל (בדוק חיבור לאינטרנט) — ניתן להזין ידנית';
             }
         }
 
@@ -9350,15 +9230,6 @@
             const ctx = document.getElementById('nutrition-trend-chart');
             if (!ctx) return;
             if (charts.nutritionTrend) charts.nutritionTrend.destroy();
-
-            // Same "no data yet" swap as the other history charts — a bar chart
-            // with every bar at zero height reads as blank/broken, not "nothing
-            // logged yet".
-            const emptyEl = document.getElementById('nutrition-trend-empty');
-            const hasLog = nutritionLog.length > 0;
-            ctx.style.display = hasLog ? '' : 'none';
-            if (emptyEl) emptyEl.style.display = hasLog ? 'none' : '';
-            if (!hasLog) return;
 
             const labels = [];
             const consumedData = [];
@@ -9507,15 +9378,11 @@
             const todayFoods = nutritionLog.filter(f => new Date(f.date).toDateString() === today).reverse();
 
             if (todayFoods.length === 0) {
-                container.innerHTML = `<div class="card empty-state-block">
-                    <div class="empty-state-icon"><svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2v6a2 2 0 0 0 4 0V2"/><path d="M9 10v12"/><path d="M17 2c-1.5 0-3 2-3 5s1.2 4.5 3 4.5V22"/></svg></div>
-                    <div class="empty-state-title">${t('no_food_today') || 'עדיין לא הוספת מאכלים היום'}</div>
-                    <div class="empty-state-desc">${t('no_food_today_desc') || 'הוסף/י ארוחה למעלה כדי להתחיל לעקוב אחרי קלוריות וחלבון'}</div>
-                </div>`;
+                container.innerHTML = `<div style="color: var(--text-secondary); text-align: center; padding: 20px;">${t('no_food_today') || 'עדיין לא הוספת מאכלים היום'}</div>`;
                 return;
             }
 
-            container.innerHTML = `<div class="nutrition-day">${todayFoods.map(f => `<div class="nutrition-item">${f.photo ? `<img src="${f.photo}" style="width:40px;height:40px;border-radius:8px;object-fit:cover;margin-left:10px;">` : ''}<div><strong>${f.name}</strong><div style="font-size: 0.8rem; color: var(--text-secondary);">${f.protein}g ${t('protein') || 'חלבון'}${f.sugar ? ` · ${f.sugar}g ${t('sugar') || 'סוכר'}` : ''}${f.fiber ? ` · ${f.fiber}g ${t('fiber') || 'סיבים'}` : ''}</div></div><div style="font-weight: 700; color: var(--accent); margin-right:auto;">${f.calories} ${t('kcal') || 'קל'}</div></div>`).join('')}</div>`;
+            container.innerHTML = `<div class="nutrition-day">${todayFoods.map(f => `<div class="nutrition-item">${f.photo ? `<img src="${f.photo}" style="width:40px;height:40px;border-radius:8px;object-fit:cover;margin-left:10px;">` : ''}<div><strong>${f.name}</strong><div style="font-size: 0.8rem; color: var(--text-secondary);">${f.protein}g ${t('protein') || 'חלבון'}${f.sugar ? ` · ${f.sugar}g ${t('sugar') || 'סוכר'}` : ''}${f.fiber ? ` · ${f.fiber}g ${t('fiber') || 'סיבים'}` : ''}</div></div><div style="font-weight: 700; color: var(--accent-text); margin-right:auto;">${f.calories} ${t('kcal') || 'קל'}</div></div>`).join('')}</div>`;
         }
 
         // ==================== DAILY CHALLENGE (adaptive difficulty) ====================
@@ -9780,11 +9647,7 @@
             if (!container) return;
 
             if (raceHistory.length === 0) {
-                container.innerHTML = `<div class="empty-state-block" style="padding:16px 12px;">
-                    <div class="empty-state-icon" style="width:64px; height:64px; border-radius:18px;"><svg class="icon-svg" style="width:26px;height:26px;" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13.5" r="8"/><path d="M12 13.5V9"/><path d="M10 2h4"/><path d="M12 2v2.5"/></svg></div>
-                    <div class="empty-state-title" style="font-size:1rem;">${t('no_races') || 'עדיין לא עשית מירוצים'}</div>
-                    <div class="empty-state-desc" style="font-size:0.85rem;">${t('no_races_desc') || 'התחל/י מירוץ למעלה כדי לראות כאן את התוצאות שלך'}</div>
-                </div>`;
+                container.innerHTML = `<div style="color: var(--text-secondary); text-align: center;">${t('no_races') || 'עדיין לא עשית מירוצים'}</div>`;
                 return;
             }
 
@@ -9872,7 +9735,7 @@
 
         async function toggleNotifications() {
             notificationsEnabled = !notificationsEnabled;
-            document.getElementById('notif-toggle').classList.toggle('active', notificationsEnabled);
+            setToggleSwitch('notif-toggle', notificationsEnabled);
             localStorage.setItem('masa_notif', notificationsEnabled);
 
             if (notificationsEnabled) {
@@ -9880,7 +9743,7 @@
                 if (!granted) {
                     showToast(t('notif_denied') || '❌ Permission needed');
                     notificationsEnabled = false;
-                    document.getElementById('notif-toggle').classList.remove('active');
+                    setToggleSwitch('notif-toggle', false);
                     localStorage.setItem('masa_notif', false);
                     saveToStorage();
                     return;
@@ -9893,7 +9756,7 @@
 
         async function toggleDailyReminder() {
             dailyReminderEnabled = !dailyReminderEnabled;
-            document.getElementById('daily-toggle').classList.toggle('active', dailyReminderEnabled);
+            setToggleSwitch('daily-toggle', dailyReminderEnabled);
             localStorage.setItem('masa_daily_remind', dailyReminderEnabled);
 
             if (dailyReminderEnabled) {
@@ -9901,7 +9764,7 @@
                 if (!granted) {
                     showToast(t('notif_denied') || '❌ Permission needed');
                     dailyReminderEnabled = false;
-                    document.getElementById('daily-toggle').classList.remove('active');
+                    setToggleSwitch('daily-toggle', false);
                     localStorage.setItem('masa_daily_remind', false);
                     saveToStorage();
                     return;
@@ -9913,7 +9776,7 @@
 
         async function toggleStreakReminder() {
             streakReminderEnabled = !streakReminderEnabled;
-            document.getElementById('streak-toggle').classList.toggle('active', streakReminderEnabled);
+            setToggleSwitch('streak-toggle', streakReminderEnabled);
             localStorage.setItem('masa_streak_remind', streakReminderEnabled);
 
             if (streakReminderEnabled) {
@@ -9921,7 +9784,7 @@
                 if (!granted) {
                     showToast(t('notif_denied') || '❌ Permission needed');
                     streakReminderEnabled = false;
-                    document.getElementById('streak-toggle').classList.remove('active');
+                    setToggleSwitch('streak-toggle', false);
                     localStorage.setItem('masa_streak_remind', false);
                     saveToStorage();
                     return;
@@ -10213,9 +10076,9 @@
                 saveToStorage();
             }
 
-            document.getElementById('notif-toggle').classList.toggle('active', notificationsEnabled);
-            document.getElementById('daily-toggle').classList.toggle('active', dailyReminderEnabled);
-            document.getElementById('streak-toggle').classList.toggle('active', streakReminderEnabled);
+            setToggleSwitch('notif-toggle', notificationsEnabled);
+            setToggleSwitch('daily-toggle', dailyReminderEnabled);
+            setToggleSwitch('streak-toggle', streakReminderEnabled);
         }
 
         function showOffline() {
@@ -10489,11 +10352,7 @@
             const strip = document.getElementById('photos-strip');
             if (!strip) return;
             if (progressPhotos.length === 0) {
-                strip.innerHTML = `<div class="empty-state-block" style="padding:20px 12px; width:100%;">
-                    <div class="empty-state-icon" style="width:64px; height:64px; border-radius:18px;"><svg class="icon-svg" style="width:26px;height:26px;" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8a2 2 0 0 1 2-2h1.5l1-1.5h7l1 1.5H18a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><circle cx="12" cy="12.5" r="3.5"/></svg></div>
-                    <div class="empty-state-title" style="font-size:1rem;">${t('photos_empty') || 'עדיין אין תמונות'}</div>
-                    <div class="empty-state-desc" style="font-size:0.85rem;">${t('photos_empty_desc') || 'צלם/י תמונה ראשונה כדי להתחיל לראות את השינוי'}</div>
-                </div>`;
+                strip.innerHTML = `<div style="color: var(--text-secondary); font-size:0.85rem;">${t('photos_empty') || 'עדיין אין תמונות'}</div>`;
                 return;
             }
             strip.innerHTML = progressPhotos.map((p, i) => {
