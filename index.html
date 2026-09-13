@@ -938,16 +938,20 @@
         .journey-date { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 4px; }
         .journey-title { font-weight: 700; margin-bottom: 4px; }
         .journey-desc { font-size: 0.9rem; color: var(--text-secondary); }
-        .journey-empty-state { text-align: center; padding: 36px 20px; }
-        .journey-empty-icon {
+        /* Shared "nothing here yet" visual language — first used for the Journey
+           timeline, now reused anywhere a list/history is empty (nutrition log,
+           progress photos, body metrics, race history, ...) so every first-time
+           state in the app reads as intentional rather than as a blank/broken box. */
+        .journey-empty-state, .empty-state-block { text-align: center; padding: 36px 20px; }
+        .journey-empty-icon, .empty-state-icon {
             width: 84px; height: 84px; border-radius: 24px;
             background: var(--bg-elevated); border: 1px solid var(--border);
             display: flex; align-items: center; justify-content: center;
             margin: 0 auto 18px; color: var(--accent);
         }
-        .journey-empty-icon .icon-svg { width: 34px; height: 34px; }
-        .journey-empty-title { font-weight: 700; font-size: 1.15rem; margin-bottom: 8px; }
-        .journey-empty-desc { color: var(--text-secondary); font-size: 0.9rem; line-height: 1.6; max-width: 320px; margin: 0 auto; }
+        .journey-empty-icon .icon-svg, .empty-state-icon .icon-svg { width: 34px; height: 34px; }
+        .journey-empty-title, .empty-state-title { font-weight: 700; font-size: 1.15rem; margin-bottom: 8px; }
+        .journey-empty-desc, .empty-state-desc { color: var(--text-secondary); font-size: 0.9rem; line-height: 1.6; max-width: 320px; margin: 0 auto; }
 
         /* ==================== RECOVERY / STRETCHING ==================== */
         .recovery-tab-active { border-color: var(--accent) !important; color: var(--accent) !important; background: var(--accent-glow) !important; }
@@ -1312,6 +1316,12 @@
             font-size: 0.85rem;
             padding: 40px 12px;
         }
+        .food-search-error, .network-error-msg {
+            display: flex; flex-direction: column; align-items: center; gap: 10px;
+            text-align: center; color: var(--text-secondary); font-size: 0.85rem;
+            padding: 14px 12px; background: var(--bg-elevated); border: 1px solid var(--border);
+            border-radius: 12px; margin-bottom: 6px;
+        }
 
         /* ==================== BODY METRICS ==================== */
         .metric-input-group {
@@ -1660,6 +1670,7 @@
                 <p class="tagline" data-i18n="onboarding_subtitle">פרטים בסיסיים לפני הקוויז</p>
             </div>
             <div class="card">
+                <div class="more-group-title" style="margin-top:0;" data-i18n="onb_section_about">עליך</div>
                 <div class="form-group"><label data-i18n="full_name">שם מלא *</label><input type="text" id="onb-name" placeholder="השם שלך" data-i18n-placeholder="name_placeholder"></div>
                 <div class="form-group"><label data-i18n="age">גיל *</label><input type="number" id="onb-age" placeholder="25" min="10" max="100"></div>
                 <div class="form-group"><label data-i18n="gender">מין</label>
@@ -1670,6 +1681,8 @@
                         <option value="other" data-i18n="other">אחר</option>
                     </select>
                 </div>
+
+                <div class="more-group-title" style="border-top:1px solid var(--border); padding-top:16px;" data-i18n="onb_section_body">הגוף שלך</div>
                 <div class="metric-input-group">
                     <div class="metric-card">
                         <div class="metric-label-small" data-i18n="weight_kg">משקל (ק"ג) *</div>
@@ -1680,6 +1693,8 @@
                         <input type="number" class="metric-value-input" id="onb-height" placeholder="175" step="0.5" min="100" max="230">
                     </div>
                 </div>
+
+                <div class="more-group-title" style="border-top:1px solid var(--border); padding-top:16px;" data-i18n="onb_section_training">האימונים שלך</div>
                 <div class="form-group"><label data-i18n="activity_level">רמת פעילות יומית</label>
                     <select id="onb-activity">
                         <option value="sedentary" data-i18n="activity_sedentary">יושבני (עבודת משרד, ללא ספורט)</option>
@@ -1699,7 +1714,8 @@
                         <option value="health" data-i18n="goal_health">בריאות כללית</option>
                     </select>
                 </div>
-                <label style="display:flex; align-items:flex-start; gap:8px; margin:14px 0; font-size:0.82rem; color: var(--text-secondary); line-height:1.5;">
+
+                <label style="display:flex; align-items:flex-start; gap:8px; margin:14px 0; font-size:0.82rem; color: var(--text-secondary); line-height:1.5; border-top:1px solid var(--border); padding-top:16px;">
                     <input type="checkbox" id="onb-consent" style="margin-top:3px; flex-shrink:0;">
                     <span data-i18n="consent_text">קראתי ואני מסכים/ה ל<a href="#" onclick="event.preventDefault(); showLegal();" style="color:var(--accent);">תנאי השימוש ומדיניות הפרטיות</a></span>
                 </label>
@@ -2050,6 +2066,11 @@
                         <div style="color: var(--text-secondary); margin-bottom:8px;"><svg class="icon-svg" viewBox="0 0 24 24" style="width:36px;height:36px;" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M10 8.5v7l6-3.5z"/></svg></div>
                         <div style="font-size:0.9rem; color: var(--text-secondary);" data-i18n="video_not_available">סרטון עדיין לא זמין לתרגיל הזה — עקוב/י אחרי ההנחיות הכתובות למטה</div>
                     </div>
+                    <div id="video-network-error" style="display:none; text-align:center; padding:20px;">
+                        <div style="color: var(--text-secondary); margin-bottom:8px;"><svg class="icon-svg" viewBox="0 0 24 24" style="width:36px;height:36px;" aria-hidden="true"><path d="M2 8.5a15 15 0 0 1 20 0"/><path d="M5.5 12.5a10 10 0 0 1 13 0"/><path d="M9 16.5a5 5 0 0 1 6 0"/><line x1="3" y1="3" x2="21" y2="21"/></svg></div>
+                        <div style="font-size:0.9rem; color: var(--text-secondary); margin-bottom:12px;" data-i18n="video_network_error">הסרטון דורש חיבור לאינטרנט וזה לא הצליח להיטען — בדוק/י את החיבור ונסה/י שוב. ההנחיות הכתובות למטה עובדות גם בלי אינטרנט.</div>
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="retryVideoLoad()" data-i18n="retry_search">נסה שוב</button>
+                    </div>
                 </div>
                 <div style="padding: 20px;">
                     <h2 id="video-player-title" style="margin-bottom: 8px;"></h2>
@@ -2258,11 +2279,13 @@
             <div class="chart-container">
                 <div class="chart-title"><span style="display:inline-flex;vertical-align:-3px;margin-inline-end:6px;color:var(--accent);"><svg class="icon-svg" style="width:17px;height:17px;" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M4 20h16"/></svg></span><span data-i18n="chart_weight">משקל לאורך זמן</span></div>
                 <canvas id="chart-weight" class="chart-canvas"></canvas>
+                <div id="chart-weight-empty" class="chart-empty-msg" style="display:none;" data-i18n="chart_metrics_no_data">אין עדיין נתונים — הוסף/י מדידה כדי לראות כאן התקדמות</div>
             </div>
 
             <div class="chart-container">
                 <div class="chart-title"><span style="display:inline-flex;vertical-align:-3px;margin-inline-end:6px;color:var(--accent);"><svg class="icon-svg" style="width:17px;height:17px;" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M4 20h16"/></svg></span><span data-i18n="chart_bodyfat">אחוז שומן לאורך זמן</span></div>
                 <canvas id="chart-bodyfat" class="chart-canvas"></canvas>
+                <div id="chart-bodyfat-empty" class="chart-empty-msg" style="display:none;" data-i18n="chart_metrics_no_data">אין עדיין נתונים — הוסף/י מדידה כדי לראות כאן התקדמות</div>
             </div>
 
             <div class="card">
@@ -2409,6 +2432,7 @@
             <div class="card">
                 <h3 style="margin-bottom: 12px;" data-i18n="nutrition_trend">מגמת השבוע האחרון</h3>
                 <canvas id="nutrition-trend-chart" height="160"></canvas>
+                <div id="nutrition-trend-empty" class="chart-empty-msg" style="display:none;" data-i18n="chart_nutrition_no_data">אין עדיין נתונים — הוסף/י ארוחה כדי לראות כאן מגמה</div>
             </div>
 
             <div class="nutrition-totals" id="nutrition-totals">
@@ -2839,6 +2863,9 @@
                 back: "חזרה",
                 onboarding_title: "בוא נכיר אותך",
                 onboarding_subtitle: "פרטים בסיסיים לפני הקוויז",
+                onb_section_about: "עליך",
+                onb_section_body: "הגוף שלך",
+                onb_section_training: "האימונים שלך",
                 full_name: "שם מלא *",
                 age: "גיל *",
                 gender: "מין",
@@ -2897,6 +2924,7 @@
                 no_exercises_found: "לא נמצאו תרגילים התואמים לחיפוש",
                 back_to_videos: "חזרה לסרטונים",
                 video_not_available: "סרטון עדיין לא זמין לתרגיל הזה — עקוב/י אחרי ההנחיות הכתובות למטה",
+                video_network_error: "הסרטון דורש חיבור לאינטרנט וזה לא הצליח להיטען — בדוק/י את החיבור ונסה/י שוב. ההנחיות הכתובות למטה עובדות גם בלי אינטרנט.",
                 more_group_progress: "התקדמות",
                 more_group_health: "בריאות",
                 more_group_system: "מערכת",
@@ -3112,6 +3140,8 @@
                 chart_scores: "ציונים לאורך זמן",
                 chart_weekly: "פילוח שבועי",
                 chart_no_data: "אין עדיין נתונים — סיימו אימון כדי לראות כאן התקדמות",
+                chart_metrics_no_data: "אין עדיין נתונים — הוסף/י מדידה כדי לראות כאן התקדמות",
+                chart_nutrition_no_data: "אין עדיין נתונים — הוסף/י ארוחה כדי לראות כאן מגמה",
                 level: "רמה",
                 beginner: "מתחיל",
                 advanced: "מתקדם",
@@ -3139,6 +3169,7 @@
                 chart_weight: "משקל לאורך זמן",
                 chart_bodyfat: "אחוז שומן לאורך זמן",
                 no_metrics: "עדיין אין מדידות",
+                no_metrics_desc: "הוסף/י מדידה למעלה כדי לראות את ההתקדמות שלך לאורך זמן",
                 kg: "ק\"ג",
                 cm: "ס\"מ",
                 plan_based_on_values: "מבוסס על",
@@ -3148,6 +3179,7 @@
                 no_results: "לא נמצאו תוצאות — ניתן להזין ידנית",
                 per_100g_note: "הערכים ל-100 גרם — ניתן לערוך לאחר הבחירה",
                 search_failed: "החיפוש נכשל (בדוק חיבור לאינטרנט) — ניתן להזין ידנית",
+                retry_search: "נסה שוב",
                 adjust_for_portion: "ערכים ל-100 גרם — התאם/י לפי הכמות שאכלת בפועל",
                 food_advanced_toggle: "+ פירוט נוסף (סוכר, סיבים, תמונה)",
                 sugar: "סוכר (ג)",
@@ -3235,6 +3267,7 @@
                 photos_desc: "צלם את עצמך מדי פעם כדי לראות את השינוי. התמונות נשמרות רק במכשיר שלך.",
                 photos_add: "הוסף תמונה",
                 photos_empty: "עדיין אין תמונות",
+                photos_empty_desc: "צלם/י תמונה ראשונה כדי להתחיל לראות את השינוי",
                 photos_limit: "הגעת למספר התמונות המקסימלי",
                 photo_saved: "התמונה נשמרה",
                 photo_error: "לא ניתן לקרוא את התמונה",
@@ -3288,6 +3321,7 @@
                 smart_reminder_found: "לפי ההיסטוריה שלך, אתה מתאמן בעיקר בסביבות",
                 add_food_btn: "הוסף לארוחה",
                 no_food_today: "עדיין לא הוספת מאכלים היום",
+                no_food_today_desc: "הוסף/י ארוחה למעלה כדי להתחיל לעקוב אחרי קלוריות וחלבון",
                 enter_food: "נא להזין שם וקלוריות",
                 food_added: "המאכל נוסף!",
                 kcal: "קל",
@@ -3340,6 +3374,7 @@
                 save_race: "שמור תוצאה",
                 race_history: "היסטוריית מירוצים",
                 no_races: "עדיין לא עשית מירוצים",
+                no_races_desc: "התחל/י מירוץ למעלה כדי לראות כאן את התוצאות שלך",
                 race_score: "ציון",
                 race_saved: "תוצאת המירוץ נשמרה!",
                 squats: "סקוואטים",
@@ -3511,6 +3546,9 @@
                 back: "Back",
                 onboarding_title: "Let's Get to Know You",
                 onboarding_subtitle: "Basic details before the quiz",
+                onb_section_about: "About you",
+                onb_section_body: "Your body",
+                onb_section_training: "Your training",
                 full_name: "Full Name *",
                 age: "Age *",
                 gender: "Gender",
@@ -3569,6 +3607,7 @@
                 no_exercises_found: "No exercises match your search",
                 back_to_videos: "Back to Videos",
                 video_not_available: "Video not yet available for this exercise — follow the written instructions below",
+                video_network_error: "This video needs an internet connection and couldn't load — check your connection and try again. The written instructions below still work without internet.",
                 more_group_progress: "Progress",
                 more_group_health: "Health",
                 more_group_system: "System",
@@ -3784,6 +3823,8 @@
                 chart_scores: "Scores Over Time",
                 chart_weekly: "Weekly Breakdown",
                 chart_no_data: "No data yet — finish a workout to see your progress here",
+                chart_metrics_no_data: "No data yet — add a measurement to see your progress here",
+                chart_nutrition_no_data: "No data yet — add a meal to see a trend here",
                 level: "Level",
                 beginner: "Beginner",
                 advanced: "Advanced",
@@ -3811,6 +3852,7 @@
                 chart_weight: "Weight Over Time",
                 chart_bodyfat: "Body Fat Over Time",
                 no_metrics: "No measurements yet",
+                no_metrics_desc: "Add a measurement above to see your progress over time",
                 kg: "kg",
                 cm: "cm",
                 plan_based_on_values: "Based on",
@@ -3820,6 +3862,7 @@
                 no_results: "No results found — you can enter manually",
                 per_100g_note: "Values per 100g — editable after selecting",
                 search_failed: "Search failed (check internet connection) — you can enter manually",
+                retry_search: "Try again",
                 adjust_for_portion: "Values per 100g — adjust to match the amount you actually ate",
                 food_advanced_toggle: "+ More detail (sugar, fiber, photo)",
                 sugar: "Sugar (g)",
@@ -3907,6 +3950,7 @@
                 photos_desc: "Take a photo now and then to see the change. Photos stay only on your device.",
                 photos_add: "Add photo",
                 photos_empty: "No photos yet",
+                photos_empty_desc: "Take your first photo to start seeing the change",
                 photos_limit: "You reached the maximum number of photos",
                 photo_saved: "Photo saved",
                 photo_error: "Could not read the image",
@@ -3960,6 +4004,7 @@
                 smart_reminder_found: "Based on your history, you mostly train around",
                 add_food_btn: "Add to Meal",
                 no_food_today: "No food added today",
+                no_food_today_desc: "Add a meal above to start tracking calories and protein",
                 enter_food: "Please enter name and calories",
                 food_added: "Food added!",
                 kcal: "kcal",
@@ -4012,6 +4057,7 @@
                 save_race: "Save Result",
                 race_history: "Race History",
                 no_races: "No races yet",
+                no_races_desc: "Start a race above to see your results here",
                 race_score: "Score",
                 race_saved: "Race result saved!",
                 squats: "Squats",
@@ -4183,6 +4229,9 @@
                 back: "Terug",
                 onboarding_title: "Laten we elkaar Leren Kennen",
                 onboarding_subtitle: "Basisgegevens voor de quiz",
+                onb_section_about: "Over jou",
+                onb_section_body: "Jouw lichaam",
+                onb_section_training: "Jouw training",
                 full_name: "Volledige Naam *",
                 age: "Leeftijd *",
                 gender: "Geslacht",
@@ -4241,6 +4290,7 @@
                 no_exercises_found: "Geen oefeningen komen overeen met je zoekopdracht",
                 back_to_videos: "Terug naar Video's",
                 video_not_available: "Nog geen video beschikbaar voor deze oefening — volg de geschreven instructies hieronder",
+                video_network_error: "Deze video heeft een internetverbinding nodig en kon niet laden — controleer je verbinding en probeer opnieuw. De geschreven instructies hieronder werken ook zonder internet.",
                 more_group_progress: "Voortgang",
                 more_group_health: "Gezondheid",
                 more_group_system: "Systeem",
@@ -4456,6 +4506,8 @@
                 chart_scores: "Scores in de Tijd",
                 chart_weekly: "Wekelijkse Verdeling",
                 chart_no_data: "Nog geen gegevens — voltooi een training om hier je voortgang te zien",
+                chart_metrics_no_data: "Nog geen gegevens — voeg een meting toe om hier je voortgang te zien",
+                chart_nutrition_no_data: "Nog geen gegevens — voeg een maaltijd toe om hier een trend te zien",
                 level: "Niveau",
                 beginner: "Beginner",
                 advanced: "Gevorderd",
@@ -4483,6 +4535,7 @@
                 chart_weight: "Gewicht in de Tijd",
                 chart_bodyfat: "Lichaamsvet in de Tijd",
                 no_metrics: "Nog geen metingen",
+                no_metrics_desc: "Voeg hierboven een meting toe om je voortgang in de tijd te zien",
                 kg: "kg",
                 cm: "cm",
                 plan_based_on_values: "Gebaseerd op",
@@ -4492,6 +4545,7 @@
                 no_results: "Geen resultaten — handmatig invoeren mogelijk",
                 per_100g_note: "Waarden per 100g — te bewerken na selectie",
                 search_failed: "Zoeken mislukt (controleer internetverbinding) — handmatig invoeren mogelijk",
+                retry_search: "Probeer opnieuw",
                 adjust_for_portion: "Waarden per 100g — pas aan naar de werkelijk gegeten hoeveelheid",
                 food_advanced_toggle: "+ Meer details (suiker, vezels, foto)",
                 sugar: "Suiker (g)",
@@ -4579,6 +4633,7 @@
                 photos_desc: "Maak af en toe een foto om de verandering te zien. Foto's blijven alleen op je apparaat.",
                 photos_add: "Foto toevoegen",
                 photos_empty: "Nog geen foto's",
+                photos_empty_desc: "Maak je eerste foto om de verandering te gaan zien",
                 photos_limit: "Je hebt het maximum aantal foto's bereikt",
                 photo_saved: "Foto opgeslagen",
                 photo_error: "Kon de afbeelding niet lezen",
@@ -4632,6 +4687,7 @@
                 smart_reminder_found: "Op basis van je geschiedenis train je meestal rond",
                 add_food_btn: "Toevoegen aan Maaltijd",
                 no_food_today: "Vandaag nog geen voedsel toegevoegd",
+                no_food_today_desc: "Voeg hierboven een maaltijd toe om calorieën en eiwitten bij te houden",
                 enter_food: "Voer naam en calorieën in",
                 food_added: "Voedsel toegevoegd!",
                 kcal: "kcal",
@@ -4684,6 +4740,7 @@
                 save_race: "Resultaat Opslaan",
                 race_history: "Race Geschiedenis",
                 no_races: "Nog geen races",
+                no_races_desc: "Start hierboven een race om hier je resultaten te zien",
                 race_score: "Score",
                 race_saved: "Race resultaat opgeslagen!",
                 squats: "Squats",
@@ -4855,6 +4912,9 @@
                 back: "Atrás",
                 onboarding_title: "Conozcámonos",
                 onboarding_subtitle: "Detalles básicos antes del cuestionario",
+                onb_section_about: "Sobre ti",
+                onb_section_body: "Tu cuerpo",
+                onb_section_training: "Tu entrenamiento",
                 full_name: "Nombre Completo *",
                 age: "Edad *",
                 gender: "Género",
@@ -4913,6 +4973,7 @@
                 no_exercises_found: "No se encontraron ejercicios que coincidan con tu búsqueda",
                 back_to_videos: "Volver a Videos",
                 video_not_available: "Aún no hay video disponible para este ejercicio — sigue las instrucciones escritas abajo",
+                video_network_error: "Este video necesita conexión a internet y no pudo cargar — verifica tu conexión e inténtalo de nuevo. Las instrucciones escritas abajo funcionan igualmente sin internet.",
                 more_group_progress: "Progreso",
                 more_group_health: "Salud",
                 more_group_system: "Sistema",
@@ -5128,6 +5189,8 @@
                 chart_scores: "Puntuaciones en el Tiempo",
                 chart_weekly: "Desglose Semanal",
                 chart_no_data: "Todavía no hay datos — termina un entrenamiento para ver tu progreso aquí",
+                chart_metrics_no_data: "Todavía no hay datos — añade una medida para ver tu progreso aquí",
+                chart_nutrition_no_data: "Todavía no hay datos — añade una comida para ver una tendencia aquí",
                 level: "Nivel",
                 beginner: "Principiante",
                 advanced: "Avanzado",
@@ -5155,6 +5218,7 @@
                 chart_weight: "Peso en el Tiempo",
                 chart_bodyfat: "Grasa Corporal en el Tiempo",
                 no_metrics: "Aún no hay medidas",
+                no_metrics_desc: "Añade una medida arriba para ver tu progreso a lo largo del tiempo",
                 kg: "kg",
                 cm: "cm",
                 plan_based_on_values: "Basado en",
@@ -5164,6 +5228,7 @@
                 no_results: "No se encontraron resultados — puedes ingresar manualmente",
                 per_100g_note: "Valores por 100g — editable tras seleccionar",
                 search_failed: "Búsqueda fallida (verifica tu conexión a internet) — puedes ingresar manualmente",
+                retry_search: "Reintentar",
                 adjust_for_portion: "Valores por 100g — ajusta según la cantidad que realmente comiste",
                 food_advanced_toggle: "+ Más detalles (azúcar, fibra, foto)",
                 sugar: "Azúcar (g)",
@@ -5251,6 +5316,7 @@
                 photos_desc: "Tómate una foto de vez en cuando para ver el cambio. Las fotos quedan solo en tu dispositivo.",
                 photos_add: "Añadir foto",
                 photos_empty: "Aún no hay fotos",
+                photos_empty_desc: "Toma tu primera foto para empezar a ver el cambio",
                 photos_limit: "Alcanzaste el número máximo de fotos",
                 photo_saved: "Foto guardada",
                 photo_error: "No se pudo leer la imagen",
@@ -5304,6 +5370,7 @@
                 smart_reminder_found: "Según tu historial, entrenas sobre todo alrededor de",
                 add_food_btn: "Añadir a la Comida",
                 no_food_today: "No has añadido alimentos hoy",
+                no_food_today_desc: "Añade una comida arriba para empezar a seguir calorías y proteínas",
                 enter_food: "Por favor introduce nombre y calorías",
                 food_added: "¡Alimento añadido!",
                 kcal: "kcal",
@@ -5356,6 +5423,7 @@
                 save_race: "Guardar Resultado",
                 race_history: "Historial de Carreras",
                 no_races: "Aún no has hecho carreras",
+                no_races_desc: "Empieza una carrera arriba para ver tus resultados aquí",
                 race_score: "Puntuación",
                 race_saved: "¡Resultado de carrera guardado!",
                 squats: "Sentadillas",
@@ -7777,11 +7845,34 @@
         }
 
         // ==================== VIDEO PLAYER ====================
+        // Real network-failure handling for the embedded YouTube player. The
+        // iframe itself can't tell us "blocked/offline" — it's cross-origin, and
+        // its 'load' event fires even when the navigation lands on a browser
+        // network-error page (a blocked/aborted request still "finishes loading"
+        // as far as the iframe is concerned, leaving a broken-image-shaped hole
+        // with no error ever surfacing). A plain <img> probe against a YouTube
+        // thumbnail CDN does NOT have that problem — its onerror reliably fires
+        // for a genuine network failure — so it's used as the real signal before
+        // ever committing to the iframe, backed by a timeout as a second line of
+        // defense (fires if neither onload nor onerror show up at all).
+        let currentVideoYtId = null;
+        let videoLoadTimeout = null;
+        const VIDEO_LOAD_TIMEOUT_MS = 6000;
+
+        function showVideoNetworkError() {
+            const iframe = document.getElementById('youtube-iframe');
+            const networkError = document.getElementById('video-network-error');
+            clearTimeout(videoLoadTimeout);
+            iframe.style.display = 'none';
+            iframe.src = '';
+            if (networkError) networkError.style.display = 'block';
+        }
+
         function openVideoPlayer(videoId) {
             let ex = null;
-            for (let lvl = 1; lvl <= 5; lvl++) { 
-                ex = exercisesByLevel[lvl].find(e => e.videoId === videoId); 
-                if (ex) break; 
+            for (let lvl = 1; lvl <= 5; lvl++) {
+                ex = exercisesByLevel[lvl].find(e => e.videoId === videoId);
+                if (ex) break;
             }
             if (!ex) return;
             currentExercise = ex;
@@ -7790,21 +7881,60 @@
             document.getElementById('video-player-goal').textContent = getExerciseGoal(ex);
             document.getElementById('video-player-tips').textContent = getExerciseTips(ex);
 
-            // Set YouTube iframe
             const ytId = youtubeVideos[videoId];
-            const iframe = document.getElementById('youtube-iframe');
             const placeholder = document.getElementById('video-unavailable-placeholder');
+            const networkError = document.getElementById('video-network-error');
             if (ytId) {
-                iframe.src = `https://www.youtube.com/embed/${ytId}?rel=0&modestbranding=1`;
-                iframe.style.display = 'block';
-                if (placeholder) placeholder.style.display = 'none';
+                loadYoutubeVideo(ytId);
             } else {
+                clearTimeout(videoLoadTimeout);
+                const iframe = document.getElementById('youtube-iframe');
                 iframe.style.display = 'none';
                 iframe.src = '';
+                if (networkError) networkError.style.display = 'none';
                 if (placeholder) placeholder.style.display = 'block';
             }
 
             showScreen('screen-video-player');
+        }
+
+        function loadYoutubeVideo(ytId) {
+            const iframe = document.getElementById('youtube-iframe');
+            const placeholder = document.getElementById('video-unavailable-placeholder');
+            const networkError = document.getElementById('video-network-error');
+            currentVideoYtId = ytId;
+            clearTimeout(videoLoadTimeout);
+            if (placeholder) placeholder.style.display = 'none';
+            if (networkError) networkError.style.display = 'none';
+
+            // No connection at all — don't even attempt the embed, show the honest
+            // "needs network" message immediately instead of a doomed blank iframe.
+            if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+                showVideoNetworkError();
+                return;
+            }
+
+            let settled = false;
+            const commit = (reachable) => {
+                if (settled) return;
+                settled = true;
+                clearTimeout(videoLoadTimeout);
+                if (reachable) {
+                    iframe.style.display = 'block';
+                    iframe.src = `https://www.youtube.com/embed/${ytId}?rel=0&modestbranding=1`;
+                } else {
+                    showVideoNetworkError();
+                }
+            };
+            const probe = new Image();
+            probe.onload = () => commit(true);
+            probe.onerror = () => commit(false);
+            probe.src = `https://i.ytimg.com/vi/${ytId}/default.jpg?_=${Date.now()}`;
+            videoLoadTimeout = setTimeout(() => commit(false), VIDEO_LOAD_TIMEOUT_MS);
+        }
+
+        function retryVideoLoad() {
+            if (currentVideoYtId) loadYoutubeVideo(currentVideoYtId);
         }
 
         function goToExerciseFromVideo() { 
@@ -8863,6 +8993,17 @@
                 });
             }
 
+            // Weight / body fat charts — same "no data yet" swap as the workouts/
+            // scores/weekly charts above: an empty Chart.js grid with axis lines
+            // but no line reads as broken, so show a plain message instead.
+            const hasMetrics = bodyMetrics.length > 0;
+            ['weight', 'bodyfat'].forEach(key => {
+                const canvas = document.getElementById(`chart-${key}`);
+                const empty = document.getElementById(`chart-${key}-empty`);
+                if (canvas) canvas.style.display = hasMetrics ? '' : 'none';
+                if (empty) empty.style.display = hasMetrics ? 'none' : '';
+            });
+
             // Weight chart
             const weightCtx = document.getElementById('chart-weight');
             if (weightCtx && bodyMetrics.length > 0) {
@@ -8988,7 +9129,11 @@
             if (!container) return;
 
             if (bodyMetrics.length === 0) {
-                container.innerHTML = `<div class="card" style="text-align: center; color: var(--text-secondary);">${t('no_metrics') || 'עדיין אין מדידות'}</div>`;
+                container.innerHTML = `<div class="card empty-state-block">
+                    <div class="empty-state-icon"><svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="18" height="10" rx="2"/><path d="M7 7v3M11 7v5M15 7v3M19 7v5"/></svg></div>
+                    <div class="empty-state-title">${t('no_metrics') || 'עדיין אין מדידות'}</div>
+                    <div class="empty-state-desc">${t('no_metrics_desc') || 'הוסף/י מדידה למעלה כדי לראות את ההתקדמות שלך לאורך זמן'}</div>
+                </div>`;
                 return;
             }
 
@@ -9173,7 +9318,14 @@
                 `).join('');
                 window._lastFoodSearchResults = products;
             } catch (err) {
-                statusEl.textContent = t('search_failed') || 'החיפוש נכשל (בדוק חיבור לאינטרנט) — ניתן להזין ידנית';
+                // Honest, actionable failure — no silent no-op and no raw fetch
+                // error surfaced to the user — with a one-tap retry that re-runs
+                // the exact same search (manual entry below still works either way).
+                statusEl.textContent = '';
+                resultsEl.innerHTML = `<div class="food-search-error">
+                    <span>${t('search_failed') || 'החיפוש נכשל (בדוק חיבור לאינטרנט) — ניתן להזין ידנית'}</span>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="searchFoodDatabase()">${t('retry_search') || 'Try again'}</button>
+                </div>`;
             }
         }
 
@@ -9198,6 +9350,15 @@
             const ctx = document.getElementById('nutrition-trend-chart');
             if (!ctx) return;
             if (charts.nutritionTrend) charts.nutritionTrend.destroy();
+
+            // Same "no data yet" swap as the other history charts — a bar chart
+            // with every bar at zero height reads as blank/broken, not "nothing
+            // logged yet".
+            const emptyEl = document.getElementById('nutrition-trend-empty');
+            const hasLog = nutritionLog.length > 0;
+            ctx.style.display = hasLog ? '' : 'none';
+            if (emptyEl) emptyEl.style.display = hasLog ? 'none' : '';
+            if (!hasLog) return;
 
             const labels = [];
             const consumedData = [];
@@ -9346,7 +9507,11 @@
             const todayFoods = nutritionLog.filter(f => new Date(f.date).toDateString() === today).reverse();
 
             if (todayFoods.length === 0) {
-                container.innerHTML = `<div style="color: var(--text-secondary); text-align: center; padding: 20px;">${t('no_food_today') || 'עדיין לא הוספת מאכלים היום'}</div>`;
+                container.innerHTML = `<div class="card empty-state-block">
+                    <div class="empty-state-icon"><svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2v6a2 2 0 0 0 4 0V2"/><path d="M9 10v12"/><path d="M17 2c-1.5 0-3 2-3 5s1.2 4.5 3 4.5V22"/></svg></div>
+                    <div class="empty-state-title">${t('no_food_today') || 'עדיין לא הוספת מאכלים היום'}</div>
+                    <div class="empty-state-desc">${t('no_food_today_desc') || 'הוסף/י ארוחה למעלה כדי להתחיל לעקוב אחרי קלוריות וחלבון'}</div>
+                </div>`;
                 return;
             }
 
@@ -9615,7 +9780,11 @@
             if (!container) return;
 
             if (raceHistory.length === 0) {
-                container.innerHTML = `<div style="color: var(--text-secondary); text-align: center;">${t('no_races') || 'עדיין לא עשית מירוצים'}</div>`;
+                container.innerHTML = `<div class="empty-state-block" style="padding:16px 12px;">
+                    <div class="empty-state-icon" style="width:64px; height:64px; border-radius:18px;"><svg class="icon-svg" style="width:26px;height:26px;" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13.5" r="8"/><path d="M12 13.5V9"/><path d="M10 2h4"/><path d="M12 2v2.5"/></svg></div>
+                    <div class="empty-state-title" style="font-size:1rem;">${t('no_races') || 'עדיין לא עשית מירוצים'}</div>
+                    <div class="empty-state-desc" style="font-size:0.85rem;">${t('no_races_desc') || 'התחל/י מירוץ למעלה כדי לראות כאן את התוצאות שלך'}</div>
+                </div>`;
                 return;
             }
 
@@ -10320,7 +10489,11 @@
             const strip = document.getElementById('photos-strip');
             if (!strip) return;
             if (progressPhotos.length === 0) {
-                strip.innerHTML = `<div style="color: var(--text-secondary); font-size:0.85rem;">${t('photos_empty') || 'עדיין אין תמונות'}</div>`;
+                strip.innerHTML = `<div class="empty-state-block" style="padding:20px 12px; width:100%;">
+                    <div class="empty-state-icon" style="width:64px; height:64px; border-radius:18px;"><svg class="icon-svg" style="width:26px;height:26px;" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8a2 2 0 0 1 2-2h1.5l1-1.5h7l1 1.5H18a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><circle cx="12" cy="12.5" r="3.5"/></svg></div>
+                    <div class="empty-state-title" style="font-size:1rem;">${t('photos_empty') || 'עדיין אין תמונות'}</div>
+                    <div class="empty-state-desc" style="font-size:0.85rem;">${t('photos_empty_desc') || 'צלם/י תמונה ראשונה כדי להתחיל לראות את השינוי'}</div>
+                </div>`;
                 return;
             }
             strip.innerHTML = progressPhotos.map((p, i) => {
